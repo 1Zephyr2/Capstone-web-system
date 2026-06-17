@@ -3,23 +3,45 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Pet;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Create Staff User
+        User::create([
+            "name" => "Furcare Staff",
+            "email" => "staff@furcare.com",
+            "password" => Hash::make("password"),
+            "role" => "staff",
+        ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // 2. Create Pet Owner User
+        $owner = User::create([
+            "name" => "John Doe",
+            "email" => "owner@furcare.com",
+            "password" => Hash::make("password"),
+            "role" => "owner",
+        ]);
+
+        // 3. Create Pets for Owner
+        Pet::create([
+            "user_id" => $owner->id,
+            "name" => "Max",
+            "breed" => "Golden Retriever",
+            "age" => 3,
+            "special_notes" => "Likes belly rubs.",
+        ]);
+
+        Pet::create([
+            "user_id" => $owner->id,
+            "name" => "Luna",
+            "breed" => "Persian Cat",
+            "age" => 2,
+            "special_notes" => "Very quiet.",
         ]);
     }
 }
