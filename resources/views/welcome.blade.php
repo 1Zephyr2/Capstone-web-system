@@ -46,8 +46,8 @@
     <!-- Hero -->
     <header class="relative z-10 py-32 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
         <div class="container mx-auto px-6 flex flex-col items-center justify-center text-center max-w-3xl mx-auto">
-            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter mb-6 text-white">
-                Pet Care Appointment System
+            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tighter mb-6 text-white">
+                FURCARE : Pet Grooming Appointment System
             </h1>
             <p class="text-white text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
                 Set Appointments, pet grooming services, and schedules in one secure platform designed for pet grooming clinics.

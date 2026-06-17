@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StaffDashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\StaffAuthController;
 
@@ -9,7 +10,7 @@ Route::get("/", function () {
 });
 
 Route::get("/dashboard", function () {
-    return view("dashboard");
+    return view("staff.dashboard");
 })
     ->middleware(["auth", "verified"])
     ->name("dashboard");
@@ -27,6 +28,13 @@ Route::middleware("auth")->group(function () {
 });
 
 // Staff routes
+Route::middleware(["auth", "can:access-staff"])->group(function () {
+    Route::get("/staff/dashboard", [
+        StaffDashboardController::class,
+        "index",
+    ])->name("staff.dashboard");
+});
+
 Route::get("/staff/login", [StaffAuthController::class, "showLoginForm"])->name(
     "staff.login",
 );
