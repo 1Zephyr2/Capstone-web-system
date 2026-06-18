@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FURCARE | Staff Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
@@ -31,13 +32,13 @@
     <nav class="relative z-50 w-full bg-[#1e1b4b] backdrop-blur-md border-b border-white/10">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="#" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
-                <i class="bi bi-shield-lock text-violet-400"></i>FURCARE <span class="text-violet-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30">STAFF PORTAL</span>
+                <img src="{{ asset('furcare.ico') }}" class="w-8 h-8" alt="Logo"> FURCARE <span class="text-violet-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30">STAFF PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
-                <a href="{{ route('staff.dashboard') }}" class="text-white hover:text-white transition-all duration-300 hover:scale-105">Dashboard</a>
+                <a href="{{ route('staff.dashboard') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Dashboard</a>
                 <a href="{{ route('staff.directory') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Pets</a>
-                <a href="#" class="hover:text-white transition-all duration-300 hover:scale-105">Appointments</a>
-                <a href="#" class="hover:text-white transition-all duration-300 hover:scale-105">Insights</a>
+                <a href="{{ route('staff.appointments') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Appointments</a>
+                <a href="{{ route('staff.insights') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Insights</a>
             </div>
             <form action="{{ route('logout') }}" method="POST">
                 @csrf

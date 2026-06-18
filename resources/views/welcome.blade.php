@@ -36,8 +36,8 @@
                 <i class="bi bi-shield-check text-teal-500"></i>FURCARE
             </a>
             <div class="flex items-center gap-8 text-sm font-medium text-slate-300">
-                <a href="#about" class="hover:text-teal-400 transition-colors">About</a>
-                <a href="#features" class="hover:text-teal-400 transition-colors">Features</a>
+                <a href="#about" class="hover:text-white transition-all duration-300 hover:scale-105">About</a>
+                <a href="#features" class="hover:text-white transition-all duration-300 hover:scale-105">Features</a>
                 <a href="{{ route('login') }}" class="px-5 py-2 rounded-full bg-teal-600 hover:bg-teal-500 text-white font-semibold transform hover:-translate-y-0.5 transition-all active:translate-y-0">Login</a>
             </div>
         </div>

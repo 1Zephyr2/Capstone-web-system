@@ -28,7 +28,7 @@ Route::middleware("auth")->group(function () {
 });
 
 // Staff routes
-Route::middleware(["auth", "can:access-staff"])->group(function () {
+Route::middleware(["auth"])->group(function () {
     Route::get("/staff/dashboard", [
         StaffDashboardController::class,
         "index",
@@ -37,8 +37,15 @@ Route::middleware(["auth", "can:access-staff"])->group(function () {
     Route::get("/staff/directory", function () {
         return view("staff.directory");
     })->name("staff.directory");
-});
 
+    Route::get("/staff/appointments", function () {
+        return view("staff.appointments");
+    })->name("staff.appointments");
+
+    Route::get("/staff/insights", function () {
+        return view("staff.insights");
+    })->name("staff.insights");
+});
 Route::get("/staff/login", [StaffAuthController::class, "showLoginForm"])->name(
     "staff.login",
 );
