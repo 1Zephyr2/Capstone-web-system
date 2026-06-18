@@ -6,6 +6,17 @@
     <title>FURCARE | Pet List</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        @keyframes slideFade {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-page {
+            animation: slideFade 0.5s ease-out forwards;
+        }
+    </style>
+
     <script>
         function toggleAccordion(id) {
             const el = document.getElementById(id);
@@ -13,6 +24,18 @@
             el.classList.toggle('hidden');
             icon.classList.toggle('rotate-90');
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100', 'translate-y-0');
+                        entry.target.classList.remove('opacity-0', 'translate-y-10');
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+        });
     </script>
 </head>
 <body class="bg-slate-950 text-slate-200 antialiased min-h-screen">
@@ -36,60 +59,61 @@
         </div>
     </nav>
 
-    <main class="container mx-auto px-6 py-12">
-        <header class="mb-8">
-            <h1 class="text-2xl font-bold text-white">Pet List</h1>
-            <p class="text-slate-400 text-sm">Manage client profiles and associated pet records.</p>
-        </header>
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-6 animate-page">
+        <main class="container mx-auto px-6 py-6">
+            <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+                <h1 class="text-2xl font-bold text-white">Pet List</h1>
+                <p class="text-slate-400 text-sm">Manage client profiles and associated pet records.</p>
+            </header>
 
-        <!-- Search Bar -->
-        <div class="mb-8 max-w-lg">
-            <div class="relative">
-                <i class="bi bi-search absolute left-4 top-3 text-slate-500"></i>
-                <input type="text" placeholder="Search by name or phone..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-violet-500 transition-all outline-none">
-            </div>
-        </div>
-
-        <!-- Directory Stack -->
-        <div class="space-y-4">
-            <!-- Owner Card: Shamaimah -->
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]">
-                <button onclick="toggleAccordion('shamaimah')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-800/30 transition-all duration-300">
-                    <span class="font-semibold text-white">Shamaimah</span>
-                    <span class="text-slate-500 text-sm">012-345-6789</span>
-                    <i id="icon-shamaimah" class="bi bi-chevron-right text-violet-400 transition-transform duration-300"></i>
-                </button>
-                <div id="shamaimah" class="hidden px-6 pb-4 bg-slate-950/20 border-t border-slate-800/50 transition-all duration-300 ease-in-out">
-                    <div class="pt-4 space-y-2">
-                        <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
-                            <span class="text-sm">🐾 Pom-S</span>
-                            <span class="text-xs text-slate-500">Golden Retriever</span>
-                        </div>
-                        <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
-                            <span class="text-sm">🐾 Toby</span>
-                            <span class="text-xs text-slate-500">Persian Cat</span>
-                        </div>
-                        <button class="mt-2 text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors hover:underline">
-                            + Add New Pet
-                        </button>
-                    </div>
+            <!-- Search Bar -->
+            <div class="mb-8 max-w-lg reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+                <div class="relative">
+                    <i class="bi bi-search absolute left-4 top-3 text-slate-500"></i>
+                    <input type="text" placeholder="Search by name or phone..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-violet-500 transition-all outline-none">
                 </div>
             </div>
 
-            <!-- Owner Card: Medge -->
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]">
-                <button onclick="toggleAccordion('medge')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-800/30 transition-all duration-300">
-                    <span class="font-semibold text-white">Medge</span>
-                    <span class="text-slate-500 text-sm">018-999-0000</span>
-                    <i id="icon-medge" class="bi bi-chevron-right text-violet-400 transition-transform duration-300"></i>
-                </button>
-                <div id="medge" class="hidden px-6 pb-4 bg-slate-950/20 border-t border-slate-800/50 transition-all duration-300 ease-in-out">
-                    <div class="pt-4 space-y-2">
-                         <p class="text-slate-500 text-sm italic">No pets found for this owner.</p>
+            <div class="space-y-4">
+                <!-- Owner Card: Shamaimah -->
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+                    <button onclick="toggleAccordion('shamaimah')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-800/30 transition-all duration-300">
+                        <span class="font-semibold text-white">Shamaimah</span>
+                        <span class="text-slate-500 text-sm">012-345-6789</span>
+                        <i id="icon-shamaimah" class="bi bi-chevron-right text-violet-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="shamaimah" class="hidden px-6 pb-4 bg-slate-950/20 border-t border-slate-800/50 transition-all duration-300 ease-in-out">
+                        <div class="pt-4 space-y-2">
+                            <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
+                                <span class="text-sm">🐾 Pom-S</span>
+                                <span class="text-xs text-slate-500">Golden Retriever</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
+                                <span class="text-sm">🐾 Toby</span>
+                                <span class="text-xs text-slate-500">Persian Cat</span>
+                            </div>
+                            <button class="mt-2 text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors hover:underline">
+                                + Add New Pet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Owner Card: Medge -->
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+                    <button onclick="toggleAccordion('medge')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-800/30 transition-all duration-300">
+                        <span class="font-semibold text-white">Medge</span>
+                        <span class="text-slate-500 text-sm">018-999-0000</span>
+                        <i id="icon-medge" class="bi bi-chevron-right text-violet-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="medge" class="hidden px-6 pb-4 bg-slate-950/20 border-t border-slate-800/50 transition-all duration-300 ease-in-out">
+                        <div class="pt-4 space-y-2">
+                             <p class="text-slate-500 text-sm italic">No pets found for this owner.</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
 </body>
 </html>
