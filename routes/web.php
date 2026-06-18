@@ -33,6 +33,10 @@ Route::middleware(["auth", "can:access-staff"])->group(function () {
         StaffDashboardController::class,
         "index",
     ])->name("staff.dashboard");
+
+    Route::get("/staff/directory", function () {
+        return view("staff.directory");
+    })->name("staff.directory");
 });
 
 Route::get("/staff/login", [StaffAuthController::class, "showLoginForm"])->name(
