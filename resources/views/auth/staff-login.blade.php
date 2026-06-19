@@ -33,7 +33,7 @@
     <nav class="relative z-50 w-full bg-[#0c1220] backdrop-blur-md border-b border-white/10">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="/" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
-                <i class="bi bi-shield-lock text-indigo-500"></i>FURCARE <span class="text-indigo-400 font-normal text-sm ml-2 px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20">STAFF</span>
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE <span class="text-violet-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30">STAFF PORTAL</span>
             </a>
         </div>
     </nav>

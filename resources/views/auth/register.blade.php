@@ -41,9 +41,9 @@
     <nav class="relative z-50 w-full bg-[#0c1220] backdrop-blur-md border-b border-white/10">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="/" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
-                <i class="bi bi-shield-check text-teal-500"></i>FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
             </a>
-            <a href="{{ route('login') }}" class="px-5 py-2 rounded-full text-sm font-medium text-slate-300 hover:text-teal-400 transition-colors">Login</a>
+            <a href="{{ route('login') }}" class="text-sm font-medium text-slate-300 hover:text-teal-400 transition-colors">Login</a>
         </div>
     </nav>
 
