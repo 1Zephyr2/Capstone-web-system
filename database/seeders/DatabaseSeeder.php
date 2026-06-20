@@ -11,6 +11,14 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // 0. Create Admin User
+        User::create([
+            "name" => "Furcare Admin",
+            "email" => "admin@furcare.com",
+            "password" => Hash::make("password"),
+            "role" => "admin",
+        ]);
+
         // 1. Create Staff User
         User::create([
             "name" => "Furcare Staff",

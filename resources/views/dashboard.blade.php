@@ -119,7 +119,7 @@
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="font-bold text-white flex items-center gap-2"><i class="bi bi-calendar-check text-teal-400"></i> Upcoming Appointments</h3>
                     <button class="text-xs px-3 py-1 bg-teal-600 hover:bg-teal-500 rounded-lg text-white font-medium transition-all duration-300">
-                        Request
+                        Request an Appointment
                     </button>
                 </div>
                 <div class="space-y-4">
