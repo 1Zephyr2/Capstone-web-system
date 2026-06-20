@@ -72,14 +72,14 @@
                 </button>
                 <div id="shamaimah" class="hidden px-6 pb-4 border-t border-slate-800/50">
                     <div class="pt-4 pb-4 space-y-2">
-                        <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
+                        <a href="{{ route('pets.details', ['id' => 'pom-s']) }}" class="block flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
                             <span class="text-sm">🐾 Pom-S</span>
                             <span class="text-xs text-slate-500">Golden Retriever</span>
-                        </div>
-                        <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
+                        </a>
+                        <a href="{{ route('pets.details', ['id' => 'toby']) }}" class="block flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
                             <span class="text-sm">🐾 Toby</span>
                             <span class="text-xs text-slate-500">Persian Cat</span>
-                        </div>
+                        </a>
                         <button class="mt-2 text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors hover:underline">
                             + Add New Pet
                         </button>

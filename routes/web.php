@@ -49,12 +49,14 @@ Route::middleware(["auth", "role:admin"])->group(function () {
         return view("admin.insights");
     })->name("admin.insights");
 
+    Route::get("/pets/{id}", function ($id) {
+        return view("pets.details", ["id" => $id]);
+    })->name("pets.details");
+
     Route::get("/admin/panel", function () {
         return view("admin.panel");
     })->name("admin.panel");
 });
-
-// Staff Routes
 Route::middleware(["auth", "role:staff"])->group(function () {
     Route::get("/staff/dashboard", [
         StaffDashboardController::class,
@@ -63,6 +65,11 @@ Route::middleware(["auth", "role:staff"])->group(function () {
     Route::get("/staff/directory", function () {
         return view("staff.directory");
     })->name("staff.directory");
+
+    Route::get("/pets/{id}", function ($id) {
+        return view("pets.details", ["id" => $id]);
+    })->name("pets.details");
+
     Route::get("/staff/appointments", function () {
         return view("staff.appointments");
     })->name("staff.appointments");
