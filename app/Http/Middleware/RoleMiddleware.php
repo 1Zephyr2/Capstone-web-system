@@ -22,16 +22,16 @@ class RoleMiddleware
             return redirect()->route("login");
         }
 
-        if ($user->role !== $role) {
-            // Log the failure to see what's happening
+        // Normalize roles to lowercase for comparison
+        if (strtolower($user->role) !== strtolower($role)) {
             \Log::warning(
                 "Unauthorized access attempt. User: {$user->email}, Expected Role: {$role}, Actual: {$user->role}",
             );
 
             // Redirect based on role
-            if ($user->role === "admin") {
+            if (strtolower($user->role) === "admin") {
                 return redirect()->route("admin.dashboard");
-            } elseif ($user->role === "staff") {
+            } elseif (strtolower($user->role) === "staff") {
                 return redirect()->route("staff.dashboard");
             } else {
                 return redirect()->route("dashboard");

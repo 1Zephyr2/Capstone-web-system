@@ -31,11 +31,23 @@ Route::middleware(["auth", "verified"])->group(function () {
     );
 });
 
+// Shared routes for both Admin and Staff
+Route::middleware(["auth"])->group(function () {
+    Route::get("/pets/{id}", function ($id) {
+        return view("pets.details", ["id" => $id]);
+    })->name("pets.details");
+});
+
 // Admin Routes
 Route::middleware(["auth", "role:admin"])->group(function () {
     Route::get("/admin/dashboard", function () {
         return view("admin.dashboard");
     })->name("admin.dashboard");
+
+    // Redirect root admin access to dashboard
+    Route::get("/admin", function () {
+        return redirect()->route("admin.dashboard");
+    });
 
     Route::get("/admin/appointments", function () {
         return view("admin.appointments");
@@ -49,27 +61,25 @@ Route::middleware(["auth", "role:admin"])->group(function () {
         return view("admin.insights");
     })->name("admin.insights");
 
-    Route::get("/pets/{id}", function ($id) {
-        return view("pets.details", ["id" => $id]);
-    })->name("pets.details");
-
     Route::get("/admin/panel", function () {
         return view("admin.panel");
     })->name("admin.panel");
 });
+
+// Staff Routes
 Route::middleware(["auth", "role:staff"])->group(function () {
     Route::get("/staff/dashboard", [
         StaffDashboardController::class,
         "index",
     ])->name("staff.dashboard");
+
+    // Redirect root staff access to dashboard
+    Route::get("/staff", function () {
+        return redirect()->route("staff.dashboard");
+    });
     Route::get("/staff/directory", function () {
         return view("staff.directory");
     })->name("staff.directory");
-
-    Route::get("/pets/{id}", function ($id) {
-        return view("pets.details", ["id" => $id]);
-    })->name("pets.details");
-
     Route::get("/staff/appointments", function () {
         return view("staff.appointments");
     })->name("staff.appointments");
