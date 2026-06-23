@@ -20,6 +20,10 @@ Route::middleware(["auth", "verified"])->group(function () {
         return view("dashboard"); // This is the Customer Dashboard
     })->name("dashboard");
 
+    Route::get("/request-appointment", function () {
+        return view("pets.booking-request");
+    })->name("request.appointment");
+
     Route::get("/profile", [ProfileController::class, "edit"])->name(
         "profile.edit",
     );
@@ -42,6 +46,10 @@ Route::middleware(["auth"])->group(function () {
         }
         return view("pets.owner-details", ["id" => $id]);
     })->name("pets.details");
+
+    Route::get("/pets/{id}/edit", function ($id) {
+        return view("pets.edit", ["id" => $id]);
+    })->name("pets.edit");
 });
 
 // Admin Routes
@@ -92,9 +100,6 @@ Route::middleware(["auth", "role:staff"])->group(function () {
     Route::get("/staff/insights", function () {
         return view("staff.insights");
     })->name("staff.insights");
-    Route::get("/request-appointment", function () {
-        return view("pets.booking-request");
-    })->name("request.appointment");
 });
 
 Route::get("/staff/login", [StaffAuthController::class, "showLoginForm"])->name(

@@ -58,7 +58,7 @@
         <!-- Controls & Filter Bar -->
         <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-white">Booking Sheet</h1>
+                <h1 class="text-3xl font-bold text-white">Appointment Booking</h1>
                 <p class="text-slate-400">Tuesday, June 23, 2026</p>
             </div>
             <div class="flex items-center gap-2 bg-slate-900/40 p-1 rounded-xl border border-slate-800">
