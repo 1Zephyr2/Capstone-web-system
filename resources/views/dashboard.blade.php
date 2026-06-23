@@ -137,16 +137,16 @@
             <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-8 hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(13,148,136,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
                 <h3 class="font-bold text-white mb-6 flex items-center gap-2"><i class="bi bi-paw text-teal-400"></i> My Pets</h3>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800/50 text-center hover:border-teal-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                    <a href="{{ route('pets.details', ['id' => 'max']) }}" class="bg-slate-900/50 p-4 rounded-xl border border-slate-800/50 text-center hover:border-teal-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg block">
                         <span class="text-2xl mb-2 block">🐾</span>
                         <p class="font-medium text-white">Max</p>
                         <p class="text-xs text-slate-400">Golden Retriever</p>
-                    </div>
-                    <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800/50 text-center hover:border-teal-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                    </a>
+                    <a href="{{ route('pets.details', ['id' => 'luna']) }}" class="bg-slate-900/50 p-4 rounded-xl border border-slate-800/50 text-center hover:border-teal-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg block">
                         <span class="text-2xl mb-2 block">🐾</span>
                         <p class="font-medium text-white">Luna</p>
                         <p class="text-xs text-slate-400">Persian Cat</p>
-                    </div>
+                    </a>
                 </div>
                 <button class="w-full mt-6 py-3 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-teal-500 transition-all duration-300">
                     + Add Pet

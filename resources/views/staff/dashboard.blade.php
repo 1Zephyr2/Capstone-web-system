@@ -41,7 +41,7 @@
                 <a href="{{ route('staff.appointments') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Appointments</a>
                 <a href="{{ route('staff.insights') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Insights</a>
             </div>
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
+            <form action="{{ route('staff.logout') }}" method="POST" class="m-0">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all duration-300 text-white shadow-lg">Logout</button>
             </form>

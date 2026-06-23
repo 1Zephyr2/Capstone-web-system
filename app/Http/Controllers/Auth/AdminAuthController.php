@@ -20,16 +20,29 @@ class AdminAuthController extends Controller
             "password" => ["required"],
         ]);
 
-        // Specifically check for the 'admin' role
-        $authData = array_merge($credentials, ["role" => "admin"]);
-
-        if (Auth::attempt($authData)) {
-            $request->session()->regenerate();
-            return redirect()->intended(route("admin.dashboard"));
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            if (strtolower($user->role) === "admin") {
+                $request->session()->regenerate();
+                return redirect()->intended(route("admin.dashboard"));
+            } else {
+                Auth::logout();
+                return back()->withErrors([
+                    "email" => "Unauthorized access: Not an admin account.",
+                ]);
+            }
         }
 
         return back()->withErrors([
-            "email" => "Invalid admin credentials.",
+            "email" => "Invalid credentials.",
         ]);
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect("/");
     }
 }

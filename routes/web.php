@@ -34,7 +34,13 @@ Route::middleware(["auth", "verified"])->group(function () {
 // Shared routes for both Admin and Staff
 Route::middleware(["auth"])->group(function () {
     Route::get("/pets/{id}", function ($id) {
-        return view("pets.details", ["id" => $id]);
+        if (
+            auth()->user()->role === "admin" ||
+            auth()->user()->role === "staff"
+        ) {
+            return view("pets.details", ["id" => $id]);
+        }
+        return view("pets.owner-details", ["id" => $id]);
     })->name("pets.details");
 });
 
@@ -50,7 +56,7 @@ Route::middleware(["auth", "role:admin"])->group(function () {
     });
 
     Route::get("/admin/appointments", function () {
-        return view("admin.appointments");
+        return view("staff.booking-sheet");
     })->name("admin.appointments");
 
     Route::get("/admin/directory", function () {
@@ -81,11 +87,14 @@ Route::middleware(["auth", "role:staff"])->group(function () {
         return view("staff.directory");
     })->name("staff.directory");
     Route::get("/staff/appointments", function () {
-        return view("staff.appointments");
+        return view("staff.booking-sheet"); // Updated to use the booking sheet wireframe
     })->name("staff.appointments");
     Route::get("/staff/insights", function () {
         return view("staff.insights");
     })->name("staff.insights");
+    Route::get("/request-appointment", function () {
+        return view("pets.booking-request");
+    })->name("request.appointment");
 });
 
 Route::get("/staff/login", [StaffAuthController::class, "showLoginForm"])->name(

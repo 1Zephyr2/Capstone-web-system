@@ -18,11 +18,11 @@ class RoleMiddleware
     ): Response {
         $user = $request->user();
 
+        // Normalize roles to lowercase for comparison
         if (!$user) {
             return redirect()->route("login");
         }
 
-        // Normalize roles to lowercase for comparison
         if (strtolower($user->role) !== strtolower($role)) {
             \Log::warning(
                 "Unauthorized access attempt. User: {$user->email}, Expected Role: {$role}, Actual: {$user->role}",
