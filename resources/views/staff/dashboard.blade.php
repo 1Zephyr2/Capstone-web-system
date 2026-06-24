@@ -76,8 +76,8 @@
             <div class="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out hover:border-violet-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]">
                 <h3 class="text-lg font-bold text-white mb-6">Quick Actions</h3>
                 <div class="flex flex-col gap-3">
-                    <button class="text-left px-4 py-3 rounded-lg bg-slate-800/50 hover:bg-violet-600 transition-all duration-300 hover:translate-x-1">Add New Pet</button>
-                    <button class="text-left px-4 py-3 rounded-lg bg-slate-800/50 hover:bg-violet-600 transition-all duration-300 hover:translate-x-1">Create Appointment</button>
+                    <a href="{{ route('staff.directory') }}" class="block px-4 py-3 rounded-lg bg-slate-800/50 hover:bg-violet-600 transition-all duration-300 hover:translate-x-1">Customers List</a>
+                    <a href="{{ route('staff.appointments') }}" class="block px-4 py-3 rounded-lg bg-slate-800/50 hover:bg-violet-600 transition-all duration-300 hover:translate-x-1">Create Appointment</a>
                 </div>
             </div>
         </div>

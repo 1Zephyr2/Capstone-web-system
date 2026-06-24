@@ -53,12 +53,12 @@
             <div class="bg-indigo-900/20 border border-indigo-800/50 rounded-2xl p-8 hover:border-indigo-600 transition-all duration-300">
                 <h3 class="font-bold text-white mb-2"><i class="bi bi-calendar-check text-indigo-400 mr-2"></i> Appointments</h3>
                 <p class="text-sm text-indigo-300 mb-6">Manage all incoming appointment requests.</p>
-                <a href="{{ route('staff.appointments') }}" class="text-indigo-400 hover:text-white text-sm font-semibold transition-colors">Manage appointments &rarr;</a>
+                <a href="{{ route('admin.appointments') }}" class="text-indigo-400 hover:text-white text-sm font-semibold transition-colors">Manage appointments &rarr;</a>
             </div>
             <div class="bg-indigo-900/20 border border-indigo-800/50 rounded-2xl p-8 hover:border-indigo-600 transition-all duration-300">
                 <h3 class="font-bold text-white mb-2"><i class="bi bi-people text-indigo-400 mr-2"></i> Staff Accounts</h3>
                 <p class="text-sm text-indigo-300 mb-6">Manage staff users and permissions.</p>
-                <a href="{{ route('staff.directory') }}" class="text-indigo-400 hover:text-white text-sm font-semibold transition-colors">Manage staff &rarr;</a>
+                <a href="{{ route('admin.directory') }}" class="text-indigo-400 hover:text-white text-sm font-semibold transition-colors">Manage staff &rarr;</a>
             </div>
             <div class="bg-indigo-900/20 border border-indigo-800/50 rounded-2xl p-8 hover:border-indigo-600 transition-all duration-300">
                 <h3 class="font-bold text-white mb-2"><i class="bi bi-cash-stack text-indigo-400 mr-2"></i> Services & Pricing</h3>
@@ -71,7 +71,7 @@
             <div class="bg-indigo-900/20 border border-indigo-800/50 rounded-2xl p-8 hover:border-indigo-600 transition-all duration-300">
                 <h3 class="font-bold text-white mb-2"><i class="bi bi-graph-up-arrow text-indigo-400 mr-2"></i> Insights & Reports</h3>
                 <p class="text-sm text-indigo-300 mb-6">View system performance and business metrics.</p>
-                <a href="{{ route('staff.insights') }}" class="text-indigo-400 hover:text-white text-sm font-semibold transition-colors">View insights &rarr;</a>
+                <a href="{{ route('admin.insights') }}" class="text-indigo-400 hover:text-white text-sm font-semibold transition-colors">View insights &rarr;</a>
             </div>
             <div class="bg-indigo-900/20 border border-indigo-800/50 rounded-2xl p-8 hover:border-indigo-600 transition-all duration-300">
                 <h3 class="font-bold text-white mb-2"><i class="bi bi-gear text-indigo-400 mr-2"></i> System Settings</h3>

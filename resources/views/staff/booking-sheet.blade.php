@@ -28,6 +28,60 @@
             }, { threshold: 0.1 });
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
         });
+
+        function showBookingModal(time, owner, service, size, notes, status) {
+            console.log("showBookingModal called with:", time, owner);
+
+            const modal = document.getElementById('booking-modal');
+            const content = document.getElementById('booking-modal-content');
+
+            if (!modal || !content) {
+                console.error("Modal elements not found!");
+                return;
+            }
+
+            const elements = {
+                'modal-time': time,
+                'modal-owner': owner,
+                'modal-service': service,
+                'modal-size': size,
+                'modal-notes': notes,
+                'modal-status': status
+            };
+
+            for (const [id, value] of Object.entries(elements)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerText = value || 'N/A';
+                } else {
+                    console.warn(`Element with id ${id} not found!`);
+                }
+            }
+
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
+
+            // Force browser to acknowledge the change
+            modal.offsetHeight;
+
+            modal.classList.add('opacity-100');
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }
+
+        function closeBookingModal() {
+            const modal = document.getElementById('booking-modal');
+            const content = document.getElementById('booking-modal-content');
+
+            modal.classList.remove('opacity-100');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+                modal.classList.remove('flex', 'opacity-100');
+            }, 300);
+        }
     </script>
 </head>
 <body class="{{ $isAdmin ? 'bg-indigo-950' : 'bg-slate-950' }} text-slate-200 antialiased min-h-screen">
@@ -94,7 +148,8 @@
                     @endforeach
 
                     <!-- Pending Approval -->
-                    <tr class="hover:{{ $isAdmin ? 'bg-indigo-800/20' : 'bg-slate-800/20' }} transition-colors">
+                    <tr onclick="showBookingModal('11:00 AM', 'Medge', 'Full Grooming', 'S', 'Nervous dog', 'Pending Staff Approval')"
+                        class="cursor-pointer hover:{{ $isAdmin ? 'bg-indigo-800/20' : 'bg-slate-800/20' }} transition-colors">
                         <td class="px-6 py-5 font-bold {{ $accentText }}">11:00 AM</td>
                         <td class="px-6 py-5 font-medium">Medge</td>
                         <td class="px-6 py-5">Full Grooming</td>
@@ -108,7 +163,8 @@
                     </tr>
 
                     <!-- Booked -->
-                    <tr class="hover:{{ $isAdmin ? 'bg-indigo-800/20' : 'bg-slate-800/20' }} transition-colors">
+                    <tr onclick="showBookingModal('1:00 PM', 'Shamaimah', 'Basic Bath', 'XS', 'Check ears', 'Confirmed')"
+                        class="cursor-pointer hover:{{ $isAdmin ? 'bg-indigo-800/20' : 'bg-slate-800/20' }} transition-colors">
                         <td class="px-6 py-5 font-bold {{ $accentText }}">1:00 PM</td>
                         <td class="px-6 py-5 font-medium">Shamaimah</td>
                         <td class="px-6 py-5">Basic Bath</td>
@@ -130,5 +186,40 @@
             </table>
         </div>
     </main>
+
+    <!-- Booking Details Modal -->
+    <div id="booking-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
+         onclick="if(event.target===this) closeBookingModal()">
+        <div id="booking-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+            <h2 class="text-xl font-bold text-white mb-6">Booking Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Time</label>
+                    <p id="modal-time" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Owner</label>
+                    <p id="modal-owner" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Service</label>
+                    <p id="modal-service" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Notes</label>
+                    <p id="modal-notes" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Status</label>
+                    <p id="modal-status" class="text-emerald-400 font-semibold bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+
+                <div class="mt-8 flex gap-4">
+                    <button type="button" onclick="closeBookingModal()" class="flex-1 px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Close</button>
+                    <button type="button" class="flex-1 px-4 py-2 rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition-all">Update Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

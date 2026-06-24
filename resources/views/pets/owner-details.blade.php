@@ -36,6 +36,7 @@
         function toggleEditPetModal() {
             const modal = document.getElementById('edit-pet-modal');
             const content = document.getElementById('edit-pet-modal-content');
+
             if (modal.classList.contains('hidden')) {
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
@@ -53,6 +54,76 @@
                     modal.classList.remove('flex', 'opacity-100');
                 }, 300);
             }
+        }
+
+        function toggleModal() {
+            const modal = document.getElementById('profile-modal');
+            const content = document.getElementById('profile-modal-content');
+
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    modal.classList.add('opacity-100');
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                modal.classList.remove('opacity-100');
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex', 'opacity-100');
+                }, 300);
+            }
+        }
+
+        function showVisitDetails(title, date, remarks, services, price) {
+            document.getElementById('visit-title').innerText = title;
+            document.getElementById('visit-date').innerText = date;
+            document.getElementById('visit-remarks').innerText = remarks;
+            document.getElementById('visit-services').innerText = services;
+            document.getElementById('visit-price').innerText = price;
+
+            const modal = document.getElementById('visit-modal');
+            const content = document.getElementById('visit-modal-content');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function openLightbox(src) {
+            const overlay = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = src;
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            setTimeout(() => overlay.classList.add('opacity-100'), 10);
+        }
+
+        function closeLightbox() {
+            const overlay = document.getElementById('lightbox');
+            overlay.classList.remove('opacity-100');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+
+        function closeVisitModal() {
+            const modal = document.getElementById('visit-modal');
+            const content = document.getElementById('visit-modal-content');
+
+            modal.classList.remove('opacity-100');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex', 'opacity-100');
+            }, 300);
         }
     </script>
 </head>
@@ -101,10 +172,11 @@
                 <div class="{{ $cardBg }} border {{ $cardBorder }} rounded-2xl p-8">
                     <h3 class="font-bold text-white mb-6 flex items-center gap-2"><i class="bi bi-clock-history {{ $accentText }}"></i> Visit History</h3>
                     <div class="space-y-4">
-                        <div class="p-4 border-l-2 {{ $accentBorder }} {{ $cardBg }} rounded-r-lg">
+                        <button onclick="showVisitDetails('Full Grooming Session', 'January 15, 2026', 'Great behavior, very cooperative.', 'Grooming, Bath, Ear Cleaning', '$50.00')"
+                                class="w-full text-left p-4 border-l-2 {{ $accentBorder }} {{ $cardBg }} rounded-r-lg hover:bg-slate-800 transition-all cursor-pointer">
                             <p class="font-medium text-white">Full Grooming Session</p>
                             <p class="text-xs text-slate-400">January 15, 2026</p>
-                        </div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -201,6 +273,46 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div id="visit-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
+         onclick="if(event.target===this) closeVisitModal()">
+        <div id="visit-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+            <h2 id="visit-title" class="text-xl font-bold text-white mb-6">Visit Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Date</label>
+                    <p id="visit-date" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Services Done</label>
+                    <p id="visit-services" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Price</label>
+                    <p id="visit-price" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Remarks</label>
+                    <p id="visit-remarks" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Photos</label>
+                    <div id="visit-photos" class="mt-2 flex gap-2">
+                        <!-- Photos will be injected here via JS -->
+                        <div onclick="openLightbox('https://via.placeholder.com/600')" class="w-16 h-16 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700 cursor-pointer hover:border-teal-500 transition-all">
+                             <i class="bi bi-image text-slate-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <button type="button" onclick="closeVisitModal()" class="w-full px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all duration-300">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Lightbox -->
+    <div id="lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center p-6 bg-slate-950/90 backdrop-blur-sm transition-opacity duration-300 opacity-0" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl">
     </div>
 </body>
 </html>

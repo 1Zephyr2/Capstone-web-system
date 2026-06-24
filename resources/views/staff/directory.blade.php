@@ -20,11 +20,34 @@
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
         });
 
+        function toggleAddPetModal() {
+            const modal = document.getElementById('add-pet-modal');
+            const content = document.getElementById('add-pet-modal-content');
+
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    modal.classList.add('opacity-100');
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                modal.classList.remove('opacity-100');
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex', 'opacity-100');
+                }, 300);
+            }
+        }
+
         function toggleAccordion(id) {
             const el = document.getElementById(id);
             const icon = document.getElementById('icon-' + id);
-            el.classList.toggle('hidden');
-            icon.classList.toggle('rotate-90');
+            if (el) el.classList.toggle('hidden');
+            if (icon) icon.classList.toggle('rotate-90');
         }
     </script>
 </head>
@@ -80,7 +103,7 @@
                             <span class="text-sm">🐾 Toby</span>
                             <span class="text-xs text-slate-500">Persian Cat</span>
                         </a>
-                        <button class="mt-2 text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors hover:underline">
+                        <button onclick="toggleAddPetModal()" class="mt-2 text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors hover:underline">
                             + Add New Pet
                         </button>
                     </div>
@@ -88,5 +111,54 @@
             </div>
         </div>
     </main>
+
+    <!-- Add Pet Modal -->
+    <div id="add-pet-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
+         onclick="if(event.target===this) toggleAddPetModal()">
+        <div id="add-pet-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+            <h2 class="text-xl font-bold text-white mb-6">Add New Pet</h2>
+            <form action="#" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Pet Name</label>
+                    <input type="text" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white mt-1 outline-none focus:border-violet-500 hover:border-slate-600 transition-all duration-300">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Pet Type</label>
+                        <select class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white mt-1 outline-none focus:border-violet-500 hover:border-slate-600 transition-all duration-300 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22M6%208l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em_1.5em] bg-[right_0.5rem_center] bg-no-repeat">
+                            <option>Dog</option>
+                            <option>Cat</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Breed</label>
+                        <input type="text" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white mt-1 outline-none focus:border-violet-500 hover:border-slate-600 transition-all duration-300">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Profile Picture</label>
+                    <div class="mt-1 flex items-center justify-center w-full">
+                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-800 border-dashed rounded-lg cursor-pointer bg-slate-950 hover:bg-slate-900 hover:border-violet-500 transition-all duration-300">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="bi bi-cloud-upload text-xl text-violet-500"></i>
+                                <p class="mb-2 text-xs text-slate-400"><span class="font-semibold">Click to upload</span></p>
+                            </div>
+                            <input type="file" class="hidden">
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Age</label>
+                    <input type="number" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white mt-1 outline-none focus:border-violet-500 hover:border-slate-600 transition-all duration-300">
+                </div>
+                <div class="mt-8 flex gap-3">
+                    <button type="button" onclick="toggleAddPetModal()" class="flex-1 px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all duration-300">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold transition-all duration-300">Add Pet</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
