@@ -83,6 +83,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/appointments/{appointment}/reject', [StaffAppointmentController::class, 'reject'])->name('appointments.reject');
     Route::patch('/appointments/{appointment}/complete', [StaffAppointmentController::class, 'complete'])->name('appointments.complete');
     Route::patch('/appointments/{appointment}/cancel', [StaffAppointmentController::class, 'cancel'])->name('appointments.cancel');
+    Route::post('/staff', [\App\Http\Controllers\AdminStaffController::class, 'store'])->name('staff.store');
+Route::delete('/staff/{user}', [\App\Http\Controllers\AdminStaffController::class, 'destroy'])->name('staff.destroy');
 });
 
 // ── Staff Routes ───────────────────────────────────────────────────────────────
