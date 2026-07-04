@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-
 class Pet extends Model
 {
     protected $fillable = [
@@ -29,15 +28,16 @@ class Pet extends Model
         return $this->hasMany(Appointment::class);
     }
 
-    /**
-     * Get the full public URL for the pet's photo,
-     * or null if no photo is set.
-     */
-    public function getPhotoUrlAttribute(): ?string
-{
-    if ($this->photo) {
-        return asset('storage/' . $this->photo);
+    public function records(): HasMany
+    {
+        return $this->hasMany(PetRecord::class)->orderByDesc('record_date');
     }
-    return null;
-}
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if ($this->photo) {
+            return asset('storage/' . $this->photo);
+        }
+        return null;
+    }
 }

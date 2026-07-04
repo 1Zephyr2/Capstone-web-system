@@ -111,4 +111,11 @@ class StaffAppointmentController extends Controller
 
         return back()->with('success', "Appointment for {$appointment->pet->name} cancelled.");
     }
+
+    public function updateNotes(Request $request, Appointment $appointment)
+{
+    $request->validate(['notes' => ['nullable', 'string', 'max:500']]);
+    $appointment->update(['notes' => $request->notes]);
+    return back()->with('success', 'Notes updated.');
+}
 }

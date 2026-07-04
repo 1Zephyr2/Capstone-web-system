@@ -39,7 +39,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/request-appointment', [AppointmentController::class, 'create'])->name('request.appointment');
     Route::post('/request-appointment', [AppointmentController::class, 'store'])->name('appointments.store');
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+
+// Appointment history (all statuses)
+    Route::get('/appointments/history', [AppointmentController::class, 'history'])->name('appointments.history');
+
+// Edit appointment (owner)
+    Route::get('/appointments/{appointment}/edit-form', [AppointmentController::class, 'edit'])->name('appointments.edit');
+    Route::patch('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+
     Route::patch('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -85,6 +94,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/appointments/{appointment}/cancel', [StaffAppointmentController::class, 'cancel'])->name('appointments.cancel');
     Route::post('/staff', [\App\Http\Controllers\AdminStaffController::class, 'store'])->name('staff.store');
 Route::delete('/staff/{user}', [\App\Http\Controllers\AdminStaffController::class, 'destroy'])->name('staff.destroy');
+
+// Medical records
+Route::post('/pets/{pet}/records', [\App\Http\Controllers\PetRecordController::class, 'store'])->name('records.store');
+Route::patch('/records/{record}', [\App\Http\Controllers\PetRecordController::class, 'update'])->name('records.update');
+Route::delete('/records/{record}', [\App\Http\Controllers\PetRecordController::class, 'destroy'])->name('records.destroy');
+
+// Edit appointment notes
+Route::patch('/appointments/{appointment}/notes', [\App\Http\Controllers\StaffAppointmentController::class, 'updateNotes'])->name('appointments.notes');
+
+// Grooming options
+Route::post('/grooming', [\App\Http\Controllers\GroomingOptionController::class, 'store'])->name('grooming.store');
+Route::patch('/grooming/{groomingOption}', [\App\Http\Controllers\GroomingOptionController::class, 'toggle'])->name('grooming.toggle');
+Route::delete('/grooming/{groomingOption}', [\App\Http\Controllers\GroomingOptionController::class, 'destroy'])->name('grooming.destroy');
 });
 
 // ── Staff Routes ───────────────────────────────────────────────────────────────
@@ -99,4 +121,12 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
     Route::patch('/appointments/{appointment}/reject', [StaffAppointmentController::class, 'reject'])->name('appointments.reject');
     Route::patch('/appointments/{appointment}/complete', [StaffAppointmentController::class, 'complete'])->name('appointments.complete');
     Route::patch('/appointments/{appointment}/cancel', [StaffAppointmentController::class, 'cancel'])->name('appointments.cancel');
+
+    // Medical records
+Route::post('/pets/{pet}/records', [\App\Http\Controllers\PetRecordController::class, 'store'])->name('records.store');
+Route::patch('/records/{record}', [\App\Http\Controllers\PetRecordController::class, 'update'])->name('records.update');
+Route::delete('/records/{record}', [\App\Http\Controllers\PetRecordController::class, 'destroy'])->name('records.destroy');
+
+// Edit appointment notes
+Route::patch('/appointments/{appointment}/notes', [\App\Http\Controllers\StaffAppointmentController::class, 'updateNotes'])->name('appointments.notes');
 });

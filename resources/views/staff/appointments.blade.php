@@ -20,36 +20,44 @@
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
         });
 
-        let currentAppointmentId = null;
-        let currentRoute = null;
-
-        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute) {
-            currentAppointmentId = id;
-
+        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute) {
             document.getElementById('modal-pet').innerText      = pet;
             document.getElementById('modal-owner').innerText    = owner;
             document.getElementById('modal-service').innerText  = service;
             document.getElementById('modal-datetime').innerText = datetime;
-            document.getElementById('modal-notes').innerText    = notes || '—';
+            document.getElementById('modal-notes-display').innerText = notes || '—';
+            document.getElementById('modal-notes-input').value = notes || '';
 
-            // Status badge
             const statusEl = document.getElementById('modal-status');
             statusEl.innerText = status.charAt(0).toUpperCase() + status.slice(1);
             statusEl.className = 'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ' + statusBadgeClass(status);
 
-            // Show/hide action buttons based on status
             document.getElementById('btn-approve').classList.toggle('hidden', status !== 'pending');
             document.getElementById('btn-reject-wrap').classList.toggle('hidden', status !== 'pending');
             document.getElementById('btn-complete').classList.toggle('hidden', status !== 'approved');
             document.getElementById('btn-cancel').classList.toggle('hidden', status !== 'approved');
 
-            // Set form actions
-            document.getElementById('form-approve').action   = approveRoute;
-            document.getElementById('form-complete').action  = completeRoute;
-            document.getElementById('form-cancel').action    = cancelRoute;
-            document.getElementById('form-reject').action    = rejectRoute;
+            document.getElementById('form-approve').action  = approveRoute;
+            document.getElementById('form-complete').action = completeRoute;
+            document.getElementById('form-cancel').action   = cancelRoute;
+            document.getElementById('form-reject').action   = rejectRoute;
+            document.getElementById('form-edit-notes').action = editNotesRoute;
+
+            // Reset notes edit mode
+            showNotesView();
 
             showModal('detail-modal', 'detail-modal-content');
+        }
+
+        function showNotesView() {
+            document.getElementById('notes-view').classList.remove('hidden');
+            document.getElementById('notes-edit').classList.add('hidden');
+        }
+
+        function showNotesEdit() {
+            document.getElementById('notes-view').classList.add('hidden');
+            document.getElementById('notes-edit').classList.remove('hidden');
+            document.getElementById('modal-notes-input').focus();
         }
 
         function openRejectModal() {
@@ -95,11 +103,6 @@
             };
             return map[status] || 'bg-slate-700 text-slate-300';
         }
-
-        @php
-            $isAdmin = auth()->user()->role === 'admin';
-            $routePrefix = $isAdmin ? 'admin' : 'staff';
-        @endphp
     </script>
 </head>
 <body class="bg-slate-950 text-slate-200 antialiased min-h-screen">
@@ -107,7 +110,6 @@
     @php $isAdmin = auth()->user()->role === 'admin'; @endphp
     @php $prefix  = $isAdmin ? 'admin' : 'staff'; @endphp
 
-    <!-- Navbar -->
     <nav class="relative z-50 w-full bg-[#0c1220] backdrop-blur-md border-b border-white/5">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="{{ route($prefix . '.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
@@ -117,21 +119,20 @@
                 </span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
-                <a href="{{ route($prefix . '.dashboard') }}"    class="hover:text-white transition-all duration-300 hover:scale-105">Dashboard</a>
-                <a href="{{ route($prefix . '.directory') }}"    class="hover:text-white transition-all duration-300 hover:scale-105">Pets</a>
-                <a href="{{ route($prefix . '.appointments') }}" class="text-white font-semibold transition-all duration-300 hover:scale-105">Appointments</a>
-                <a href="{{ route($prefix . '.insights') }}"     class="hover:text-white transition-all duration-300 hover:scale-105">Insights</a>
+                <a href="{{ route($prefix . '.dashboard') }}"    class="hover:text-white transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route($prefix . '.directory') }}"    class="hover:text-white transition-all hover:scale-105">Pets</a>
+                <a href="{{ route($prefix . '.appointments') }}" class="text-white font-semibold transition-all hover:scale-105">Appointments</a>
+                <a href="{{ route($prefix . '.insights') }}"     class="hover:text-white transition-all hover:scale-105">Insights</a>
             </div>
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
+            <form action="{{ route($isAdmin ? 'admin.logout' : 'staff.logout') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all duration-300 text-white shadow-lg">Logout</button>
+                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all text-white">Logout</button>
             </form>
         </div>
     </nav>
 
     <main class="container mx-auto px-6 py-12">
 
-        <!-- Flash -->
         @if(session('success'))
             <div class="mb-6 px-6 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-3 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
                 <i class="bi bi-check-circle-fill"></i> {{ session('success') }}
@@ -143,7 +144,6 @@
             </div>
         @endif
 
-        <!-- Header + Stats -->
         <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
             <h1 class="text-2xl font-bold text-white">Appointment Management</h1>
             <p class="text-slate-400 text-sm">Review, approve, and manage all appointment requests.</p>
@@ -173,30 +173,23 @@
               class="flex flex-wrap gap-3 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
             <input type="date" name="date" value="{{ request('date') }}"
                    class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-violet-500 transition-all">
-
             <select name="status" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-violet-500 transition-all appearance-none">
                 <option value="">All Statuses</option>
                 @foreach($statusOptions as $s)
-                    <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>
-                        {{ ucfirst($s) }}
-                    </option>
+                    <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
                 @endforeach
             </select>
-
             <select name="service" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-violet-500 transition-all appearance-none">
                 <option value="">All Services</option>
                 @foreach($serviceTypes as $key => $label)
                     <option value="{{ $key }}" {{ request('service') === $key ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-
             <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-all hover:scale-105">
                 <i class="bi bi-funnel mr-1"></i> Filter
             </button>
             @if(request()->hasAny(['date','status','service']))
-                <a href="{{ route($prefix . '.appointments') }}" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all">
-                    Clear
-                </a>
+                <a href="{{ route($prefix . '.appointments') }}" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all">Clear</a>
             @endif
         </form>
 
@@ -204,21 +197,14 @@
         <div class="space-y-3">
             @forelse($appointments as $appt)
                 @php
-                    $accentMap = [
-                        'pending'   => 'border-l-amber-500',
-                        'approved'  => 'border-l-emerald-500',
-                        'rejected'  => 'border-l-red-500',
-                        'completed' => 'border-l-blue-500',
-                        'cancelled' => 'border-l-slate-600',
-                    ];
+                    $accentMap = ['pending'=>'border-l-amber-500','approved'=>'border-l-emerald-500','rejected'=>'border-l-red-500','completed'=>'border-l-blue-500','cancelled'=>'border-l-slate-600'];
                     $accent = $accentMap[$appt->status] ?? 'border-l-slate-600';
-
-                    $approveRoute  = route($prefix . '.appointments.approve',  $appt);
-                    $rejectRoute   = route($prefix . '.appointments.reject',   $appt);
-                    $completeRoute = route($prefix . '.appointments.complete', $appt);
-                    $cancelRoute   = route($prefix . '.appointments.cancel',   $appt);
+                    $approveRoute  = route($prefix.'.appointments.approve',  $appt);
+                    $rejectRoute   = route($prefix.'.appointments.reject',   $appt);
+                    $completeRoute = route($prefix.'.appointments.complete', $appt);
+                    $cancelRoute   = route($prefix.'.appointments.cancel',   $appt);
+                    $editNotesRoute = route($prefix.'.appointments.notes',   $appt);
                 @endphp
-
                 <div onclick="openDetailModal(
                         {{ $appt->id }},
                         '{{ addslashes($appt->pet->name . ' (' . $appt->pet->breed . ')') }}',
@@ -230,10 +216,10 @@
                         '{{ $rejectRoute }}',
                         '{{ $approveRoute }}',
                         '{{ $completeRoute }}',
-                        '{{ $cancelRoute }}'
+                        '{{ $cancelRoute }}',
+                        '{{ $editNotesRoute }}'
                      )"
                      class="bg-slate-900/40 border border-slate-800/80 border-l-4 {{ $accent }} rounded-xl p-5 hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.08)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out flex items-center justify-between cursor-pointer">
-
                     <div class="flex items-center gap-4">
                         <div class="w-11 h-11 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
                             <i class="bi bi-calendar-event"></i>
@@ -245,13 +231,13 @@
                                 &bull; {{ $appt->service_label }}
                                 &bull; {{ $appt->appointment_date->format('M d, Y — g:i A') }}
                             </p>
+                            @if($appt->notes)
+                                <p class="text-xs text-slate-500 mt-0.5 truncate max-w-sm"><i class="bi bi-chat-left-text mr-1"></i>{{ $appt->notes }}</p>
+                            @endif
                         </div>
                     </div>
-
                     <div class="flex items-center gap-3 shrink-0">
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {{ $appt->status_badge_class }}">
-                            {{ ucfirst($appt->status) }}
-                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {{ $appt->status_badge_class }}">{{ ucfirst($appt->status) }}</span>
                         <i class="bi bi-chevron-right text-slate-600"></i>
                     </div>
                 </div>
@@ -263,18 +249,15 @@
             @endforelse
         </div>
 
-        <!-- Pagination -->
         @if($appointments->hasPages())
-            <div class="mt-8 flex justify-center">
-                {{ $appointments->withQueryString()->links() }}
-            </div>
+            <div class="mt-8 flex justify-center">{{ $appointments->withQueryString()->links() }}</div>
         @endif
     </main>
 
-    <!-- ── Detail Modal ─────────────────────────────────────────────── -->
+    <!-- Detail Modal -->
     <div id="detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
          onclick="if(event.target===this) closeModal('detail-modal','detail-modal-content')">
-        <div id="detail-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+        <div id="detail-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out max-h-[90vh] overflow-y-auto">
             <h2 class="text-xl font-bold text-white mb-6">Appointment Details</h2>
 
             <div class="space-y-4 mb-6">
@@ -294,10 +277,36 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Date & Time</label>
                     <p id="modal-datetime" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800"></p>
                 </div>
+
+                <!-- Notes — view + inline edit -->
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Notes</label>
-                    <p id="modal-notes" class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800 text-sm"></p>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Notes</label>
+                        <button type="button" onclick="showNotesEdit()" id="notes-edit-btn"
+                                class="text-xs text-violet-400 hover:text-violet-300 transition-all">
+                            <i class="bi bi-pencil mr-1"></i>Edit
+                        </button>
+                    </div>
+                    <!-- View mode -->
+                    <div id="notes-view">
+                        <p id="modal-notes-display" class="text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800 text-sm min-h-[44px]"></p>
+                    </div>
+                    <!-- Edit mode -->
+                    <div id="notes-edit" class="hidden">
+                        <form id="form-edit-notes" method="POST">
+                            @csrf @method('PATCH')
+                            <textarea id="modal-notes-input" name="notes" rows="3"
+                                      class="w-full bg-slate-950 border border-violet-500 rounded-lg px-3 py-2.5 text-white outline-none text-sm resize-none mb-2"></textarea>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="showNotesView()"
+                                        class="flex-1 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold transition-all">Cancel</button>
+                                <button type="submit"
+                                        class="flex-1 px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold transition-all">Save Notes</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
+
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Status</label>
                     <span id="modal-status" class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"></span>
@@ -306,74 +315,52 @@
 
             <!-- Action Buttons -->
             <div class="space-y-3">
-                <!-- Approve -->
                 <form id="form-approve" method="POST">
                     @csrf @method('PATCH')
-                    <button id="btn-approve" type="submit"
-                            class="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all duration-300 hover:scale-[1.02]">
+                    <button id="btn-approve" type="submit" class="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all hover:scale-[1.02]">
                         <i class="bi bi-check-circle mr-2"></i>Approve Appointment
                     </button>
                 </form>
-
-                <!-- Reject -->
                 <div id="btn-reject-wrap">
-                    <button type="button" onclick="openRejectModal()"
-                            class="w-full px-4 py-3 rounded-xl bg-red-900/40 hover:bg-red-900/60 text-red-400 border border-red-500/30 font-semibold transition-all duration-300">
+                    <button type="button" onclick="openRejectModal()" class="w-full px-4 py-3 rounded-xl bg-red-900/40 hover:bg-red-900/60 text-red-400 border border-red-500/30 font-semibold transition-all">
                         <i class="bi bi-x-circle mr-2"></i>Reject Appointment
                     </button>
                 </div>
-
-                <!-- Complete -->
                 <form id="form-complete" method="POST">
                     @csrf @method('PATCH')
-                    <button id="btn-complete" type="submit"
-                            class="w-full px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all duration-300 hover:scale-[1.02]">
+                    <button id="btn-complete" type="submit" class="w-full px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all hover:scale-[1.02]">
                         <i class="bi bi-check2-all mr-2"></i>Mark as Completed
                     </button>
                 </form>
-
-                <!-- Cancel -->
                 <form id="form-cancel" method="POST">
                     @csrf @method('PATCH')
-                    <button id="btn-cancel" type="submit"
-                            class="w-full px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-all duration-300"
-                            onclick="return confirm('Cancel this appointment?')">
+                    <button id="btn-cancel" type="submit" onclick="return confirm('Cancel this appointment?')"
+                            class="w-full px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-all">
                         <i class="bi bi-slash-circle mr-2"></i>Cancel Appointment
                     </button>
                 </form>
-
                 <button type="button" onclick="closeModal('detail-modal','detail-modal-content')"
-                        class="w-full px-4 py-2 rounded-xl bg-transparent text-slate-500 hover:text-slate-300 text-sm transition-all">
-                    Close
-                </button>
+                        class="w-full px-4 py-2 rounded-xl bg-transparent text-slate-500 hover:text-slate-300 text-sm transition-all">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- ── Reject Reason Modal ──────────────────────────────────────── -->
+    <!-- Reject Modal -->
     <div id="reject-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
          onclick="if(event.target===this) closeRejectModal()">
         <div id="reject-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
             <h2 class="text-xl font-bold text-white mb-2">Reject Appointment</h2>
             <p class="text-slate-400 text-sm mb-6">Optionally provide a reason for the owner.</p>
-
             <form id="form-reject" method="POST">
                 @csrf @method('PATCH')
                 <textarea name="rejection_reason" rows="3" placeholder="e.g. Slot unavailable, please reschedule..."
                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-red-500 transition-all resize-none text-sm mb-4"></textarea>
                 <div class="grid grid-cols-2 gap-3">
-                    <button type="button" onclick="closeRejectModal()"
-                            class="px-4 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all font-semibold">
-                        Back
-                    </button>
-                    <button type="submit"
-                            class="px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold transition-all hover:scale-[1.02]">
-                        Confirm Reject
-                    </button>
+                    <button type="button" onclick="closeRejectModal()" class="px-4 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all font-semibold">Back</button>
+                    <button type="submit" class="px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold transition-all hover:scale-[1.02]">Confirm Reject</button>
                 </div>
             </form>
         </div>
     </div>
-
 </body>
 </html>
