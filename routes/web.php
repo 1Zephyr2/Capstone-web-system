@@ -107,6 +107,9 @@ Route::patch('/appointments/{appointment}/notes', [\App\Http\Controllers\StaffAp
 Route::post('/grooming', [\App\Http\Controllers\GroomingOptionController::class, 'store'])->name('grooming.store');
 Route::patch('/grooming/{groomingOption}', [\App\Http\Controllers\GroomingOptionController::class, 'toggle'])->name('grooming.toggle');
 Route::delete('/grooming/{groomingOption}', [\App\Http\Controllers\GroomingOptionController::class, 'destroy'])->name('grooming.destroy');
+
+// Grooming image upload
+Route::post('/grooming/{groomingOption}/image', [\App\Http\Controllers\GroomingOptionController::class, 'updateImage'])->name('grooming.image');
 });
 
 // ── Staff Routes ───────────────────────────────────────────────────────────────
@@ -130,3 +133,7 @@ Route::delete('/records/{record}', [\App\Http\Controllers\PetRecordController::c
 // Edit appointment notes
 Route::patch('/appointments/{appointment}/notes', [\App\Http\Controllers\StaffAppointmentController::class, 'updateNotes'])->name('appointments.notes');
 });
+
+// Public services page (outside all middleware)
+Route::get('/services', fn() => view('services'))->name('services');
+

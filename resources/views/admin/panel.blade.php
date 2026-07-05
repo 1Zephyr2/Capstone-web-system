@@ -167,41 +167,84 @@
                     </div>
                 </div>
 
-                <!-- Grooming Options (Item 2) -->
+                 <!-- Grooming Options -->
                 <div id="panel-services" class="tab-panel hidden">
                     <div class="mb-6 flex items-center justify-between">
                         <div>
                             <h2 class="text-xl font-bold text-white">Grooming Options</h2>
-                            <p class="text-indigo-400 text-sm">Manage available styles and add-ons shown to clients.</p>
+                            <p class="text-indigo-400 text-sm">Manage styles and add-ons shown to clients. Upload images for each.</p>
                         </div>
                     </div>
-
+ 
                     <!-- Styles -->
                     <div class="mb-8">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-white flex items-center gap-2"><i class="bi bi-scissors text-indigo-400"></i> Grooming Styles</h3>
-                            <button onclick="openAddGrooming('style')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105">
+                            <h3 class="font-bold text-white flex items-center gap-2">
+                                <i class="bi bi-scissors text-indigo-400"></i> Grooming Styles
+                            </h3>
+                            <button onclick="openAddGrooming('style')"
+                                    class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105">
                                 <i class="bi bi-plus mr-1"></i> Add Style
                             </button>
                         </div>
-                        <div class="space-y-2">
+                        <div class="space-y-3">
                             @forelse($groomingStyles as $opt)
-                                <div class="bg-indigo-950/40 border {{ $opt->is_active ? 'border-indigo-800/50' : 'border-slate-700/30 opacity-60' }} rounded-xl p-4 flex items-center justify-between">
-                                    <div>
-                                        <p class="font-semibold text-white text-sm">{{ $opt->name }}
-                                            @if(!$opt->is_active)<span class="ml-2 text-xs text-slate-500">(disabled)</span>@endif
-                                        </p>
-                                        @if($opt->description)<p class="text-xs text-indigo-400 mt-0.5">{{ $opt->description }}</p>@endif
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <form method="POST" action="{{ route('admin.grooming.toggle', $opt) }}">@csrf @method('PATCH')
-                                            <button type="submit" class="px-3 py-1 rounded-lg text-xs {{ $opt->is_active ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-indigo-700 text-indigo-200 hover:bg-indigo-600' }} transition-all">
-                                                {{ $opt->is_active ? 'Disable' : 'Enable' }}
-                                            </button>
-                                        </form>
-                                        <form method="POST" action="{{ route('admin.grooming.destroy', $opt) }}" onsubmit="return confirm('Remove {{ addslashes($opt->name) }}?')">@csrf @method('DELETE')
-                                            <button type="submit" class="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-all"><i class="bi bi-trash text-xs"></i></button>
-                                        </form>
+                                <div class="bg-indigo-950/40 border {{ $opt->is_active ? 'border-indigo-800/50' : 'border-slate-700/30 opacity-60' }} rounded-xl p-4">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <!-- Image preview or placeholder -->
+                                        <div class="shrink-0">
+                                            @if($opt->image)
+                                                <img src="{{ asset('storage/' . $opt->image) }}"
+                                                     alt="{{ $opt->name }}"
+                                                     class="w-16 h-16 rounded-xl object-cover border border-indigo-700">
+                                            @else
+                                                <div class="w-16 h-16 rounded-xl bg-indigo-900/40 border border-indigo-800/50 flex items-center justify-center">
+                                                    <i class="bi bi-scissors text-indigo-500 text-xl"></i>
+                                                </div>
+                                            @endif
+                                        </div>
+ 
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-semibold text-white text-sm">
+                                                {{ $opt->name }}
+                                                @if(!$opt->is_active)<span class="ml-2 text-xs text-slate-500">(disabled)</span>@endif
+                                            </p>
+                                            @if($opt->description)
+                                                <p class="text-xs text-indigo-400 mt-0.5">{{ $opt->description }}</p>
+                                            @endif
+ 
+                                            <!-- Image upload form -->
+                                            <form method="POST" action="{{ route('admin.grooming.image', $opt) }}"
+                                                  enctype="multipart/form-data" class="mt-2 flex items-center gap-2">
+                                                @csrf
+                                                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-800/40 hover:bg-indigo-700/50 border border-indigo-700/50 cursor-pointer text-xs text-indigo-300 transition-all">
+                                                    <i class="bi bi-cloud-upload"></i>
+                                                    {{ $opt->image ? 'Replace Image' : 'Upload Image' }}
+                                                    <input type="file" name="image" accept="image/*" class="hidden"
+                                                           onchange="this.closest('form').submit()">
+                                                </label>
+                                                @if($opt->image)
+                                                    <span class="text-xs text-indigo-500">Auto-saves on select</span>
+                                                @endif
+                                            </form>
+                                        </div>
+ 
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <form method="POST" action="{{ route('admin.grooming.toggle', $opt) }}">
+                                                @csrf @method('PATCH')
+                                                <button type="submit"
+                                                        class="px-3 py-1 rounded-lg text-xs {{ $opt->is_active ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-indigo-700 text-indigo-200 hover:bg-indigo-600' }} transition-all">
+                                                    {{ $opt->is_active ? 'Disable' : 'Enable' }}
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('admin.grooming.destroy', $opt) }}"
+                                                  onsubmit="return confirm('Remove {{ addslashes($opt->name) }}?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-all">
+                                                    <i class="bi bi-trash text-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             @empty
@@ -209,33 +252,74 @@
                             @endforelse
                         </div>
                     </div>
-
+ 
                     <!-- Add-ons -->
                     <div>
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-white flex items-center gap-2"><i class="bi bi-plus-circle text-indigo-400"></i> Add-on Services</h3>
-                            <button onclick="openAddGrooming('addon')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105">
+                            <h3 class="font-bold text-white flex items-center gap-2">
+                                <i class="bi bi-plus-circle text-indigo-400"></i> Add-on Services
+                            </h3>
+                            <button onclick="openAddGrooming('addon')"
+                                    class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105">
                                 <i class="bi bi-plus mr-1"></i> Add Add-on
                             </button>
                         </div>
-                        <div class="space-y-2">
+                        <div class="space-y-3">
                             @forelse($groomingAddons as $opt)
-                                <div class="bg-indigo-950/40 border {{ $opt->is_active ? 'border-indigo-800/50' : 'border-slate-700/30 opacity-60' }} rounded-xl p-4 flex items-center justify-between">
-                                    <div>
-                                        <p class="font-semibold text-white text-sm">{{ $opt->name }}
-                                            @if(!$opt->is_active)<span class="ml-2 text-xs text-slate-500">(disabled)</span>@endif
-                                        </p>
-                                        @if($opt->description)<p class="text-xs text-indigo-400 mt-0.5">{{ $opt->description }}</p>@endif
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <form method="POST" action="{{ route('admin.grooming.toggle', $opt) }}">@csrf @method('PATCH')
-                                            <button type="submit" class="px-3 py-1 rounded-lg text-xs {{ $opt->is_active ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-indigo-700 text-indigo-200 hover:bg-indigo-600' }} transition-all">
-                                                {{ $opt->is_active ? 'Disable' : 'Enable' }}
-                                            </button>
-                                        </form>
-                                        <form method="POST" action="{{ route('admin.grooming.destroy', $opt) }}" onsubmit="return confirm('Remove {{ addslashes($opt->name) }}?')">@csrf @method('DELETE')
-                                            <button type="submit" class="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-all"><i class="bi bi-trash text-xs"></i></button>
-                                        </form>
+                                <div class="bg-indigo-950/40 border {{ $opt->is_active ? 'border-indigo-800/50' : 'border-slate-700/30 opacity-60' }} rounded-xl p-4">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="shrink-0">
+                                            @if($opt->image)
+                                                <img src="{{ asset('storage/' . $opt->image) }}"
+                                                     alt="{{ $opt->name }}"
+                                                     class="w-16 h-16 rounded-xl object-cover border border-indigo-700">
+                                            @else
+                                                <div class="w-16 h-16 rounded-xl bg-indigo-900/40 border border-indigo-800/50 flex items-center justify-center">
+                                                    <i class="bi bi-plus-circle text-indigo-500 text-xl"></i>
+                                                </div>
+                                            @endif
+                                        </div>
+ 
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-semibold text-white text-sm">
+                                                {{ $opt->name }}
+                                                @if(!$opt->is_active)<span class="ml-2 text-xs text-slate-500">(disabled)</span>@endif
+                                            </p>
+                                            @if($opt->description)
+                                                <p class="text-xs text-indigo-400 mt-0.5">{{ $opt->description }}</p>
+                                            @endif
+ 
+                                            <form method="POST" action="{{ route('admin.grooming.image', $opt) }}"
+                                                  enctype="multipart/form-data" class="mt-2 flex items-center gap-2">
+                                                @csrf
+                                                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-800/40 hover:bg-indigo-700/50 border border-indigo-700/50 cursor-pointer text-xs text-indigo-300 transition-all">
+                                                    <i class="bi bi-cloud-upload"></i>
+                                                    {{ $opt->image ? 'Replace Image' : 'Upload Image' }}
+                                                    <input type="file" name="image" accept="image/*" class="hidden"
+                                                           onchange="this.closest('form').submit()">
+                                                </label>
+                                                @if($opt->image)
+                                                    <span class="text-xs text-indigo-500">Auto-saves on select</span>
+                                                @endif
+                                            </form>
+                                        </div>
+ 
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <form method="POST" action="{{ route('admin.grooming.toggle', $opt) }}">
+                                                @csrf @method('PATCH')
+                                                <button type="submit"
+                                                        class="px-3 py-1 rounded-lg text-xs {{ $opt->is_active ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-indigo-700 text-indigo-200 hover:bg-indigo-600' }} transition-all">
+                                                    {{ $opt->is_active ? 'Disable' : 'Enable' }}
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('admin.grooming.destroy', $opt) }}"
+                                                  onsubmit="return confirm('Remove {{ addslashes($opt->name) }}?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-all">
+                                                    <i class="bi bi-trash text-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             @empty
@@ -244,34 +328,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Settings -->
-                <div id="panel-settings" class="tab-panel hidden">
-                    <div class="mb-6"><h2 class="text-xl font-bold text-white">System Settings</h2><p class="text-indigo-400 text-sm">General system information.</p></div>
-                    <div class="space-y-4">
-                        <div class="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-5">
-                            <h3 class="font-semibold text-white text-sm uppercase tracking-widest mb-3">System Info</h3>
-                            <div class="grid grid-cols-2 gap-3 text-sm">
-                                <div class="bg-indigo-900/30 rounded-lg p-3"><p class="text-indigo-400 text-xs mb-1">Laravel Version</p><p class="text-white font-medium">{{ app()->version() }}</p></div>
-                                <div class="bg-indigo-900/30 rounded-lg p-3"><p class="text-indigo-400 text-xs mb-1">PHP Version</p><p class="text-white font-medium">{{ phpversion() }}</p></div>
-                                <div class="bg-indigo-900/30 rounded-lg p-3"><p class="text-indigo-400 text-xs mb-1">Environment</p><p class="text-white font-medium">{{ app()->environment() }}</p></div>
-                                <div class="bg-indigo-900/30 rounded-lg p-3"><p class="text-indigo-400 text-xs mb-1">App Name</p><p class="text-white font-medium">{{ config('app.name') }}</p></div>
-                            </div>
-                        </div>
-                        <div class="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-5">
-                            <h3 class="font-semibold text-white text-sm uppercase tracking-widest mb-3">Clinic Hours</h3>
-                            <div class="grid grid-cols-2 gap-2 text-sm">
-                                @foreach(\App\Models\Appointment::CLINIC_HOURS as $value => $label)
-                                    <div class="flex items-center gap-2 bg-indigo-900/30 rounded-lg px-3 py-2">
-                                        <i class="bi bi-clock text-indigo-400 text-xs"></i>
-                                        <span class="text-white">{{ $label }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
