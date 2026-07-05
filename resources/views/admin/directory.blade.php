@@ -1,10 +1,21 @@
 @php
+    $threeMonthsAgo = now()->subMonths(3);
+
     $owners = App\Models\User::where('role', 'owner')
-        ->with(['pets' => function($q) {
-            $q->orderBy('name');
-        }])
+        ->with([
+            'pets' => fn($q) => $q->orderBy('name'),
+            'appointments' => fn($q) => $q->orderByDesc('appointment_date')->limit(1),
+        ])
         ->orderBy('name')
-        ->get();
+        ->get()
+        ->map(function($owner) use ($threeMonthsAgo) {
+            $lastAppt = $owner->appointments->first();
+            $owner->is_inactive = !$lastAppt || $lastAppt->appointment_date->lt($threeMonthsAgo);
+            $owner->last_visit   = $lastAppt ? $lastAppt->appointment_date : null;
+            return $owner;
+        });
+
+    $inactiveCount = $owners->filter(fn($o) => $o->is_inactive)->count();
 @endphp
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
@@ -27,13 +38,29 @@
             }, { threshold: 0.1 });
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
 
-            // Live search
             document.getElementById('search').addEventListener('input', function () {
                 const q = this.value.toLowerCase();
                 document.querySelectorAll('.owner-card').forEach(card => {
                     const name = card.dataset.name.toLowerCase();
                     const pets = card.dataset.pets.toLowerCase();
                     card.style.display = (name.includes(q) || pets.includes(q)) ? '' : 'none';
+                });
+            });
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => {
+                        b.classList.remove('bg-indigo-600','text-white');
+                        b.classList.add('bg-indigo-800/40','text-indigo-300');
+                    });
+                    this.classList.add('bg-indigo-600','text-white');
+                    this.classList.remove('bg-indigo-800/40','text-indigo-300');
+                    const filter = this.dataset.filter;
+                    document.querySelectorAll('.owner-card').forEach(card => {
+                        if (filter === 'all') card.style.display = '';
+                        else if (filter === 'inactive') card.style.display = card.dataset.inactive === 'true' ? '' : 'none';
+                        else if (filter === 'active')   card.style.display = card.dataset.inactive === 'false' ? '' : 'none';
+                    });
                 });
             });
         });
@@ -55,36 +82,48 @@
                 <span class="text-rose-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/30">ADMIN PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-indigo-300">
-                <a href="{{ route('admin.dashboard') }}"    class="hover:text-white transition-all duration-300 hover:scale-105">Dashboard</a>
-                <a href="{{ route('admin.directory') }}"    class="text-white font-semibold transition-all duration-300 hover:scale-105">Pets</a>
-                <a href="{{ route('admin.appointments') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Appointments</a>
-                <a href="{{ route('admin.insights') }}"     class="hover:text-white transition-all duration-300 hover:scale-105">Insights</a>
-                <a href="{{ route('admin.panel') }}"        class="text-white hover:text-white transition-all duration-300 bg-rose-900/30 px-3 py-1 rounded-lg border border-rose-500/30 ml-4 hover:bg-rose-900/50">Admin Panel</a>
+                <a href="{{ route('admin.dashboard') }}"    class="hover:text-white transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route('admin.directory') }}"    class="text-white font-semibold transition-all hover:scale-105">Pets</a>
+                <a href="{{ route('admin.appointments') }}" class="hover:text-white transition-all hover:scale-105">Appointments</a>
+                <a href="{{ route('admin.insights') }}"     class="hover:text-white transition-all hover:scale-105">Insights</a>
+                <a href="{{ route('admin.panel') }}"        class="text-white transition-all bg-rose-900/30 px-3 py-1 rounded-lg border border-rose-500/30 ml-4 hover:bg-rose-900/50">Admin Panel</a>
             </div>
             <form action="{{ route('admin.logout') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all duration-300 text-white shadow-lg">Logout</button>
+                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all text-white">Logout</button>
             </form>
         </div>
     </nav>
 
     <main class="container mx-auto px-6 py-12">
-        <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+        <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             <h1 class="text-2xl font-bold text-white">Pet Directory</h1>
             <p class="text-indigo-300 text-sm">Browse all registered owners and their pets.</p>
         </header>
 
         <!-- Search -->
-        <div class="mb-8 max-w-lg reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+        <div class="mb-5 max-w-lg reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             <div class="relative">
                 <i class="bi bi-search absolute left-4 top-3 text-indigo-400"></i>
                 <input id="search" type="text" placeholder="Search by owner name or pet name..."
-                       class="w-full bg-indigo-900/20 border border-indigo-800 rounded-xl pl-12 pr-4 py-3 text-white placeholder-indigo-400 focus:border-indigo-500 transition-all outline-none">
+                       class="w-full bg-indigo-900/20 border border-indigo-800 rounded-xl pl-12 pr-4 py-3 text-white placeholder-indigo-500 focus:border-indigo-500 transition-all outline-none text-sm">
             </div>
         </div>
 
+        <!-- Filter tabs -->
+        <div class="flex items-center gap-2 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+            <button data-filter="all"      class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-indigo-600 text-white">All</button>
+            <button data-filter="active"   class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-indigo-800/40 text-indigo-300">Active</button>
+            <button data-filter="inactive" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-indigo-800/40 text-indigo-300 flex items-center gap-1.5">
+                Inactive
+                @if($inactiveCount > 0)
+                    <span class="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $inactiveCount }}</span>
+                @endif
+            </button>
+        </div>
+
         <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+        <div class="grid grid-cols-3 gap-4 mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             <div class="bg-indigo-900/20 border border-indigo-800/80 rounded-2xl p-5">
                 <p class="text-indigo-400 text-xs mb-1">Total Owners</p>
                 <p class="text-2xl font-bold text-white">{{ $owners->count() }}</p>
@@ -93,29 +132,49 @@
                 <p class="text-indigo-400 text-xs mb-1">Total Pets</p>
                 <p class="text-2xl font-bold text-white">{{ $owners->sum(fn($o) => $o->pets->count()) }}</p>
             </div>
-            <div class="bg-indigo-900/20 border border-indigo-800/80 rounded-2xl p-5">
-                <p class="text-indigo-400 text-xs mb-1">Owners with Pets</p>
-                <p class="text-2xl font-bold text-white">{{ $owners->filter(fn($o) => $o->pets->count() > 0)->count() }}</p>
+            <div class="bg-red-500/10 border border-red-500/20 rounded-2xl p-5">
+                <p class="text-red-400 text-xs mb-1">Inactive (3+ months)</p>
+                <p class="text-2xl font-bold text-white">{{ $inactiveCount }}</p>
             </div>
         </div>
 
         <!-- Owner List -->
-        <div class="space-y-4">
+        <div class="space-y-3">
             @forelse($owners as $owner)
                 @php $petNames = $owner->pets->pluck('name')->join(', '); @endphp
-                <div class="owner-card bg-indigo-900/20 border border-indigo-800/80 rounded-xl overflow-hidden hover:border-indigo-600 transition-all duration-300 hover:shadow-[0_0_20px_rgba(79,70,229,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out"
+                <div class="owner-card bg-indigo-900/20 border {{ $owner->is_inactive ? 'border-red-500/20' : 'border-indigo-800/80' }} rounded-xl overflow-hidden hover:border-indigo-600 transition-all duration-300 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out"
                      data-name="{{ strtolower($owner->name) }}"
-                     data-pets="{{ strtolower($petNames) }}">
+                     data-pets="{{ strtolower($petNames) }}"
+                     data-inactive="{{ $owner->is_inactive ? 'true' : 'false' }}">
 
                     <button onclick="toggleAccordion({{ $owner->id }})"
-                            class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-indigo-900/40 transition-all duration-300">
+                            class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-indigo-900/40 transition-all">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                            <div class="w-9 h-9 rounded-full {{ $owner->is_inactive ? 'bg-red-500/20' : 'bg-indigo-500/20' }} flex items-center justify-center {{ $owner->is_inactive ? 'text-red-400' : 'text-indigo-400' }} shrink-0">
                                 <i class="bi bi-person text-sm"></i>
                             </div>
                             <div>
-                                <p class="font-semibold text-white">{{ $owner->name }}</p>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-semibold text-white text-sm">{{ $owner->name }}</p>
+                                    @if($owner->is_inactive)
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/30">
+                                            <i class="bi bi-exclamation-circle mr-1"></i>Inactive
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Active</span>
+                                    @endif
+                                </div>
                                 <p class="text-xs text-indigo-400">{{ $owner->email }}</p>
+                                @if($owner->last_visit)
+                                    <p class="text-xs {{ $owner->is_inactive ? 'text-red-400' : 'text-indigo-500' }} mt-0.5">
+                                        Last visit: {{ $owner->last_visit->format('M d, Y') }}
+                                        @if($owner->is_inactive)
+                                            ({{ $owner->last_visit->diffForHumans() }})
+                                        @endif
+                                    </p>
+                                @else
+                                    <p class="text-xs text-red-400 mt-0.5">No appointments yet</p>
+                                @endif
                             </div>
                         </div>
                         <div class="flex items-center gap-4">
@@ -130,7 +189,7 @@
                         <div class="pt-4 space-y-2">
                             @forelse($owner->pets as $pet)
                                 <a href="{{ route('pets.details', ['id' => $pet->id]) }}"
-                                   class="flex items-center justify-between bg-indigo-950/50 p-3 rounded-lg border border-indigo-800/50 hover:border-indigo-500/30 transition-all duration-300 hover:translate-x-1 hover:shadow-lg">
+                                   class="flex items-center justify-between bg-indigo-950/50 p-3 rounded-lg border border-indigo-800/50 hover:border-indigo-500/30 transition-all hover:translate-x-1">
                                     <div class="flex items-center gap-3">
                                         @if($pet->photo)
                                             <img src="{{ asset('storage/' . $pet->photo) }}" alt="{{ $pet->name }}"

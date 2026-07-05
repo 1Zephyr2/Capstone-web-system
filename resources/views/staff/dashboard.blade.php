@@ -23,12 +23,10 @@
 </head>
 <body class="bg-slate-950 text-slate-200 antialiased relative overflow-x-hidden min-h-screen flex flex-col">
 
-    <!-- Ambient Background -->
     <div class="fixed inset-0 pointer-events-none z-0">
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-[120px]"></div>
     </div>
 
-    <!-- Navbar -->
     <nav class="relative z-50 w-full bg-[#0c1220] backdrop-blur-md border-b border-white/5">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
@@ -36,48 +34,48 @@
                 <span class="text-violet-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30">STAFF PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
-                <a href="{{ route('staff.dashboard') }}"    class="text-white font-semibold transition-all duration-300 hover:scale-105">Dashboard</a>
-                <a href="{{ route('staff.directory') }}"    class="hover:text-white transition-all duration-300 hover:scale-105">Pets</a>
-                <a href="{{ route('staff.appointments') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Appointments</a>
-                <a href="{{ route('staff.insights') }}"     class="hover:text-white transition-all duration-300 hover:scale-105">Insights</a>
+                <a href="{{ route('staff.dashboard') }}"    class="text-white font-semibold transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route('staff.directory') }}"    class="hover:text-white transition-all hover:scale-105">Pets</a>
+                <a href="{{ route('staff.appointments') }}" class="hover:text-white transition-all hover:scale-105">Appointments</a>
+                <a href="{{ route('staff.insights') }}"     class="hover:text-white transition-all hover:scale-105">Insights</a>
             </div>
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
+            <form action="{{ route('staff.logout') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all duration-300 text-white shadow-lg">Logout</button>
+                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all text-white">Logout</button>
             </form>
         </div>
     </nav>
 
     <main class="flex-grow container mx-auto px-6 py-12 relative z-10">
 
-        <!-- Flash -->
         @if(session('success'))
-            <div class="mb-6 px-6 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-3">
+            <div class="mb-6 px-6 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-3 text-sm">
                 <i class="bi bi-check-circle-fill"></i> {{ session('success') }}
             </div>
         @endif
 
-        <header class="mb-12 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+        <header class="mb-10 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             <h1 class="text-3xl font-bold text-white">Clinic Overview</h1>
-            <p class="text-slate-400">Welcome back, <span class="text-violet-300">{{ auth()->user()->name }}</span>. Here's today's snapshot.</p>
+            <p class="text-slate-400 text-sm">Welcome back, <span class="text-violet-300">{{ auth()->user()->name }}</span>. Here's today's snapshot.</p>
         </header>
 
         <!-- Stats Grid -->
-        <div class="grid md:grid-cols-4 gap-6 mb-12">
+        <div class="grid md:grid-cols-5 gap-4 mb-10 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             @php
                 $statCards = [
-                    ['icon' => 'sun',            'label' => "Today's Appointments", 'value' => $stats['todays_appointments'], 'color' => 'text-yellow-400'],
-                    ['icon' => 'paw',            'label' => 'Total Pets',           'value' => $stats['total_pets'],          'color' => 'text-violet-400'],
-                    ['icon' => 'hourglass-split','label' => 'Pending Requests',     'value' => $stats['pending_appointments'],'color' => 'text-amber-400'],
-                    ['icon' => 'people',         'label' => 'Pet Owners',           'value' => $stats['total_owners'],        'color' => 'text-teal-400'],
+                    ['icon' => 'sun',             'label' => "Today's Appts",  'value' => $stats['todays_appointments'],  'color' => 'text-yellow-400', 'bg' => 'bg-slate-900/40',   'border' => 'border-slate-800/80'],
+                    ['icon' => 'paw',             'label' => 'Total Pets',     'value' => $stats['total_pets'],           'color' => 'text-violet-400', 'bg' => 'bg-slate-900/40',   'border' => 'border-slate-800/80'],
+                    ['icon' => 'hourglass-split', 'label' => 'Pending',        'value' => $stats['pending_appointments'], 'color' => 'text-amber-400',  'bg' => 'bg-amber-500/5',    'border' => 'border-amber-500/20'],
+                    ['icon' => 'people',          'label' => 'Pet Owners',     'value' => $stats['total_owners'],         'color' => 'text-teal-400',   'bg' => 'bg-slate-900/40',   'border' => 'border-slate-800/80'],
+                    ['icon' => 'person-slash',    'label' => 'Inactive (3mo)', 'value' => $stats['inactive_owners'],      'color' => 'text-red-400',    'bg' => 'bg-red-500/5',      'border' => 'border-red-500/20'],
                 ];
             @endphp
             @foreach($statCards as $card)
-            <div class="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 hover:border-violet-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-                <i class="bi bi-{{ $card['icon'] }} {{ $card['color'] }} text-xl mb-2 block"></i>
-                <h5 class="text-slate-400 text-sm mb-1">{{ $card['label'] }}</h5>
-                <p class="text-2xl font-bold text-white">{{ $card['value'] }}</p>
-            </div>
+                <div class="{{ $card['bg'] }} border {{ $card['border'] }} rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+                    <i class="bi bi-{{ $card['icon'] }} {{ $card['color'] }} text-xl mb-2 block"></i>
+                    <h5 class="text-slate-400 text-xs mb-1">{{ $card['label'] }}</h5>
+                    <p class="text-2xl font-bold text-white">{{ $card['value'] }}</p>
+                </div>
             @endforeach
         </div>
 
@@ -85,7 +83,7 @@
         <div class="grid md:grid-cols-3 gap-6">
 
             <!-- Pending Requests -->
-            <div class="md:col-span-2 bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out hover:border-violet-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]">
+            <div class="md:col-span-2 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-bold text-white">Pending Requests</h3>
                     @if($stats['pending_appointments'] > 0)
@@ -107,14 +105,12 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 shrink-0">
-                                <!-- Quick Approve -->
                                 <form method="POST" action="{{ route('staff.appointments.approve', $appt) }}">
                                     @csrf @method('PATCH')
                                     <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs font-semibold transition-all hover:scale-105">
                                         <i class="bi bi-check"></i> Approve
                                     </button>
                                 </form>
-                                <!-- View Details -->
                                 <a href="{{ route('staff.appointments') }}"
                                    class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all">
                                     Details
@@ -131,11 +127,11 @@
             </div>
 
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="space-y-5">
 
-                <!-- Upcoming Today -->
-                <div class="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out hover:border-violet-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]">
-                    <h3 class="text-base font-bold text-white mb-4">Upcoming Appointments</h3>
+                <!-- Upcoming -->
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+                    <h3 class="font-bold text-white mb-4 text-sm">Upcoming Appointments</h3>
                     <div class="space-y-3">
                         @forelse($upcomingAppointments as $appt)
                             <div class="flex items-start gap-3">
@@ -155,34 +151,39 @@
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out hover:border-violet-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]">
-                    <h3 class="text-base font-bold text-white mb-4">Quick Actions</h3>
-                    <div class="flex flex-col gap-3">
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+                    <h3 class="font-bold text-white mb-4 text-sm">Quick Actions</h3>
+                    <div class="flex flex-col gap-2">
                         <a href="{{ route('staff.appointments') }}"
-                           class="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-800/50 hover:bg-violet-600 transition-all duration-300 hover:translate-x-1 text-sm">
-                            <i class="bi bi-calendar-event text-violet-400"></i> View All Appointments
+                           class="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-800/50 hover:bg-violet-600 transition-all hover:translate-x-1 text-sm">
+                            <i class="bi bi-calendar-event text-violet-400"></i> All Appointments
                         </a>
                         <a href="{{ route('staff.directory') }}"
-                           class="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-800/50 hover:bg-violet-600 transition-all duration-300 hover:translate-x-1 text-sm">
+                           class="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-800/50 hover:bg-violet-600 transition-all hover:translate-x-1 text-sm">
                             <i class="bi bi-paw text-violet-400"></i> Pet Directory
                         </a>
                         <a href="{{ route('staff.appointments', ['status' => 'pending']) }}"
-                           class="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all duration-300 hover:translate-x-1 text-sm text-amber-300">
-                            <i class="bi bi-hourglass-split"></i>
-                            Pending Requests
+                           class="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all hover:translate-x-1 text-sm text-amber-300">
+                            <i class="bi bi-hourglass-split"></i> Pending
                             @if($stats['pending_appointments'] > 0)
                                 <span class="ml-auto bg-amber-500 text-slate-900 text-xs font-bold px-2 py-0.5 rounded-full">{{ $stats['pending_appointments'] }}</span>
                             @endif
                         </a>
+                        @if($stats['inactive_owners'] > 0)
+                        <a href="{{ route('staff.directory', ['filter' => 'inactive']) }}"
+                           class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all hover:translate-x-1 text-sm text-red-300">
+                            <i class="bi bi-person-slash"></i> Inactive Owners
+                            <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $stats['inactive_owners'] }}</span>
+                        </a>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="relative z-10 py-10 text-center border-t border-white/5 text-slate-500 text-sm">
+    <footer class="relative z-10 py-8 text-center border-t border-white/5 text-slate-500 text-sm">
         &copy; {{ date('Y') }} FURCARE | Staff System.
     </footer>
-
 </body>
 </html>
