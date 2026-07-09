@@ -8,365 +8,291 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
-        // ── Calendar State ──────────────────────────────────────────────
         let currentYear, currentMonth, selectedDate = null;
-
         document.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
-            currentYear  = now.getFullYear();
-            currentMonth = now.getMonth();
+            currentYear = now.getFullYear(); currentMonth = now.getMonth();
             renderCalendar(currentYear, currentMonth);
         });
-
         function renderCalendar(year, month) {
-            const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-            document.getElementById('cal-month-label').innerText = monthNames[month] + ' ' + year;
-
+            const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            document.getElementById('cal-month-label').innerText = months[month] + ' ' + year;
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const today = new Date();
-            today.setHours(0,0,0,0);
-
+            const today = new Date(); today.setHours(0,0,0,0);
             const grid = document.getElementById('cal-grid');
             grid.innerHTML = '';
-
-            // Day headers
-            ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+            ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
                 const el = document.createElement('div');
-                el.className = 'text-center text-xs text-slate-500 font-semibold py-1';
-                el.innerText = d;
-                grid.appendChild(el);
+                el.className = 'text-center text-xs text-gray-400 font-semibold py-1';
+                el.innerText = d; grid.appendChild(el);
             });
-
-            // Empty cells before first day
-            for (let i = 0; i < firstDay; i++) {
-                grid.appendChild(document.createElement('div'));
-            }
-
-            // Day cells
+            for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
             for (let d = 1; d <= daysInMonth; d++) {
-                const cellDate = new Date(year, month, d);
-                cellDate.setHours(0,0,0,0);
+                const cellDate = new Date(year, month, d); cellDate.setHours(0,0,0,0);
                 const isPast = cellDate <= today;
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const isSelected = selectedDate === dateStr;
-
                 const el = document.createElement('button');
-                el.type = 'button';
-                el.innerText = d;
-                el.className = [
-                    'rounded-lg py-1.5 text-sm font-medium transition-all',
-                    isPast
-                        ? 'text-slate-700 cursor-not-allowed'
-                        : isSelected
-                            ? 'bg-teal-500 text-white font-bold shadow-lg shadow-teal-900/30'
-                            : 'text-slate-200 hover:bg-teal-500/20 hover:text-teal-300',
-                ].join(' ');
-
-                if (!isPast) {
-                    el.onclick = () => selectDate(dateStr, d, monthNames[month], year);
-                }
+                el.type = 'button'; el.innerText = d;
+                el.className = ['rounded-lg py-1.5 text-sm font-medium transition-all w-full',
+                    isPast ? 'text-gray-300 cursor-not-allowed' :
+                    isSelected ? 'bg-emerald-600 text-white font-bold shadow-md' :
+                    'text-gray-700 hover:bg-emerald-100 hover:text-emerald-700'].join(' ');
+                if (!isPast) el.onclick = () => selectDate(dateStr, d, months[month], year);
                 grid.appendChild(el);
             }
         }
-
-        function prevMonth() {
-            currentMonth--;
-            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-            renderCalendar(currentYear, currentMonth);
-        }
-
-        function nextMonth() {
-            currentMonth++;
-            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-            renderCalendar(currentYear, currentMonth);
-        }
-
+        function prevMonth() { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(currentYear, currentMonth); }
+        function nextMonth() { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(currentYear, currentMonth); }
         function selectDate(dateStr, day, monthName, year) {
             selectedDate = dateStr;
             renderCalendar(currentYear, currentMonth);
-
-            // Show booking sheet
             document.getElementById('booking-sheet').classList.remove('hidden');
+            document.getElementById('booking-placeholder').classList.add('hidden');
             document.getElementById('selected-date-label').innerText = monthName + ' ' + day + ', ' + year;
             document.getElementById('appointment_date_hidden').value = dateStr;
-
-            // Smooth scroll to booking sheet
             setTimeout(() => document.getElementById('booking-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
         }
-
-        // ── Confirm Modal ───────────────────────────────────────────────
         function openServiceModal(timeValue, timeLabel) {
             if (!selectedDate) { alert('Please select a date first.'); return; }
-
-            const petSelect     = document.getElementById('pet_select');
+            const petSelect = document.getElementById('pet_select');
             const serviceSelect = document.getElementById('service_select');
-
             document.getElementById('appointment_time').value    = timeValue;
             document.getElementById('hidden_date').value         = selectedDate;
             document.getElementById('hidden_pet_id').value       = petSelect.value;
             document.getElementById('hidden_service_type').value = serviceSelect.value;
-
             document.getElementById('selected_time_display').innerText   = timeLabel;
             document.getElementById('confirm_date_display').innerText    = document.getElementById('selected-date-label').innerText;
             document.getElementById('confirm_pet_display').innerText     = petSelect.options[petSelect.selectedIndex].text;
             document.getElementById('confirm_service_display').innerText = serviceSelect.options[serviceSelect.selectedIndex].text;
-
-            showModal('service-modal', 'service-modal-content');
+            showModal('service-modal','service-modal-content');
         }
-
         function showModal(id, cId) {
             const m = document.getElementById(id), c = document.getElementById(cId);
             m.classList.remove('hidden'); m.classList.add('flex');
             setTimeout(() => { m.classList.add('opacity-100'); c.classList.remove('scale-95','opacity-0'); c.classList.add('scale-100','opacity-100'); }, 10);
         }
-
         function closeModal(id, cId) {
             const m = document.getElementById(id), c = document.getElementById(cId);
             m.classList.remove('opacity-100'); c.classList.remove('scale-100','opacity-100'); c.classList.add('scale-95','opacity-0');
             setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); }, 300);
         }
-
-        function toggleProfileModal() {
-            const modal = document.getElementById('profile-modal');
-            if (modal.classList.contains('hidden')) showModal('profile-modal','profile-modal-content');
-            else closeModal('profile-modal','profile-modal-content');
-        }
+        function toggleNav() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
     </script>
 </head>
-<body class="bg-slate-950 text-slate-200 antialiased min-h-screen">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
-    <nav class="relative z-50 w-full bg-[#0b0f19] backdrop-blur-md border-b border-white/5">
-        <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ route('dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
+    <nav class="w-full bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <a href="{{ route('dashboard') }}" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
+                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> FURCARE
             </a>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('appointments.index') }}" class="px-4 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all">
-                    <i class="bi bi-calendar-check mr-1"></i> My Appointments
+            <div class="hidden sm:flex items-center gap-3">
+                <a href="{{ route('appointments.index') }}" class="px-4 py-2 rounded-full text-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all">
+                    <i class="bi bi-calendar-check mr-1 text-emerald-600"></i> My Appointments
                 </a>
-                <button onclick="toggleProfileModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-all hover:scale-105">
-                    <i class="bi bi-person-circle text-lg"></i>
-                </button>
                 <form action="{{ route('logout') }}" method="POST" class="m-0">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 rounded-full text-sm bg-red-900/30 hover:bg-red-900/50 text-red-400 transition-all">Logout</button>
+                    @csrf <button class="px-4 py-2 rounded-full text-sm bg-red-50 border border-red-100 text-red-500 transition-all">Logout</button>
                 </form>
             </div>
+            <button onclick="toggleNav()" class="sm:hidden w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500">
+                <i class="bi bi-list text-xl"></i>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden sm:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
+            <a href="{{ route('appointments.index') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-emerald-50 text-gray-600 text-sm"><i class="bi bi-calendar-check text-emerald-600"></i> My Appointments</a>
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf <button class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-50 text-red-500 text-sm"><i class="bi bi-box-arrow-right"></i> Logout</button>
+            </form>
         </div>
     </nav>
 
-    <main class="container mx-auto px-6 py-10">
+    <main class="container mx-auto px-4 sm:px-6 py-8">
 
         @if(session('success'))
-            <div class="mb-5 px-5 py-3 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 flex items-center gap-3 text-sm">
-                <i class="bi bi-check-circle-fill"></i> {{ session('success') }}
+            <div class="mb-5 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-3 text-sm">
+                <i class="bi bi-check-circle-fill shrink-0"></i> {{ session('success') }}
             </div>
         @endif
 
-        <header class="mb-8 flex items-start justify-between">
+        <header class="mb-6 flex items-start justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-white mb-1">Request an Appointment</h1>
-                <p class="text-slate-400 text-sm">Pick a date on the calendar, then choose a time slot.</p>
+                <h1 class="text-2xl font-bold text-gray-900 mb-1">Request Appointment</h1>
+                <p class="text-gray-400 text-sm">Pick a date on the calendar, then choose a time slot.</p>
             </div>
-            <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold transition-all">← Back</a>
+            <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 text-sm font-semibold transition-all shrink-0">← Back</a>
         </header>
 
         @if($pets->isEmpty())
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-12 text-center">
-                <i class="bi bi-paw text-5xl text-slate600 mb-4 block"></i>
-                <h3 class="text-xl font-bold text-white mb-2">No Pets Registered</h3>
-                <p class="text-slate-400 mb-6">Add a pet from your dashboard before booking.</p>
-                <a href="{{ route('dashboard') }}" class="px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold transition-all hover:scale-105">Go to Dashboard</a>
+            <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
+                <i class="bi bi-paw text-5xl text-gray-300 mb-4 block"></i>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">No Pets Registered</h3>
+                <p class="text-gray-400 mb-5 text-sm">Add a pet from your dashboard before booking.</p>
+                <a href="{{ route('dashboard') }}" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold transition-all hover:bg-emerald-700">Go to Dashboard</a>
             </div>
         @else
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div class="grid lg:grid-cols-3 gap-8">
-
-            <!-- LEFT: Settings + Calendar -->
-            <div class="space-y-5">
-
-                <!-- Pet & Service selectors -->
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 space-y-5">
+            <!-- Settings + Calendar -->
+            <div class="space-y-4">
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Which Pet?</label>
+                        <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Which Pet?</label>
                         <div class="relative">
-                            <i class="bi bi-paw absolute left-4 top-3 text-teal-500 pointer-events-none"></i>
-                            <select id="pet_select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-10 py-3 text-white outline-none focus:border-teal-500 transition-all appearance-none text-sm">
+                            <i class="bi bi-paw absolute left-3 top-3 text-emerald-500 pointer-events-none text-sm"></i>
+                            <select id="pet_select" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-9 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all appearance-none text-sm">
                                 @foreach($pets as $pet)
                                     <option value="{{ $pet->id }}">{{ $pet->name }} ({{ $pet->breed }})</option>
                                 @endforeach
                             </select>
-                            <i class="bi bi-chevron-down absolute right-3 top-3 text-slate-500 pointer-events-none"></i>
+                            <i class="bi bi-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none text-sm"></i>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Service Type</label>
+                        <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Service Type</label>
                         <div class="relative">
-                            <i class="bi bi-scissors absolute left-4 top-3 text-teal-500 pointer-events-none"></i>
-                            <select id="service_select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-10 py-3 text-white outline-none focus:border-teal-500 transition-all appearance-none text-sm">
+                            <i class="bi bi-scissors absolute left-3 top-3 text-emerald-500 pointer-events-none text-sm"></i>
+                            <select id="service_select" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-9 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all appearance-none text-sm">
                                 @foreach($serviceTypes as $key => $label)
                                     <option value="{{ $key }}">{{ $label }}</option>
                                 @endforeach
                             </select>
-                            <i class="bi bi-chevron-down absolute right-3 top-3 text-slate-500 pointer-events-none"></i>
+                            <i class="bi bi-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none text-sm"></i>
                         </div>
                     </div>
                 </div>
 
                 <!-- Calendar -->
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5">
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
-                        <button type="button" onclick="prevMonth()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition-all">
+                        <button onclick="prevMonth()" class="w-8 h-8 rounded-lg border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-all">
                             <i class="bi bi-chevron-left text-sm"></i>
                         </button>
-                        <span id="cal-month-label" class="text-white font-semibold text-sm"></span>
-                        <button type="button" onclick="nextMonth()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition-all">
+                        <span id="cal-month-label" class="text-gray-900 font-bold text-sm"></span>
+                        <button onclick="nextMonth()" class="w-8 h-8 rounded-lg border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-all">
                             <i class="bi bi-chevron-right text-sm"></i>
                         </button>
                     </div>
                     <div id="cal-grid" class="grid grid-cols-7 gap-1 text-center"></div>
-                    <p class="text-slate-600 text-xs text-center mt-3">Click a date to see available slots</p>
+                    <p class="text-gray-400 text-xs text-center mt-3">Click a date to see available slots</p>
                 </div>
 
                 <!-- Legend -->
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 space-y-2 text-xs text-slate-400">
-                    <p class="font-bold uppercase tracking-widest text-slate-500 mb-2">Legend</p>
-                    <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block"></span> Open — click to request</div>
-                    <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span> Past date</div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 space-y-2 text-xs text-gray-500">
+                    <p class="font-bold uppercase tracking-widest text-emerald-700 mb-2">Legend</p>
+                    <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span> Open — click to request</div>
+                    <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block"></span> Past date</div>
                 </div>
             </div>
 
-            <!-- RIGHT: Booking Sheet (hidden until date selected) -->
-            <div class="lg:col-span-2" id="booking-sheet" style="display:none;" class="hidden">
+            <!-- Booking Sheet -->
+            <div class="lg:col-span-2">
                 <input type="hidden" id="appointment_date_hidden">
 
-                <div class="bg-slate-900/40 border border-teal-500/30 rounded-2xl overflow-hidden shadow-2xl">
-                    <div class="px-6 py-4 border-b border-slate-800/80 flex items-center gap-3">
-                        <i class="bi bi-calendar-check text-teal-400"></i>
+                <div id="booking-placeholder" class="flex items-center justify-center py-20 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                    <div class="text-center">
+                        <i class="bi bi-calendar3 text-5xl text-gray-300 mb-4 block"></i>
+                        <p class="text-gray-500 font-medium">Select a date on the calendar</p>
+                        <p class="text-gray-400 text-sm mt-1">Available time slots will appear here</p>
+                    </div>
+                </div>
+
+                <div id="booking-sheet" class="hidden bg-white border border-emerald-200 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-emerald-50">
+                        <i class="bi bi-calendar-check text-emerald-600"></i>
                         <div>
-                            <p class="text-white font-semibold text-sm">Available Slots</p>
-                            <p class="text-teal-400 text-xs" id="selected-date-label"></p>
+                            <p class="text-gray-900 font-bold text-sm">Available Slots</p>
+                            <p class="text-emerald-600 text-xs font-medium" id="selected-date-label"></p>
                         </div>
                     </div>
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-950/30 border-b border-slate-800">
-                            <tr class="text-xs uppercase text-slate-500 tracking-widest">
-                                <th class="px-6 py-4">Time</th>
-                                <th class="px-6 py-4">Availability</th>
-                                <th class="px-6 py-4 text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800">
-                            @foreach($clinicHours as $value => $label)
-                                <tr>
-                                    <td class="px-6 py-5 font-bold text-teal-400">{{ $label }}</td>
-                                    <td class="px-6 py-5">
-                                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-teal-500/10 text-teal-400 border border-teal-500/20 uppercase tracking-wide">Open Slot</span>
-                                    </td>
-                                    <td class="px-6 py-5 text-right">
-                                        <button type="button" onclick="openServiceModal('{{ $value }}', '{{ $label }}')"
-                                                class="px-5 py-2 rounded-xl text-sm bg-teal-600 hover:bg-teal-500 text-white font-semibold transition-all hover:scale-105 active:scale-95">
-                                            + Request
-                                        </button>
-                                    </td>
+                    <!-- Mobile cards -->
+                    <div class="block sm:hidden p-4 space-y-2">
+                        @foreach($clinicHours as $value => $label)
+                            <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                                <span class="font-bold text-emerald-700 text-sm">{{ $label }}</span>
+                                <button type="button" onclick="openServiceModal('{{ $value }}', '{{ $label }}')"
+                                        class="px-4 py-2 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all">
+                                    + Request
+                                </button>
+                            </div>
+                        @endforeach
+                    </div>
+                    <!-- Desktop table -->
+                    <div class="hidden sm:block overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-100">
+                                <tr class="text-xs uppercase text-gray-400 tracking-widest">
+                                    <th class="px-6 py-4">Time</th>
+                                    <th class="px-6 py-4">Availability</th>
+                                    <th class="px-6 py-4 text-right">Action</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Placeholder when no date selected -->
-            <div class="lg:col-span-2 flex items-center justify-center" id="booking-placeholder">
-                <div class="text-center py-16">
-                    <i class="bi bi-calendar3 text-5xl text-slate-700 mb-4 block"></i>
-                    <p class="text-slate-500 font-medium">Select a date on the calendar</p>
-                    <p class="text-slate-600 text-sm mt-1">Available time slots will appear here</p>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach($clinicHours as $value => $label)
+                                    <tr class="hover:bg-emerald-50 transition-all">
+                                        <td class="px-6 py-4 font-bold text-emerald-700">{{ $label }}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase">Open Slot</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button type="button" onclick="openServiceModal('{{ $value }}', '{{ $label }}')"
+                                                    class="px-5 py-2 rounded-xl text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all hover:shadow-md">
+                                                + Request
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <script>
-            // Override selectDate to also show/hide placeholder
-            const origSelectDate = selectDate;
-            selectDate = function(dateStr, day, monthName, year) {
-                origSelectDate(dateStr, day, monthName, year);
-                document.getElementById('booking-sheet').style.display = 'block';
-                document.getElementById('booking-placeholder').style.display = 'none';
-            }
-        </script>
-
         @endif
     </main>
 
-    <!-- Confirm Booking Modal -->
-    <div id="service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
+    <!-- Confirm Modal -->
+    <div id="service-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center sm:p-6 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
          onclick="if(event.target===this) closeModal('service-modal','service-modal-content')">
-        <div id="service-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
-            <h2 class="text-xl font-bold text-white mb-2">Confirm Appointment</h2>
-            <p class="text-slate-400 text-sm mb-6">Review your booking details before submitting.</p>
+        <div id="service-modal-content" class="bg-white border border-gray-200 rounded-t-2xl sm:rounded-2xl p-6 sm:p-8 w-full sm:max-w-md shadow-xl transform scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-lg font-bold text-gray-900 mb-1">Confirm Appointment</h2>
+            <p class="text-gray-400 text-xs mb-5">Review your booking details before submitting.</p>
             <form method="POST" action="{{ route('appointments.store') }}">
                 @csrf
                 <input type="hidden" name="appointment_time" id="appointment_time">
                 <input type="hidden" name="appointment_date" id="hidden_date">
                 <input type="hidden" name="pet_id"           id="hidden_pet_id">
                 <input type="hidden" name="service_type"     id="hidden_service_type">
-                <div class="space-y-3 mb-6">
+                <div class="space-y-3 mb-5">
+                    <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Time</label>
+                        <p id="selected_time_display" class="text-emerald-700 font-bold bg-emerald-50 p-3 rounded-lg border border-emerald-200 text-sm"></p></div>
+                    <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Date</label>
+                        <p id="confirm_date_display" class="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm"></p></div>
+                    <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Pet</label>
+                        <p id="confirm_pet_display" class="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm"></p></div>
+                    <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Service</label>
+                        <p id="confirm_service_display" class="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm"></p></div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Time</label>
-                        <p id="selected_time_display" class="text-teal-400 font-bold bg-slate-950 p-3 rounded-lg border border-slate-800"></p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Date</label>
-                        <p id="confirm_date_display" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800"></p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Pet</label>
-                        <p id="confirm_pet_display" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800"></p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Service</label>
-                        <p id="confirm_service_display" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800"></p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                            Additional Info <span class="normal-case font-normal text-slate-600">(optional)</span>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                            Additional Info <span class="normal-case font-normal text-gray-300">(optional)</span>
                         </label>
                         <textarea name="notes" rows="2" placeholder="Any special instructions..."
-                                  class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-teal-500 transition-all resize-none text-sm"></textarea>
+                                  class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all resize-none text-sm"></textarea>
                     </div>
                 </div>
                 @if($errors->any())
-                    <div class="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm space-y-1">
+                    <div class="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm space-y-1">
                         @foreach($errors->all() as $error)<p>• {{ $error }}</p>@endforeach
                     </div>
                 @endif
                 <div class="grid grid-cols-2 gap-3">
                     <button type="button" onclick="closeModal('service-modal','service-modal-content')"
-                            class="px-4 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all font-semibold">Cancel</button>
-                    <button type="submit" class="px-4 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold transition-all hover:scale-105">Submit Request</button>
+                            class="px-4 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm transition-all hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all">Submit Request</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Profile Modal -->
-    <div id="profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
-         onclick="if(event.target===this) toggleProfileModal()">
-        <div id="profile-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
-            <h2 class="text-xl font-bold text-white mb-6">User Profile</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Name</label>
-                    <p class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1">{{ auth()->user()->name }}</p>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Email</label>
-                    <p class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1">{{ auth()->user()->email }}</p>
-                </div>
-                <button onclick="toggleProfileModal()" class="w-full mt-2 px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Close</button>
-            </div>
         </div>
     </div>
 </body>

@@ -53,10 +53,10 @@
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.filter-btn').forEach(b => {
                         b.classList.remove('bg-violet-600', 'text-white');
-                        b.classList.add('bg-slate-800', 'text-slate-300');
+                        b.classList.add('bg-gray-100', 'text-gray-600');
                     });
                     this.classList.add('bg-violet-600', 'text-white');
-                    this.classList.remove('bg-slate-800', 'text-slate-300');
+                    this.classList.remove('bg-gray-100', 'text-gray-600');
 
                     const filter = this.dataset.filter;
                     document.querySelectorAll('.owner-card').forEach(card => {
@@ -80,47 +80,47 @@
         }
     </script>
 </head>
-<body class="bg-slate-950 text-slate-200 antialiased min-h-screen">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
-    <nav class="relative z-50 w-full bg-[#0c1220] backdrop-blur-md border-b border-white/5">
+    <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
+            <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
                 <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
-                <span class="text-violet-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30">STAFF PORTAL</span>
+                <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
             </a>
-            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
-                <a href="{{ route('staff.dashboard') }}"    class="hover:text-white transition-all hover:scale-105">Dashboard</a>
-                <a href="{{ route('staff.directory') }}"    class="text-white font-semibold transition-all hover:scale-105">Pets</a>
-                <a href="{{ route('staff.appointments') }}" class="hover:text-white transition-all hover:scale-105">Appointments</a>
-                <a href="{{ route('staff.insights') }}"     class="hover:text-white transition-all hover:scale-105">Insights</a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
+                <a href="{{ route('staff.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route('staff.directory') }}"    class="text-gray-900 font-semibold transition-all hover:scale-105">Pets</a>
+                <a href="{{ route('staff.appointments') }}" class="hover:text-gray-900 transition-all hover:scale-105">Appointments</a>
+                <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
             </div>
             <form action="{{ route('staff.logout') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all text-white">Logout</button>
+                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
         </div>
     </nav>
 
     <main class="container mx-auto px-6 py-12">
         <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-            <h1 class="text-2xl font-bold text-white">Pet Directory</h1>
-            <p class="text-slate-400 text-sm">Browse all registered owners and their pets.</p>
+            <h1 class="text-2xl font-bold text-gray-900">Pet Directory</h1>
+            <p class="text-gray-500 text-sm">Browse all registered owners and their pets.</p>
         </header>
 
         <!-- Search -->
         <div class="mb-5 max-w-lg reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             <div class="relative">
-                <i class="bi bi-search absolute left-4 top-3 text-slate-500"></i>
+                <i class="bi bi-search absolute left-4 top-3 text-gray-400"></i>
                 <input id="search" type="text" placeholder="Search by owner name or pet name..."
-                       class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-violet-500 transition-all outline-none text-sm">
+                       class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-slate-600 focus:border-violet-500 transition-all outline-none text-sm">
             </div>
         </div>
 
         <!-- Filter tabs -->
         <div class="flex items-center gap-2 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             <button data-filter="all"      class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-violet-600 text-white">All</button>
-            <button data-filter="active"   class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-slate-300">Active</button>
-            <button data-filter="inactive" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-slate-300 flex items-center gap-1.5">
+            <button data-filter="active"   class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-gray-100 text-gray-600">Active</button>
+            <button data-filter="inactive" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-gray-100 text-gray-600 flex items-center gap-1.5">
                 Inactive
                 @if($inactiveCount > 0)
                     <span class="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $inactiveCount }}</span>
@@ -130,17 +130,17 @@
 
         <!-- Stats -->
         <div class="grid grid-cols-3 gap-4 mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5">
-                <p class="text-slate-400 text-xs mb-1">Total Owners</p>
-                <p class="text-2xl font-bold text-white">{{ $owners->count() }}</p>
+            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <p class="text-gray-500 text-xs mb-1">Total Owners</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $owners->count() }}</p>
             </div>
-            <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5">
-                <p class="text-slate-400 text-xs mb-1">Total Pets</p>
-                <p class="text-2xl font-bold text-white">{{ $owners->sum(fn($o) => $o->pets->count()) }}</p>
+            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <p class="text-gray-500 text-xs mb-1">Total Pets</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $owners->sum(fn($o) => $o->pets->count()) }}</p>
             </div>
-            <div class="bg-red-500/10 border border-red-500/20 rounded-2xl p-5">
-                <p class="text-red-400 text-xs mb-1">Inactive (3+ months)</p>
-                <p class="text-2xl font-bold text-white">{{ $inactiveCount }}</p>
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
+                <p class="text-red-600 text-xs mb-1">Inactive (3+ months)</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $inactiveCount }}</p>
             </div>
         </div>
 
@@ -148,78 +148,78 @@
         <div class="space-y-3">
             @forelse($owners as $owner)
                 @php $petNames = $owner->pets->pluck('name')->join(', '); @endphp
-                <div class="owner-card bg-slate-900/40 border {{ $owner->is_inactive ? 'border-red-500/20' : 'border-slate-800/80' }} rounded-xl overflow-hidden hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.08)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out"
+                <div class="owner-card bg-white border {{ $owner->is_inactive ? 'border-red-200' : 'border-gray-200' }} rounded-xl overflow-hidden hover:border-gray-300 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.08)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out"
                      data-name="{{ strtolower($owner->name) }}"
                      data-pets="{{ strtolower($petNames) }}"
                      data-inactive="{{ $owner->is_inactive ? 'true' : 'false' }}">
 
                     <button onclick="toggleAccordion({{ $owner->id }})"
-                            class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-800/30 transition-all duration-300">
+                            class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-all duration-300">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full {{ $owner->is_inactive ? 'bg-red-500/20' : 'bg-violet-500/20' }} flex items-center justify-center {{ $owner->is_inactive ? 'text-red-400' : 'text-violet-400' }} shrink-0">
+                            <div class="w-9 h-9 rounded-full {{ $owner->is_inactive ? 'bg-red-100' : 'bg-violet-100' }} flex items-center justify-center {{ $owner->is_inactive ? 'text-red-600' : 'text-violet-600' }} shrink-0">
                                 <i class="bi bi-person text-sm"></i>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <p class="font-semibold text-white text-sm">{{ $owner->name }}</p>
+                                    <p class="font-semibold text-gray-900 text-sm">{{ $owner->name }}</p>
                                     @if($owner->is_inactive)
-                                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/30">
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-600 border border-red-200">
                                             <i class="bi bi-exclamation-circle mr-1"></i>Inactive
                                         </span>
                                     @else
-                                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Active</span>
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-600 border border-emerald-200">Active</span>
                                     @endif
                                 </div>
-                                <p class="text-xs text-slate-500">{{ $owner->email }}</p>
+                                <p class="text-xs text-gray-400">{{ $owner->email }}</p>
                                 @if($owner->last_visit)
-                                    <p class="text-xs {{ $owner->is_inactive ? 'text-red-400' : 'text-slate-500' }} mt-0.5">
+                                    <p class="text-xs {{ $owner->is_inactive ? 'text-red-600' : 'text-gray-400' }} mt-0.5">
                                         Last visit: {{ $owner->last_visit->format('M d, Y') }}
                                         @if($owner->is_inactive)
-                                            <span class="text-red-400">({{ $owner->last_visit->diffForHumans() }})</span>
+                                            <span class="text-red-600">({{ $owner->last_visit->diffForHumans() }})</span>
                                         @endif
                                     </p>
                                 @else
-                                    <p class="text-xs text-red-400 mt-0.5">No appointments yet</p>
+                                    <p class="text-xs text-red-600 mt-0.5">No appointments yet</p>
                                 @endif
                             </div>
                         </div>
                         <div class="flex items-center gap-4">
-                            <span class="text-xs text-slate-500 hidden sm:block">
+                            <span class="text-xs text-gray-400 hidden sm:block">
                                 {{ $owner->pets->count() }} {{ Str::plural('pet', $owner->pets->count()) }}
                             </span>
-                            <i id="icon-{{ $owner->id }}" class="bi bi-chevron-right text-violet-400 transition-transform duration-300"></i>
+                            <i id="icon-{{ $owner->id }}" class="bi bi-chevron-right text-violet-600 transition-transform duration-300"></i>
                         </div>
                     </button>
 
-                    <div id="acc-{{ $owner->id }}" class="hidden px-6 pb-4 border-t border-slate-800/50">
+                    <div id="acc-{{ $owner->id }}" class="hidden px-6 pb-4 border-t border-gray-200">
                         <div class="pt-4 space-y-2">
                             @forelse($owner->pets as $pet)
                                 <a href="{{ route('pets.details', ['id' => $pet->id]) }}"
-                                   class="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 hover:border-violet-500/30 transition-all hover:translate-x-1">
+                                   class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 hover:border-violet-200 transition-all hover:translate-x-1">
                                     <div class="flex items-center gap-3">
                                         @if($pet->photo)
                                             <img src="{{ asset('storage/' . $pet->photo) }}" alt="{{ $pet->name }}"
-                                                 class="w-8 h-8 rounded-full object-cover border border-violet-500/30">
+                                                 class="w-8 h-8 rounded-full object-cover border border-violet-200">
                                         @else
                                             <span class="text-lg">{{ $pet->type === 'cat' ? '🐱' : ($pet->type === 'dog' ? '🐶' : '🐾') }}</span>
                                         @endif
-                                        <span class="text-sm text-white font-medium">{{ $pet->name }}</span>
+                                        <span class="text-sm text-gray-900 font-medium">{{ $pet->name }}</span>
                                     </div>
                                     <div class="flex items-center gap-3">
-                                        <span class="text-xs text-slate-500">{{ $pet->breed }}</span>
-                                        <i class="bi bi-chevron-right text-slate-600 text-xs"></i>
+                                        <span class="text-xs text-gray-400">{{ $pet->breed }}</span>
+                                        <i class="bi bi-chevron-right text-gray-500 text-xs"></i>
                                     </div>
                                 </a>
                             @empty
-                                <p class="text-slate-600 text-sm italic py-2">No pets registered yet.</p>
+                                <p class="text-gray-500 text-sm italic py-2">No pets registered yet.</p>
                             @endforelse
                         </div>
                     </div>
                 </div>
             @empty
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-12 text-center">
-                    <i class="bi bi-people text-4xl text-slate-700 mb-3 block"></i>
-                    <p class="text-slate-500">No owners registered yet.</p>
+                <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
+                    <i class="bi bi-people text-4xl text-gray-300 mb-3 block"></i>
+                    <p class="text-gray-400">No owners registered yet.</p>
                 </div>
             @endforelse
         </div>

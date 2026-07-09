@@ -18,11 +18,11 @@
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
             document.getElementById('panel-' + tabId).classList.remove('hidden');
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-900/50','text-white','border-indigo-500');
-                btn.classList.add('text-indigo-300','border-transparent','hover:bg-indigo-900/20');
+                btn.classList.remove('bg-indigo-50','text-indigo-700','border-indigo-500');
+                btn.classList.add('text-gray-500','border-transparent','hover:bg-gray-50');
             });
-            document.getElementById('btn-' + tabId).classList.add('bg-indigo-900/50','text-white','border-indigo-500');
-            document.getElementById('btn-' + tabId).classList.remove('text-indigo-300','border-transparent');
+            document.getElementById('btn-' + tabId).classList.add('bg-indigo-50','text-indigo-700','border-indigo-500');
+            document.getElementById('btn-' + tabId).classList.remove('text-gray-500','border-transparent');
         }
 
         function toggleModal(id, contentId) {
@@ -54,24 +54,24 @@
         });
     </script>
 </head>
-<body class="bg-indigo-950 text-indigo-100 antialiased min-h-screen">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
-    <nav class="relative z-50 w-full bg-[#1e1b4b] backdrop-blur-md border-b border-white/10">
+    <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ route('admin.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
+            <a href="{{ route('admin.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
                 <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
-                <span class="text-rose-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/30">ADMIN PORTAL</span>
+                <span class="text-rose-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-100 border border-rose-200">ADMIN PORTAL</span>
             </a>
-            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-indigo-300">
-                <a href="{{ route('admin.dashboard') }}"    class="hover:text-white transition-all hover:scale-105">Dashboard</a>
-                <a href="{{ route('admin.directory') }}"    class="hover:text-white transition-all hover:scale-105">Pets</a>
-                <a href="{{ route('admin.appointments') }}" class="hover:text-white transition-all hover:scale-105">Appointments</a>
-                <a href="{{ route('admin.insights') }}"     class="hover:text-white transition-all hover:scale-105">Insights</a>
-                <a href="{{ route('admin.panel') }}"        class="text-white transition-all bg-rose-900/30 px-3 py-1 rounded-lg border border-rose-500/30 ml-4 hover:bg-rose-900/50">Admin Panel</a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
+                <a href="{{ route('admin.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route('admin.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
+                <a href="{{ route('admin.appointments') }}" class="hover:text-gray-900 transition-all hover:scale-105">Appointments</a>
+                <a href="{{ route('admin.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
+                <a href="{{ route('admin.panel') }}"        class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100">Admin Panel</a>
             </div>
             <form action="{{ route('admin.logout') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-rose-900/30 hover:bg-rose-900/50 text-rose-300 transition-all">Logout</button>
+                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
         </div>
     </nav>
@@ -79,19 +79,19 @@
     <main class="container mx-auto px-6 py-12">
 
         @if(session('success'))
-            <div class="mb-6 px-6 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-3">
+            <div class="mb-6 px-6 py-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-3">
                 <i class="bi bi-check-circle-fill"></i> {{ session('success') }}
             </div>
         @endif
         @if(session('error'))
-            <div class="mb-6 px-6 py-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 flex items-center gap-3">
+            <div class="mb-6 px-6 py-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3">
                 <i class="bi bi-exclamation-circle-fill"></i> {{ session('error') }}
             </div>
         @endif
 
         <header class="mb-10">
-            <h1 class="text-3xl font-bold text-white">Admin Panel</h1>
-            <p class="text-indigo-300 text-sm">System configuration and master controls.</p>
+            <h1 class="text-3xl font-bold text-gray-900">Admin Panel</h1>
+            <p class="text-gray-500 text-sm">System configuration and master controls.</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -99,20 +99,20 @@
             <!-- Sidebar -->
             <div class="lg:col-span-1 space-y-2">
                 <button id="btn-staff"    onclick="showTab('staff')"    class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all"><i class="bi bi-person-badge mr-2"></i> Staff Management</button>
-                <button id="btn-owners"   onclick="showTab('owners')"   class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-indigo-300 border-transparent hover:bg-indigo-900/20"><i class="bi bi-people mr-2"></i> Owner Accounts</button>
-                <button id="btn-services" onclick="showTab('services')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-indigo-300 border-transparent hover:bg-indigo-900/20"><i class="bi bi-scissors mr-2"></i> Grooming Options</button>
-                <button id="btn-settings" onclick="showTab('settings')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-indigo-300 border-transparent hover:bg-indigo-900/20"><i class="bi bi-gear mr-2"></i> System Settings</button>
+                <button id="btn-owners"   onclick="showTab('owners')"   class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-people mr-2"></i> Owner Accounts</button>
+                <button id="btn-services" onclick="showTab('services')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-scissors mr-2"></i> Grooming Options</button>
+                <button id="btn-settings" onclick="showTab('settings')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-gear mr-2"></i> System Settings</button>
             </div>
 
             <!-- Content -->
-            <div class="lg:col-span-3 bg-indigo-900/20 border border-indigo-800/50 rounded-2xl p-8 min-h-[500px]">
+            <div class="lg:col-span-3 bg-white border border-gray-200 rounded-2xl p-8 min-h-[500px]">
 
                 <!-- Staff -->
                 <div id="panel-staff" class="tab-panel hidden">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h2 class="text-xl font-bold text-white">Staff Management</h2>
-                            <p class="text-indigo-400 text-sm">{{ $staffMembers->count() }} staff {{ Str::plural('member',$staffMembers->count()) }}</p>
+                            <h2 class="text-xl font-bold text-gray-900">Staff Management</h2>
+                            <p class="text-gray-500 text-sm">{{ $staffMembers->count() }} staff {{ Str::plural('member',$staffMembers->count()) }}</p>
                         </div>
                         <button onclick="toggleModal('add-staff-modal','add-staff-modal-content')"
                                 class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-semibold transition-all hover:scale-105 text-white">
@@ -121,23 +121,23 @@
                     </div>
                     <div class="space-y-3">
                         @forelse($staffMembers as $staff)
-                            <div class="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-4 flex items-center justify-between hover:border-indigo-600 transition-all">
+                            <div class="bg-gray-50/40 border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-indigo-300 transition-all">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-300 font-bold text-sm">{{ strtoupper(substr($staff->name,0,1)) }}</div>
+                                    <div class="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-bold text-sm">{{ strtoupper(substr($staff->name,0,1)) }}</div>
                                     <div>
-                                        <p class="font-semibold text-white">{{ $staff->name }}</p>
-                                        <p class="text-xs text-indigo-400">{{ $staff->email }}</p>
+                                        <p class="font-semibold text-gray-900">{{ $staff->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ $staff->email }}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="px-2 py-0.5 rounded-full text-xs bg-violet-500/20 text-violet-300 border border-violet-500/30">Staff</span>
+                                    <span class="px-2 py-0.5 rounded-full text-xs bg-violet-100 text-violet-700 border border-violet-200">Staff</span>
                                     <form id="delete-staff-{{ $staff->id }}" method="POST" action="{{ route('admin.staff.destroy', $staff) }}">@csrf @method('DELETE')</form>
                                     <button onclick="confirmDelete('delete-staff-{{ $staff->id }}','Remove {{ addslashes($staff->name) }}?')"
-                                            class="p-2 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-all"><i class="bi bi-trash text-sm"></i></button>
+                                            class="p-2 rounded-lg text-rose-600 hover:bg-rose-100 transition-all"><i class="bi bi-trash text-sm"></i></button>
                                 </div>
                             </div>
                         @empty
-                            <div class="text-center py-8"><i class="bi bi-person-badge text-4xl text-indigo-800 mb-3 block"></i><p class="text-indigo-500 italic text-sm">No staff accounts yet.</p></div>
+                            <div class="text-center py-8"><i class="bi bi-person-badge text-4xl text-gray-300 mb-3 block"></i><p class="text-gray-400 italic text-sm">No staff accounts yet.</p></div>
                         @endforelse
                     </div>
                 </div>
@@ -145,24 +145,24 @@
                 <!-- Owners -->
                 <div id="panel-owners" class="tab-panel hidden">
                     <div class="mb-6">
-                        <h2 class="text-xl font-bold text-white">Owner Accounts</h2>
-                        <p class="text-indigo-400 text-sm">{{ $owners->count() }} registered {{ Str::plural('owner',$owners->count()) }}</p>
+                        <h2 class="text-xl font-bold text-gray-900">Owner Accounts</h2>
+                        <p class="text-gray-500 text-sm">{{ $owners->count() }} registered {{ Str::plural('owner',$owners->count()) }}</p>
                     </div>
                     <div class="space-y-3">
                         @forelse($owners as $owner)
-                            <div class="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-4 flex items-center justify-between hover:border-indigo-600 transition-all">
+                            <div class="bg-gray-50/40 border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-indigo-300 transition-all">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 font-bold text-sm">{{ strtoupper(substr($owner->name,0,1)) }}</div>
+                                    <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">{{ strtoupper(substr($owner->name,0,1)) }}</div>
                                     <div>
-                                        <p class="font-semibold text-white">{{ $owner->name }}</p>
-                                        <p class="text-xs text-indigo-400">{{ $owner->email }}</p>
-                                        <p class="text-xs text-indigo-500 mt-0.5">{{ $owner->pets->count() }} {{ Str::plural('pet',$owner->pets->count()) }}</p>
+                                        <p class="font-semibold text-gray-900">{{ $owner->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ $owner->email }}</p>
+                                        <p class="text-xs text-gray-400 mt-0.5">{{ $owner->pets->count() }} {{ Str::plural('pet',$owner->pets->count()) }}</p>
                                     </div>
                                 </div>
-                                <span class="px-2 py-0.5 rounded-full text-xs bg-teal-500/20 text-teal-300 border border-teal-500/30">Owner</span>
+                                <span class="px-2 py-0.5 rounded-full text-xs bg-teal-100 text-teal-700 border border-teal-200">Owner</span>
                             </div>
                         @empty
-                            <p class="text-indigo-500 text-sm italic">No owners registered yet.</p>
+                            <p class="text-gray-400 text-sm italic">No owners registered yet.</p>
                         @endforelse
                     </div>
                 </div>
@@ -171,16 +171,16 @@
                 <div id="panel-services" class="tab-panel hidden">
                     <div class="mb-6 flex items-center justify-between">
                         <div>
-                            <h2 class="text-xl font-bold text-white">Grooming Options</h2>
-                            <p class="text-indigo-400 text-sm">Manage styles and add-ons shown to clients. Upload images for each.</p>
+                            <h2 class="text-xl font-bold text-gray-900">Grooming Options</h2>
+                            <p class="text-gray-500 text-sm">Manage styles and add-ons shown to clients. Upload images for each.</p>
                         </div>
                     </div>
  
                     <!-- Styles -->
                     <div class="mb-8">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-white flex items-center gap-2">
-                                <i class="bi bi-scissors text-indigo-400"></i> Grooming Styles
+                            <h3 class="font-bold text-gray-900 flex items-center gap-2">
+                                <i class="bi bi-scissors text-gray-500"></i> Grooming Styles
                             </h3>
                             <button onclick="openAddGrooming('style')"
                                     class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105">
@@ -189,42 +189,42 @@
                         </div>
                         <div class="space-y-3">
                             @forelse($groomingStyles as $opt)
-                                <div class="bg-indigo-950/40 border {{ $opt->is_active ? 'border-indigo-800/50' : 'border-slate-700/30 opacity-60' }} rounded-xl p-4">
+                                <div class="bg-gray-50/40 border {{ $opt->is_active ? 'border-gray-200' : 'border-gray-300/30 opacity-60' }} rounded-xl p-4">
                                     <div class="flex items-start justify-between gap-4">
                                         <!-- Image preview or placeholder -->
                                         <div class="shrink-0">
                                             @if($opt->image)
                                                 <img src="{{ asset('storage/' . $opt->image) }}"
                                                      alt="{{ $opt->name }}"
-                                                     class="w-16 h-16 rounded-xl object-cover border border-indigo-700">
+                                                     class="w-16 h-16 rounded-xl object-cover border border-gray-300">
                                             @else
-                                                <div class="w-16 h-16 rounded-xl bg-indigo-900/40 border border-indigo-800/50 flex items-center justify-center">
-                                                    <i class="bi bi-scissors text-indigo-500 text-xl"></i>
+                                                <div class="w-16 h-16 rounded-xl bg-white border border-gray-200 flex items-center justify-center">
+                                                    <i class="bi bi-scissors text-gray-400 text-xl"></i>
                                                 </div>
                                             @endif
                                         </div>
  
                                         <div class="flex-1 min-w-0">
-                                            <p class="font-semibold text-white text-sm">
+                                            <p class="font-semibold text-gray-900 text-sm">
                                                 {{ $opt->name }}
-                                                @if(!$opt->is_active)<span class="ml-2 text-xs text-slate-500">(disabled)</span>@endif
+                                                @if(!$opt->is_active)<span class="ml-2 text-xs text-gray-400">(disabled)</span>@endif
                                             </p>
                                             @if($opt->description)
-                                                <p class="text-xs text-indigo-400 mt-0.5">{{ $opt->description }}</p>
+                                                <p class="text-xs text-gray-500 mt-0.5">{{ $opt->description }}</p>
                                             @endif
  
                                             <!-- Image upload form -->
                                             <form method="POST" action="{{ route('admin.grooming.image', $opt) }}"
                                                   enctype="multipart/form-data" class="mt-2 flex items-center gap-2">
                                                 @csrf
-                                                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-800/40 hover:bg-indigo-700/50 border border-indigo-700/50 cursor-pointer text-xs text-indigo-300 transition-all">
+                                                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 cursor-pointer text-xs text-indigo-700 transition-all">
                                                     <i class="bi bi-cloud-upload"></i>
                                                     {{ $opt->image ? 'Replace Image' : 'Upload Image' }}
                                                     <input type="file" name="image" accept="image/*" class="hidden"
                                                            onchange="this.closest('form').submit()">
                                                 </label>
                                                 @if($opt->image)
-                                                    <span class="text-xs text-indigo-500">Auto-saves on select</span>
+                                                    <span class="text-xs text-gray-400">Auto-saves on select</span>
                                                 @endif
                                             </form>
                                         </div>
@@ -233,14 +233,14 @@
                                             <form method="POST" action="{{ route('admin.grooming.toggle', $opt) }}">
                                                 @csrf @method('PATCH')
                                                 <button type="submit"
-                                                        class="px-3 py-1 rounded-lg text-xs {{ $opt->is_active ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-indigo-700 text-indigo-200 hover:bg-indigo-600' }} transition-all">
+                                                        class="px-3 py-1 rounded-lg text-xs {{ $opt->is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' }} transition-all">
                                                     {{ $opt->is_active ? 'Disable' : 'Enable' }}
                                                 </button>
                                             </form>
                                             <form method="POST" action="{{ route('admin.grooming.destroy', $opt) }}"
                                                   onsubmit="return confirm('Remove {{ addslashes($opt->name) }}?')">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-all">
+                                                <button type="submit" class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-100 transition-all">
                                                     <i class="bi bi-trash text-xs"></i>
                                                 </button>
                                             </form>
@@ -248,7 +248,7 @@
                                     </div>
                                 </div>
                             @empty
-                                <p class="text-indigo-500 text-sm italic py-3">No styles added yet.</p>
+                                <p class="text-gray-400 text-sm italic py-3">No styles added yet.</p>
                             @endforelse
                         </div>
                     </div>
@@ -256,8 +256,8 @@
                     <!-- Add-ons -->
                     <div>
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-white flex items-center gap-2">
-                                <i class="bi bi-plus-circle text-indigo-400"></i> Add-on Services
+                            <h3 class="font-bold text-gray-900 flex items-center gap-2">
+                                <i class="bi bi-plus-circle text-gray-500"></i> Add-on Services
                             </h3>
                             <button onclick="openAddGrooming('addon')"
                                     class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105">
@@ -266,40 +266,40 @@
                         </div>
                         <div class="space-y-3">
                             @forelse($groomingAddons as $opt)
-                                <div class="bg-indigo-950/40 border {{ $opt->is_active ? 'border-indigo-800/50' : 'border-slate-700/30 opacity-60' }} rounded-xl p-4">
+                                <div class="bg-gray-50/40 border {{ $opt->is_active ? 'border-gray-200' : 'border-gray-300/30 opacity-60' }} rounded-xl p-4">
                                     <div class="flex items-start justify-between gap-4">
                                         <div class="shrink-0">
                                             @if($opt->image)
                                                 <img src="{{ asset('storage/' . $opt->image) }}"
                                                      alt="{{ $opt->name }}"
-                                                     class="w-16 h-16 rounded-xl object-cover border border-indigo-700">
+                                                     class="w-16 h-16 rounded-xl object-cover border border-gray-300">
                                             @else
-                                                <div class="w-16 h-16 rounded-xl bg-indigo-900/40 border border-indigo-800/50 flex items-center justify-center">
-                                                    <i class="bi bi-plus-circle text-indigo-500 text-xl"></i>
+                                                <div class="w-16 h-16 rounded-xl bg-white border border-gray-200 flex items-center justify-center">
+                                                    <i class="bi bi-plus-circle text-gray-400 text-xl"></i>
                                                 </div>
                                             @endif
                                         </div>
  
                                         <div class="flex-1 min-w-0">
-                                            <p class="font-semibold text-white text-sm">
+                                            <p class="font-semibold text-gray-900 text-sm">
                                                 {{ $opt->name }}
-                                                @if(!$opt->is_active)<span class="ml-2 text-xs text-slate-500">(disabled)</span>@endif
+                                                @if(!$opt->is_active)<span class="ml-2 text-xs text-gray-400">(disabled)</span>@endif
                                             </p>
                                             @if($opt->description)
-                                                <p class="text-xs text-indigo-400 mt-0.5">{{ $opt->description }}</p>
+                                                <p class="text-xs text-gray-500 mt-0.5">{{ $opt->description }}</p>
                                             @endif
  
                                             <form method="POST" action="{{ route('admin.grooming.image', $opt) }}"
                                                   enctype="multipart/form-data" class="mt-2 flex items-center gap-2">
                                                 @csrf
-                                                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-800/40 hover:bg-indigo-700/50 border border-indigo-700/50 cursor-pointer text-xs text-indigo-300 transition-all">
+                                                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 cursor-pointer text-xs text-indigo-700 transition-all">
                                                     <i class="bi bi-cloud-upload"></i>
                                                     {{ $opt->image ? 'Replace Image' : 'Upload Image' }}
                                                     <input type="file" name="image" accept="image/*" class="hidden"
                                                            onchange="this.closest('form').submit()">
                                                 </label>
                                                 @if($opt->image)
-                                                    <span class="text-xs text-indigo-500">Auto-saves on select</span>
+                                                    <span class="text-xs text-gray-400">Auto-saves on select</span>
                                                 @endif
                                             </form>
                                         </div>
@@ -308,14 +308,14 @@
                                             <form method="POST" action="{{ route('admin.grooming.toggle', $opt) }}">
                                                 @csrf @method('PATCH')
                                                 <button type="submit"
-                                                        class="px-3 py-1 rounded-lg text-xs {{ $opt->is_active ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-indigo-700 text-indigo-200 hover:bg-indigo-600' }} transition-all">
+                                                        class="px-3 py-1 rounded-lg text-xs {{ $opt->is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' }} transition-all">
                                                     {{ $opt->is_active ? 'Disable' : 'Enable' }}
                                                 </button>
                                             </form>
                                             <form method="POST" action="{{ route('admin.grooming.destroy', $opt) }}"
                                                   onsubmit="return confirm('Remove {{ addslashes($opt->name) }}?')">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-all">
+                                                <button type="submit" class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-100 transition-all">
                                                     <i class="bi bi-trash text-xs"></i>
                                                 </button>
                                             </form>
@@ -323,7 +323,7 @@
                                     </div>
                                 </div>
                             @empty
-                                <p class="text-indigo-500 text-sm italic py-3">No add-ons added yet.</p>
+                                <p class="text-gray-400 text-sm italic py-3">No add-ons added yet.</p>
                             @endforelse
                         </div>
                     </div>
@@ -332,27 +332,27 @@
     </main>
 
     <!-- Add Staff Modal -->
-    <div id="add-staff-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-indigo-950/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
+    <div id="add-staff-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
          onclick="if(event.target===this) toggleModal('add-staff-modal','add-staff-modal-content')">
-        <div id="add-staff-modal-content" class="bg-indigo-900 border border-indigo-700 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
-            <h2 class="text-xl font-bold text-white mb-6">Add New Staff Member</h2>
+        <div id="add-staff-modal-content" class="bg-white border border-gray-300 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Add New Staff Member</h2>
             <form method="POST" action="{{ route('admin.staff.store') }}" class="space-y-4">
                 @csrf
-                <div><label class="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Full Name</label>
-                    <input type="text" name="name" value="{{ old('name') }}" required class="w-full bg-indigo-950 border border-indigo-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-400 transition-all" placeholder="e.g. Maria Santos"></div>
-                <div><label class="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Email Address</label>
-                    <input type="email" name="email" value="{{ old('email') }}" required class="w-full bg-indigo-950 border border-indigo-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-400 transition-all" placeholder="staff@furcare.com"></div>
-                <div><label class="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Password</label>
-                    <input type="password" name="password" required class="w-full bg-indigo-950 border border-indigo-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-400 transition-all" placeholder="Minimum 8 characters"></div>
-                <div><label class="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Confirm Password</label>
-                    <input type="password" name="password_confirmation" required class="w-full bg-indigo-950 border border-indigo-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-400 transition-all" placeholder="Repeat password"></div>
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Full Name</label>
+                    <input type="text" name="name" value="{{ old('name') }}" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all" placeholder="e.g. Maria Santos"></div>
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Email Address</label>
+                    <input type="email" name="email" value="{{ old('email') }}" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all" placeholder="staff@furcare.com"></div>
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Password</label>
+                    <input type="password" name="password" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all" placeholder="Minimum 8 characters"></div>
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Confirm Password</label>
+                    <input type="password" name="password_confirmation" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all" placeholder="Repeat password"></div>
                 @if($errors->any())
-                    <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm space-y-1">
+                    <div class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm space-y-1">
                         @foreach($errors->all() as $error)<p>• {{ $error }}</p>@endforeach
                     </div>
                 @endif
                 <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="toggleModal('add-staff-modal','add-staff-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-indigo-800 hover:bg-indigo-700 text-white font-semibold transition-all">Cancel</button>
+                    <button type="button" onclick="toggleModal('add-staff-modal','add-staff-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all">Cancel</button>
                     <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-[1.02]">Create Account</button>
                 </div>
             </form>
@@ -360,19 +360,19 @@
     </div>
 
     <!-- Add Grooming Option Modal -->
-    <div id="add-grooming-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-indigo-950/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
+    <div id="add-grooming-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
          onclick="if(event.target===this) toggleModal('add-grooming-modal','add-grooming-modal-content')">
-        <div id="add-grooming-modal-content" class="bg-indigo-900 border border-indigo-700 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
-            <h2 id="grooming-modal-title" class="text-xl font-bold text-white mb-6">Add Grooming Option</h2>
+        <div id="add-grooming-modal-content" class="bg-white border border-gray-300 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+            <h2 id="grooming-modal-title" class="text-xl font-bold text-gray-900 mb-6">Add Grooming Option</h2>
             <form method="POST" action="{{ route('admin.grooming.store') }}" class="space-y-4">
                 @csrf
                 <input type="hidden" id="grooming-type-input" name="type" value="style">
-                <div><label class="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Name</label>
-                    <input type="text" name="name" required class="w-full bg-indigo-950 border border-indigo-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-400 transition-all" placeholder="e.g. Teddy Bear Cut"></div>
-                <div><label class="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Description <span class="normal-case font-normal">(optional)</span></label>
-                    <input type="text" name="description" class="w-full bg-indigo-950 border border-indigo-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-400 transition-all" placeholder="Brief description..."></div>
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Name</label>
+                    <input type="text" name="name" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all" placeholder="e.g. Teddy Bear Cut"></div>
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Description <span class="normal-case font-normal">(optional)</span></label>
+                    <input type="text" name="description" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all" placeholder="Brief description..."></div>
                 <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="toggleModal('add-grooming-modal','add-grooming-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-indigo-800 hover:bg-indigo-700 text-white font-semibold transition-all">Cancel</button>
+                    <button type="button" onclick="toggleModal('add-grooming-modal','add-grooming-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all">Cancel</button>
                     <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-[1.02]">Add Option</button>
                 </div>
             </form>

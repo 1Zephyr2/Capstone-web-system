@@ -5,62 +5,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FURCARE | Staff Portal</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('opacity-100', 'translate-y-0');
-                        entry.target.classList.remove('opacity-0', 'translate-y-10');
-                    }
-                });
-            }, { threshold: 0.1 });
-            document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
-        });
-    </script>
 </head>
-<body class="bg-slate-950 text-slate-200 antialiased relative overflow-x-hidden min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Ambient Background Glows (Staff specific: Purple/Indigo accent) -->
-    <div class="fixed inset-0 pointer-events-none z-0">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px]"></div>
-    </div>
-
-    <!-- Navbar -->
-    <nav class="relative z-50 w-full bg-[#0c1220] backdrop-blur-md border-b border-white/10">
+    <nav class="w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE <span class="text-violet-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-500/30">STAFF PORTAL</span>
+            <a href="/" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
+                <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
             </a>
         </div>
     </nav>
 
-    <main class="flex-grow flex items-center justify-center relative z-10 py-12 px-6">
-        <div class="w-full max-w-md bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-8 shadow-2xl reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)]">
-            <h2 class="text-2xl font-bold text-white mb-6 text-center">Staff Authentication</h2>
+    <main class="flex-grow flex items-center justify-center py-12 px-6">
+        <div class="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+            <div class="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center text-violet-600 mx-auto mb-4">
+                <i class="bi bi-person-badge text-xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-1 text-center">Staff Authentication</h2>
+            <p class="text-gray-400 text-sm text-center mb-6">Restricted access for FURCARE staff members.</p>
+
+            @if($errors->any())
+                <div class="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm space-y-1">
+                    @foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach
+                </div>
+            @endif
 
             <form action="{{ route('staff.login') }}" method="POST" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Staff Email</label>
-                    <input type="email" name="email" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Staff Email</label>
+                    <input type="email" name="email" required autofocus
+                           class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-violet-200 focus:border-violet-500 outline-none transition-all">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Secure Password</label>
-                    <input type="password" name="password" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Secure Password</label>
+                    <input type="password" name="password" required
+                           class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-violet-200 focus:border-violet-500 outline-none transition-all">
                 </div>
-                <button type="submit" class="w-full py-3 mt-4 font-bold text-sm text-white rounded-xl bg-indigo-600 hover:bg-indigo-500 transition-all duration-300 transform hover:-translate-y-1 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40">
+                <button type="submit" class="w-full py-3 mt-2 font-semibold text-sm text-white rounded-xl bg-violet-600 hover:bg-violet-700 transition-all shadow-sm">
                     Access System
                 </button>
             </form>
         </div>
     </main>
 
-    <footer class="relative z-10 py-10 text-center border-t border-white/5">
-        <p class="text-slate-500 text-sm">&copy; {{ date('Y') }} FURCARE. Staff portal restricted.</p>
+    <footer class="py-8 text-center border-t border-gray-100">
+        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} FURCARE. Staff portal restricted.</p>
     </footer>
 
 </body>

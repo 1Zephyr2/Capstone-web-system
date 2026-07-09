@@ -4,80 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FURCARE | Register</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
-<body class="bg-slate-950 text-slate-200 antialiased relative overflow-x-hidden min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Ambient Background Glows -->
-    <div class="fixed inset-0 pointer-events-none z-0">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px]"></div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('opacity-100', 'translate-y-0');
-                        entry.target.classList.remove('opacity-0', 'translate-y-10');
-                    }
-                });
-            }, { threshold: 0.1 });
-            document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
-        });
-    </script>
-</head>
-<body class="bg-slate-950 text-slate-200 antialiased relative overflow-x-hidden min-h-screen flex flex-col">
-
-    <!-- Ambient Background Glows -->
-    <div class="fixed inset-0 pointer-events-none z-0">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px]"></div>
-    </div>
-
-    <!-- Navbar -->
-    <nav class="relative z-50 w-full bg-[#0c1220] backdrop-blur-md border-b border-white/10">
-        <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
+    <nav class="w-full bg-white border-b border-gray-200 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <a href="/" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
+                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> FURCARE
             </a>
-            <a href="{{ route('login') }}" class="text-sm font-medium text-slate-300 hover:text-teal-400 transition-colors">Login</a>
+            <a href="{{ route('login') }}" class="text-sm font-medium text-gray-500 hover:text-emerald-600 transition-colors">Login</a>
         </div>
     </nav>
 
-    <main class="flex-grow flex items-center justify-center relative z-10 py-12 px-6">
-        <div class="w-full max-w-md bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-8 shadow-2xl reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out hover:border-slate-700 transition-all duration-300 hover:shadow-[0_0_20px_rgba(20,184,166,0.1)]">
-            <h2 class="text-2xl font-bold text-white mb-6 text-center">Create an account</h2>
+    <main class="flex-grow flex items-center justify-center py-12 px-6">
+        <div class="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+            <h2 class="text-2xl font-bold text-gray-900 mb-1 text-center">Create an account</h2>
+            <p class="text-gray-400 text-sm text-center mb-6">Join FURCARE to book grooming for your pets.</p>
+
+            @if($errors->any())
+                <div class="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm space-y-1">
+                    @foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach
+                </div>
+            @endif
 
             <form action="{{ route('register') }}" method="POST" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Full Name</label>
-                    <input type="text" name="name" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-teal-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
+                    <input type="text" name="name" value="{{ old('name') }}" required autofocus
+                           class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition-all">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Email Address</label>
-                    <input type="email" name="email" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-teal-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Email Address</label>
+                    <input type="email" name="email" value="{{ old('email') }}" required
+                           class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition-all">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Password</label>
-                    <input type="password" name="password" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-teal-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Password</label>
+                    <input type="password" name="password" required
+                           class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition-all">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-1">Confirm Password</label>
-                    <input type="password" name="password_confirmation" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-teal-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Confirm Password</label>
+                    <input type="password" name="password_confirmation" required
+                           class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition-all">
                 </div>
-                <button type="submit" class="w-full py-3 mt-4 font-bold text-sm text-white rounded-xl bg-teal-500 hover:bg-teal-400 transition-all duration-300 transform hover:-translate-y-1 shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40">
+                <button type="submit" class="w-full py-3 mt-2 font-semibold text-sm text-white rounded-xl bg-emerald-600 hover:bg-emerald-700 transition-all shadow-sm">
                     Register
                 </button>
             </form>
         </div>
     </main>
 
-    <footer class="relative z-10 py-10 text-center border-t border-white/5">
-        <p class="text-slate-500 text-sm">&copy; {{ date('Y') }} FURCARE | Appointment System</p>
+    <footer class="py-8 text-center border-t border-gray-100">
+        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} FURCARE | Appointment System</p>
     </footer>
 
 </body>

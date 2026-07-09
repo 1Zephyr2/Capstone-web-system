@@ -20,24 +20,24 @@
         });
     </script>
 </head>
-<body class="bg-indigo-950 text-indigo-100 antialiased min-h-screen">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
     <!-- Navbar -->
-    <nav class="relative z-50 w-full bg-[#1e1b4b] backdrop-blur-md border-b border-white/10">
+    <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ route('admin.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
+            <a href="{{ route('admin.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
                 <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
-                <span class="text-rose-300 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/30">ADMIN PORTAL</span>
+                <span class="text-rose-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-100 border border-rose-200">ADMIN PORTAL</span>
             </a>
-            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-indigo-300">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Dashboard</a>
-                <a href="{{ route('admin.directory') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Pets</a>
-                <a href="{{ route('admin.appointments') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Appointments</a>
-                <a href="{{ route('admin.insights') }}" class="hover:text-white transition-all duration-300 hover:scale-105">Insights</a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
+                <a href="{{ route('admin.dashboard') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Dashboard</a>
+                <a href="{{ route('admin.directory') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Pets</a>
+                <a href="{{ route('admin.appointments') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Appointments</a>
+                <a href="{{ route('admin.insights') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Insights</a>
             </div>
             <form action="{{ route('admin.logout') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all duration-300 text-white shadow-lg">Logout</button>
+                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
         </div>
     </nav>
@@ -45,41 +45,41 @@
     <!-- Main Content -->
     <main class="container mx-auto px-6 py-12">
         <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-            <h1 class="text-2xl font-bold text-white">Upcoming Appointments</h1>
-            <p class="text-indigo-300 text-sm">View and manage confirmed grooming sessions.</p>
+            <h1 class="text-2xl font-bold text-gray-900">Upcoming Appointments</h1>
+            <p class="text-gray-500 text-sm">View and manage confirmed grooming sessions.</p>
         </header>
 
         <!-- Appointments List -->
         <div class="space-y-4">
             <!-- Appointment Card -->
-            <div class="bg-indigo-900/20 border border-indigo-800/80 rounded-xl p-6 hover:border-indigo-600 transition-all duration-300 hover:shadow-[0_0_20px_rgba(79,70,229,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out flex items-center justify-between">
+            <div class="bg-white border border-gray-200 rounded-xl p-6 hover:border-indigo-300 transition-all duration-300 hover:shadow-[0_0_20px_rgba(79,70,229,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-gray-500">
                         <i class="bi bi-calendar-event"></i>
                     </div>
                     <div>
-                        <h5 class="font-semibold text-white">Max (Golden Retriever)</h5>
-                        <p class="text-sm text-indigo-300">Owner: Shamaimah | 10:00 AM - 11:30 AM</p>
+                        <h5 class="font-semibold text-gray-900">Max (Golden Retriever)</h5>
+                        <p class="text-sm text-gray-500">Owner: Shamaimah | 10:00 AM - 11:30 AM</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <span class="px-3 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-medium">Confirmed</span>
+                    <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-600 border border-emerald-200 font-medium">Confirmed</span>
                 </div>
             </div>
 
             <!-- Appointment Card -->
-            <div class="bg-indigo-900/20 border border-indigo-800/80 rounded-xl p-6 hover:border-indigo-600 transition-all duration-300 hover:shadow-[0_0_20px_rgba(79,70,229,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out flex items-center justify-between">
+            <div class="bg-white border border-gray-200 rounded-xl p-6 hover:border-indigo-300 transition-all duration-300 hover:shadow-[0_0_20px_rgba(79,70,229,0.1)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-gray-500">
                         <i class="bi bi-calendar-event"></i>
                     </div>
                     <div>
-                        <h5 class="font-semibold text-white">Luna (Persian Cat)</h5>
-                        <p class="text-sm text-indigo-300">Owner: Shamaimah | 01:00 PM - 02:00 PM</p>
+                        <h5 class="font-semibold text-gray-900">Luna (Persian Cat)</h5>
+                        <p class="text-sm text-gray-500">Owner: Shamaimah | 01:00 PM - 02:00 PM</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <span class="px-3 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-medium">Confirmed</span>
+                    <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-600 border border-emerald-200 font-medium">Confirmed</span>
                 </div>
             </div>
         </div>

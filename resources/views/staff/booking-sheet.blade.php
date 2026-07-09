@@ -1,11 +1,11 @@
 @php
     $isAdmin = auth()->check() && auth()->user()->role === 'admin';
-    $bgNav = $isAdmin ? 'bg-[#1e1b4b]' : 'bg-[#0c1220]';
+    $bgNav = 'bg-white';
     $portalLabel = $isAdmin ? 'ADMIN PORTAL' : 'STAFF PORTAL';
-    $badgeBg = $isAdmin ? 'bg-rose-500/20' : 'bg-violet-500/20';
-    $badgeBorder = $isAdmin ? 'border-rose-500/30' : 'border-violet-500/30';
-    $badgeText = $isAdmin ? 'text-rose-300' : 'text-violet-300';
-    $accentText = $isAdmin ? 'text-indigo-400' : 'text-violet-400';
+    $badgeBg = $isAdmin ? 'bg-rose-100' : 'bg-violet-100';
+    $badgeBorder = $isAdmin ? 'border-rose-200' : 'border-violet-200';
+    $badgeText = $isAdmin ? 'text-rose-700' : 'text-violet-700';
+    $accentText = $isAdmin ? 'text-indigo-600' : 'text-violet-600';
 @endphp
 
 <!DOCTYPE html>
@@ -84,26 +84,26 @@
         }
     </script>
 </head>
-<body class="{{ $isAdmin ? 'bg-indigo-950' : 'bg-slate-950' }} text-slate-200 antialiased min-h-screen">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
     <!-- Navbar -->
-    <nav class="relative z-50 w-full {{ $bgNav }} backdrop-blur-md border-b border-white/5">
+    <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ $isAdmin ? route('admin.dashboard') : route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-white">
+            <a href="{{ $isAdmin ? route('admin.dashboard') : route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
                 <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
                 <span class="{{ $badgeText }} font-normal text-xs ml-2 px-2 py-0.5 rounded-md {{ $badgeBg }} border {{ $badgeBorder }}">
                     {{ $portalLabel }}
                 </span>
             </a>
-            <div class="hidden md:flex items-center gap-6 text-sm font-medium {{ $isAdmin ? 'text-indigo-300' : 'text-slate-300' }}">
-                <a href="{{ $isAdmin ? route('admin.dashboard') : route('staff.dashboard') }}" class="hover:text-white transition-all">Dashboard</a>
-                <a href="{{ $isAdmin ? route('admin.directory') : route('staff.directory') }}" class="hover:text-white transition-all">Pets</a>
-                <a href="{{ $isAdmin ? route('admin.appointments') : route('staff.appointments') }}" class="text-white">Appointments</a>
-                <a href="{{ $isAdmin ? route('admin.insights') : route('staff.insights') }}" class="hover:text-white transition-all">Insights</a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium {{ $isAdmin ? 'text-indigo-700' : 'text-slate-700' }}">
+                <a href="{{ $isAdmin ? route('admin.dashboard') : route('staff.dashboard') }}" class="hover:text-gray-900 transition-all">Dashboard</a>
+                <a href="{{ $isAdmin ? route('admin.directory') : route('staff.directory') }}" class="hover:text-gray-900 transition-all">Pets</a>
+                <a href="{{ $isAdmin ? route('admin.appointments') : route('staff.appointments') }}" class="text-gray-900">Appointments</a>
+                <a href="{{ $isAdmin ? route('admin.insights') : route('staff.insights') }}" class="hover:text-gray-900 transition-all">Insights</a>
             </div>
             <form action="{{ $isAdmin ? route('admin.logout') : route('staff.logout') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-slate-800 hover:bg-slate-700 transition-all text-white shadow-lg">Logout</button>
+                <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
         </div>
     </nav>
@@ -112,22 +112,22 @@
         <!-- Controls & Filter Bar -->
         <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-white">Appointment Booking</h1>
-                <p class="text-slate-400">Tuesday, June 23, 2026</p>
+                <h1 class="text-3xl font-bold text-gray-900">Appointment Booking</h1>
+                <p class="text-gray-500">Tuesday, June 23, 2026</p>
             </div>
-            <div class="flex items-center gap-2 bg-slate-900/40 p-1 rounded-xl border border-slate-800">
-                <button class="px-4 py-2 rounded-lg text-sm bg-slate-800 hover:bg-slate-700 transition-all text-white font-medium">[ < Prev ]</button>
-                <button class="px-4 py-2 rounded-lg text-sm bg-slate-800 hover:bg-slate-700 transition-all text-white font-medium">[ Today ]</button>
-                <button class="px-4 py-2 rounded-lg text-sm bg-slate-800 hover:bg-slate-700 transition-all text-white font-medium">[ Next > ]</button>
-                <input type="text" value="06/23/2026" class="px-4 py-2 rounded-lg text-sm bg-slate-950 border border-slate-700 text-white outline-none w-32 text-center">
+            <div class="flex items-center gap-2 bg-white p-1 rounded-xl border border-gray-200">
+                <button class="px-4 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 transition-all text-gray-700 font-medium">[ &lt; Prev ]</button>
+                <button class="px-4 py-2 rounded-lg text-sm bg-gray-900 hover:bg-gray-800 transition-all text-white font-medium">[ Today ]</button>
+                <button class="px-4 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 transition-all text-gray-700 font-medium">[ Next &gt; ]</button>
+                <input type="text" value="06/23/2026" class="px-4 py-2 rounded-lg text-sm bg-gray-50 border border-gray-300 text-gray-900 outline-none w-32 text-center">
             </div>
         </header>
 
         <!-- Core Grid Table -->
-        <div class="{{ $isAdmin ? 'bg-indigo-900/20 border-indigo-800/80' : 'bg-slate-900/40 border-slate-800/80' }} border rounded-2xl overflow-hidden shadow-2xl">
+        <div class="bg-white border-gray-200 border rounded-2xl overflow-hidden shadow-sm">
             <table class="w-full text-left border-collapse">
-                <thead class="{{ $isAdmin ? 'bg-indigo-950/50 border-indigo-800' : 'bg-slate-950/50 border-slate-800' }} border-b">
-                    <tr class="text-xs uppercase {{ $isAdmin ? 'text-indigo-400' : 'text-slate-400' }} tracking-wider">
+                <thead class="bg-gray-50/50 border-gray-200 border-b">
+                    <tr class="text-xs uppercase text-gray-500 tracking-wider">
                         <th class="px-6 py-4">Time</th>
                         <th class="px-6 py-4">Owner</th>
                         <th class="px-6 py-4">Package / Service</th>
@@ -137,49 +137,49 @@
                         <th class="px-6 py-4">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y {{ $isAdmin ? 'divide-indigo-800' : 'divide-slate-800' }}">
+                <tbody class="divide-y divide-gray-200">
                     <!-- Available slots -->
                     @foreach(['9:00 AM', '10:00 AM'] as $time)
-                    <tr class="hover:{{ $isAdmin ? 'bg-indigo-800/20' : 'bg-slate-800/20' }} transition-colors">
+                    <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold {{ $accentText }}">{{ $time }}</td>
-                        <td colspan="5" class="px-6 py-5 text-center {{ $isAdmin ? 'text-indigo-500' : 'text-slate-500' }} italic">— Available —</td>
-                        <td class="px-6 py-5"><button class="text-emerald-400 font-semibold hover:text-emerald-300 transition-all">+ Book</button></td>
+                        <td colspan="5" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
+                        <td class="px-6 py-5"><button class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all">+ Book</button></td>
                     </tr>
                     @endforeach
 
                     <!-- Pending Approval -->
                     <tr onclick="showBookingModal('11:00 AM', 'Medge', 'Full Grooming', 'S', 'Nervous dog', 'Pending Staff Approval')"
-                        class="cursor-pointer hover:{{ $isAdmin ? 'bg-indigo-800/20' : 'bg-slate-800/20' }} transition-colors">
+                        class="cursor-pointer hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold {{ $accentText }}">11:00 AM</td>
                         <td class="px-6 py-5 font-medium">Medge</td>
                         <td class="px-6 py-5">Full Grooming</td>
                         <td class="px-6 py-5">S</td>
-                        <td class="px-6 py-5 text-slate-400 text-sm">Nervous dog</td>
-                        <td class="px-6 py-5"><span class="px-3 py-1 rounded-full text-xs bg-amber-500/10 text-amber-500 border border-amber-500/20">[ 🟡 Pending Staff Approval ]</span></td>
+                        <td class="px-6 py-5 text-gray-500 text-sm">Nervous dog</td>
+                        <td class="px-6 py-5"><span class="px-3 py-1 rounded-full text-xs bg-amber-50 text-amber-500 border border-amber-200">[ 🟡 Pending Staff Approval ]</span></td>
                         <td class="px-6 py-5 space-x-2">
-                            <button class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/40 transition-all">✔️ Approve</button>
-                            <button class="text-xs px-3 py-1.5 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/40 transition-all">❌ Deny</button>
+                            <button class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-600 hover:bg-emerald-600/40 transition-all">✔️ Approve</button>
+                            <button class="text-xs px-3 py-1.5 rounded-lg bg-red-600/20 text-red-600 hover:bg-red-600/40 transition-all">❌ Deny</button>
                         </td>
                     </tr>
 
                     <!-- Booked -->
                     <tr onclick="showBookingModal('1:00 PM', 'Shamaimah', 'Basic Bath', 'XS', 'Check ears', 'Confirmed')"
-                        class="cursor-pointer hover:{{ $isAdmin ? 'bg-indigo-800/20' : 'bg-slate-800/20' }} transition-colors">
+                        class="cursor-pointer hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold {{ $accentText }}">1:00 PM</td>
                         <td class="px-6 py-5 font-medium">Shamaimah</td>
                         <td class="px-6 py-5">Basic Bath</td>
                         <td class="px-6 py-5">XS</td>
-                        <td class="px-6 py-5 text-slate-400 text-sm">Check ears</td>
-                        <td class="px-6 py-5"><span class="px-3 py-1 rounded-full text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">[ 🟢 Confirmed ]</span></td>
-                        <td class="px-6 py-5"><button class="text-xs text-slate-300 hover:text-white underline transition-all">📝 Edit Notes</button></td>
+                        <td class="px-6 py-5 text-gray-500 text-sm">Check ears</td>
+                        <td class="px-6 py-5"><span class="px-3 py-1 rounded-full text-xs bg-emerald-50 text-emerald-600 border border-emerald-200">[ 🟢 Confirmed ]</span></td>
+                        <td class="px-6 py-5"><button class="text-xs text-slate-700 hover:text-gray-900 underline transition-all">📝 Edit Notes</button></td>
                     </tr>
 
                     <!-- Available slots -->
                     @foreach(['2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'] as $time)
-                    <tr class="hover:{{ $isAdmin ? 'bg-indigo-800/20' : 'bg-slate-800/20' }} transition-colors">
+                    <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold {{ $accentText }}">{{ $time }}</td>
-                        <td colspan="5" class="px-6 py-5 text-center {{ $isAdmin ? 'text-indigo-500' : 'text-slate-500' }} italic">— Available —</td>
-                        <td class="px-6 py-5"><button class="text-emerald-400 font-semibold hover:text-emerald-300 transition-all">+ Book</button></td>
+                        <td colspan="5" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
+                        <td class="px-6 py-5"><button class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all">+ Book</button></td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -188,35 +188,35 @@
     </main>
 
     <!-- Booking Details Modal -->
-    <div id="booking-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
+    <div id="booking-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
          onclick="if(event.target===this) closeBookingModal()">
-        <div id="booking-modal-content" class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
-            <h2 class="text-xl font-bold text-white mb-6">Booking Details</h2>
+        <div id="booking-modal-content" class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Booking Details</h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Time</label>
-                    <p id="modal-time" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Time</label>
+                    <p id="modal-time" class="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Owner</label>
-                    <p id="modal-owner" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Owner</label>
+                    <p id="modal-owner" class="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Service</label>
-                    <p id="modal-service" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Service</label>
+                    <p id="modal-service" class="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Notes</label>
-                    <p id="modal-notes" class="text-white bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Notes</label>
+                    <p id="modal-notes" class="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Status</label>
-                    <p id="modal-status" class="text-emerald-400 font-semibold bg-slate-950 p-3 rounded-lg border border-slate-800 mt-1"></p>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Status</label>
+                    <p id="modal-status" class="text-emerald-600 font-semibold bg-gray-50 p-3 rounded-lg border border-gray-200 mt-1"></p>
                 </div>
 
                 <div class="mt-8 flex gap-4">
-                    <button type="button" onclick="closeBookingModal()" class="flex-1 px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">Close</button>
-                    <button type="button" class="flex-1 px-4 py-2 rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition-all">Update Status</button>
+                    <button type="button" onclick="closeBookingModal()" class="flex-1 px-4 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all">Close</button>
+                    <button type="button" class="flex-1 px-4 py-2 rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition-all">Update Status</button>
                 </div>
             </div>
         </div>
