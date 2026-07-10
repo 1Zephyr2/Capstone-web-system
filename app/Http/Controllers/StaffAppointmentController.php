@@ -12,46 +12,53 @@ class StaffAppointmentController extends Controller
      * GET /staff/appointments  OR  /admin/appointments
      */
     public function index(Request $request)
-    {
-        $query = Appointment::with(['user', 'pet'])
-            ->orderBy('appointment_date', 'asc');
+{
+    // The day being viewed in the schedule grid (defaults to today)
+    $date = $request->filled('date')
+        ? \Carbon\Carbon::parse($request->date)->startOfDay()
+        : today();
 
-        // Optional filters
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+    // Business hours shown in the grid (skips the 12:00 PM lunch slot)
+    $slotTimes = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
-        if ($request->filled('date')) {
-            $query->whereDate('appointment_date', $request->date);
-        }
+    $dayAppointments = Appointment::with(['user', 'pet'])
+        ->whereDate('appointment_date', $date)
+        ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
+        ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
+        ->when($request->filled('service'), fn($q) => $q->where('service_type', $request->service))
+        ->get()
+        ->keyBy(fn($appt) => $appt->appointment_date->format('H:i'));
 
-        if ($request->filled('service')) {
-            $query->where('service_type', $request->service);
-        }
-
-        $appointments  = $query->paginate(15)->withQueryString();
-        $serviceTypes  = Appointment::SERVICE_TYPES;
-        $statusOptions = [
-            Appointment::STATUS_PENDING,
-            Appointment::STATUS_APPROVED,
-            Appointment::STATUS_REJECTED,
-            Appointment::STATUS_COMPLETED,
-            Appointment::STATUS_CANCELLED,
+    $timeSlots = collect($slotTimes)->map(function ($slot) use ($dayAppointments, $date) {
+        return [
+            'time'        => $slot,
+            'label'       => \Carbon\Carbon::parse($slot)->format('g:i A'),
+            'datetime'    => $date->copy()->setTimeFromTimeString($slot . ':00'),
+            'appointment' => $dayAppointments->get($slot),
         ];
+    });
 
-        // Stats for dashboard summary cards
-        $stats = [
-            'pending'   => Appointment::where('status', Appointment::STATUS_PENDING)->count(),
-            'approved'  => Appointment::where('status', Appointment::STATUS_APPROVED)->count(),
-            'today'     => Appointment::whereDate('appointment_date', today())
-                                      ->where('status', Appointment::STATUS_APPROVED)
-                                      ->count(),
-        ];
+    $serviceTypes  = Appointment::SERVICE_TYPES;
+    $statusOptions = [
+        Appointment::STATUS_PENDING,
+        Appointment::STATUS_APPROVED,
+        Appointment::STATUS_REJECTED,
+        Appointment::STATUS_COMPLETED,
+        Appointment::STATUS_CANCELLED,
+    ];
 
-        return view('staff.appointments', compact(
-            'appointments', 'serviceTypes', 'statusOptions', 'stats'
-        ));
-    }
+    $stats = [
+        'pending'  => Appointment::where('status', Appointment::STATUS_PENDING)->count(),
+        'approved' => Appointment::where('status', Appointment::STATUS_APPROVED)->count(),
+        'today'    => Appointment::whereDate('appointment_date', today())
+                                  ->where('status', Appointment::STATUS_APPROVED)
+                                  ->count(),
+    ];
+
+    return view('staff.appointments', compact(
+        'timeSlots', 'date', 'serviceTypes', 'statusOptions', 'stats'
+    ));
+}
 
     /**
      * Approve a pending appointment.
@@ -117,5 +124,98 @@ class StaffAppointmentController extends Controller
     $request->validate(['notes' => ['nullable', 'string', 'max:500']]);
     $appointment->update(['notes' => $request->notes]);
     return back()->with('success', 'Notes updated.');
+}
+
+/**
+ * AJAX search for existing pets/owners (for the walk-in booking modal).
+ * GET /staff/appointments/search-pets  OR  /admin/appointments/search-pets
+ */
+public function searchPets(Request $request)
+{
+    $q = trim($request->get('q', ''));
+
+    if (strlen($q) < 2) {
+        return response()->json([]);
+    }
+
+    $pets = \App\Models\Pet::with('user')
+        ->where(function ($query) use ($q) {
+            $query->where('name', 'like', "%{$q}%")
+                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$q}%"));
+        })
+        ->limit(10)
+        ->get()
+        ->map(fn($pet) => [
+            'pet_id'     => $pet->id,
+            'pet_name'   => $pet->name,
+            'breed'      => $pet->breed,
+            'owner_name' => $pet->user->name,
+        ]);
+
+    return response()->json($pets);
+}
+
+/**
+ * Create a staff/admin-initiated booking (existing owner or walk-in), auto-approved.
+ * POST /staff/appointments  OR  /admin/appointments
+ */
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'appointment_date' => ['required', 'date'],
+        'service_type'     => ['required', 'in:' . implode(',', array_keys(Appointment::SERVICE_TYPES))],
+        'notes'            => ['nullable', 'string', 'max:500'],
+        'booking_mode'     => ['required', 'in:existing,walkin'],
+        'pet_id'           => ['required_if:booking_mode,existing', 'nullable', 'exists:pets,id'],
+        'owner_name'       => ['required_if:booking_mode,walkin', 'nullable', 'string', 'max:100'],
+        'pet_name'         => ['required_if:booking_mode,walkin', 'nullable', 'string', 'max:100'],
+        'pet_type'         => ['required_if:booking_mode,walkin', 'nullable', 'in:dog,cat,other'],
+        'pet_breed'        => ['nullable', 'string', 'max:100'],
+    ]);
+
+    $slotDateTime = \Carbon\Carbon::parse($validated['appointment_date']);
+
+    // Prevent double-booking the same slot
+    $taken = Appointment::where('appointment_date', $slotDateTime)
+        ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
+        ->exists();
+
+    abort_if($taken, 422, 'That time slot is already booked.');
+
+    if ($validated['booking_mode'] === 'existing') {
+        $pet    = \App\Models\Pet::findOrFail($validated['pet_id']);
+        $userId = $pet->user_id;
+        $petId  = $pet->id;
+    } else {
+        // Lightweight guest account so the FK constraints stay satisfied
+        $guest = \App\Models\User::create([
+            'name'     => $validated['owner_name'],
+            'email'    => 'walkin_' . uniqid() . '@furcare.local',
+            'password' => bcrypt(str()->random(32)),
+            'role'     => 'customer',
+        ]);
+
+        $pet = \App\Models\Pet::create([
+            'user_id' => $guest->id,
+            'name'    => $validated['pet_name'],
+            'type'    => $validated['pet_type'],
+            'breed'   => $validated['pet_breed'] ?? 'N/A',
+            'age'     => 0,
+        ]);
+
+        $userId = $guest->id;
+        $petId  = $pet->id;
+    }
+
+    Appointment::create([
+        'user_id'          => $userId,
+        'pet_id'           => $petId,
+        'appointment_date' => $slotDateTime,
+        'service_type'     => $validated['service_type'],
+        'status'           => Appointment::STATUS_APPROVED,
+        'notes'            => $validated['notes'] ?? null,
+    ]);
+
+    return back()->with('success', 'Walk-in appointment booked and approved.');
 }
 }

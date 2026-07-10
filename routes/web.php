@@ -103,6 +103,9 @@ Route::delete('/records/{record}', [\App\Http\Controllers\PetRecordController::c
 // Edit appointment notes
 Route::patch('/appointments/{appointment}/notes', [\App\Http\Controllers\StaffAppointmentController::class, 'updateNotes'])->name('appointments.notes');
 
+Route::get('/appointments/search-pets', [StaffAppointmentController::class, 'searchPets'])->name('appointments.search-pets');
+Route::post('/appointments', [StaffAppointmentController::class, 'store'])->name('appointments.store');
+
 // Grooming options
 Route::post('/grooming', [\App\Http\Controllers\GroomingOptionController::class, 'store'])->name('grooming.store');
 Route::patch('/grooming/{groomingOption}', [\App\Http\Controllers\GroomingOptionController::class, 'toggle'])->name('grooming.toggle');
@@ -132,7 +135,12 @@ Route::delete('/records/{record}', [\App\Http\Controllers\PetRecordController::c
 
 // Edit appointment notes
 Route::patch('/appointments/{appointment}/notes', [\App\Http\Controllers\StaffAppointmentController::class, 'updateNotes'])->name('appointments.notes');
+
+Route::get('/appointments/search-pets', [StaffAppointmentController::class, 'searchPets'])->name('appointments.search-pets');
+Route::post('/appointments', [StaffAppointmentController::class, 'store'])->name('appointments.store');
 });
+
+
 
 // Public services page (outside all middleware)
 Route::get('/services', fn() => view('services'))->name('services');

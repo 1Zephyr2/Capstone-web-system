@@ -145,113 +145,143 @@
         @endif
 
         <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-            <h1 class="text-2xl font-bold text-gray-900">Appointment Management</h1>
-            <p class="text-gray-500 text-sm">Review, approve, and manage all appointment requests.</p>
-        </header>
+    <h1 class="text-2xl font-bold text-gray-900">Appointment Management</h1>
+    <p class="text-gray-500 text-sm">Review, approve, and manage appointments by day.</p>
+</header>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-3 gap-4 mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-                <i class="bi bi-hourglass-split text-amber-600 text-xl mb-2 block"></i>
-                <p class="text-gray-500 text-xs mb-1">Pending</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $stats['pending'] }}</p>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
-                <i class="bi bi-calendar-check text-emerald-600 text-xl mb-2 block"></i>
-                <p class="text-gray-500 text-xs mb-1">Approved</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $stats['approved'] }}</p>
-            </div>
-            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5">
-                <i class="bi bi-sun text-blue-600 text-xl mb-2 block"></i>
-                <p class="text-gray-500 text-xs mb-1">Today's Schedule</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $stats['today'] }}</p>
-            </div>
-        </div>
+<!-- Summary Cards -->
+<div class="grid grid-cols-3 gap-4 mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+        <i class="bi bi-hourglass-split text-amber-600 text-xl mb-2 block"></i>
+        <p class="text-gray-500 text-xs mb-1">Pending</p>
+        <p class="text-2xl font-bold text-gray-900">{{ $stats['pending'] }}</p>
+    </div>
+    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+        <i class="bi bi-calendar-check text-emerald-600 text-xl mb-2 block"></i>
+        <p class="text-gray-500 text-xs mb-1">Approved</p>
+        <p class="text-2xl font-bold text-gray-900">{{ $stats['approved'] }}</p>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+        <i class="bi bi-sun text-blue-600 text-xl mb-2 block"></i>
+        <p class="text-gray-500 text-xs mb-1">Today's Schedule</p>
+        <p class="text-2xl font-bold text-gray-900">{{ $stats['today'] }}</p>
+    </div>
+</div>
 
-        <!-- Filters -->
-        <form method="GET" action="{{ route($prefix . '.appointments') }}"
-              class="flex flex-wrap gap-3 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-            <input type="date" name="date" value="{{ request('date') }}"
-                   class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all shadow-sm">
-            <select name="status" class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all appearance-none shadow-sm">
-                <option value="">All Statuses</option>
-                @foreach($statusOptions as $s)
-                    <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-                @endforeach
-            </select>
-            <select name="service" class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all appearance-none shadow-sm">
-                <option value="">All Services</option>
-                @foreach($serviceTypes as $key => $label)
-                    <option value="{{ $key }}" {{ request('service') === $key ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-            <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-all hover:scale-105">
-                <i class="bi bi-funnel mr-1"></i> Filter
-            </button>
-            @if(request()->hasAny(['date','status','service']))
-                <a href="{{ route($prefix . '.appointments') }}" class="px-5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition-all">Clear</a>
-            @endif
-        </form>
+@php
+    $prevDate  = $date->copy()->subDay()->toDateString();
+    $nextDate  = $date->copy()->addDay()->toDateString();
+    $todayDate = today()->toDateString();
+@endphp
 
-        <!-- Appointments List -->
-        <div class="space-y-3">
-            @forelse($appointments as $appt)
-                @php
-                    $accentMap = ['pending'=>'border-l-amber-500','approved'=>'border-l-emerald-500','rejected'=>'border-l-red-500','completed'=>'border-l-blue-500','cancelled'=>'border-l-slate-600'];
-                    $accent = $accentMap[$appt->status] ?? 'border-l-slate-600';
-                    $approveRoute  = route($prefix.'.appointments.approve',  $appt);
-                    $rejectRoute   = route($prefix.'.appointments.reject',   $appt);
-                    $completeRoute = route($prefix.'.appointments.complete', $appt);
-                    $cancelRoute   = route($prefix.'.appointments.cancel',   $appt);
-                    $editNotesRoute = route($prefix.'.appointments.notes',   $appt);
-                @endphp
-                <div onclick="openDetailModal(
-                        {{ $appt->id }},
-                        '{{ addslashes($appt->pet->name . ' (' . $appt->pet->breed . ')') }}',
-                        '{{ addslashes($appt->user->name) }}',
-                        '{{ addslashes($appt->service_label) }}',
-                        '{{ $appt->appointment_date->format('M d, Y — g:i A') }}',
-                        '{{ $appt->status }}',
-                        '{{ addslashes($appt->notes ?? '') }}',
-                        '{{ $rejectRoute }}',
-                        '{{ $approveRoute }}',
-                        '{{ $completeRoute }}',
-                        '{{ $cancelRoute }}',
-                        '{{ $editNotesRoute }}'
-                     )"
-                     class="bg-white border border-gray-200 border-l-4 {{ $accent }} rounded-xl p-5 hover:border-gray-300 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.08)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out flex items-center justify-between cursor-pointer">
-                    <div class="flex items-center gap-4">
-                        <div class="w-11 h-11 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 shrink-0">
-                            <i class="bi bi-calendar-event"></i>
-                        </div>
-                        <div>
-                            <h5 class="font-semibold text-gray-900">{{ $appt->pet->name }} <span class="text-gray-400 font-normal text-sm">({{ $appt->pet->breed }})</span></h5>
-                            <p class="text-sm text-gray-500">
-                                <span class="text-gray-600">{{ $appt->user->name }}</span>
-                                &bull; {{ $appt->service_label }}
-                                &bull; {{ $appt->appointment_date->format('M d, Y — g:i A') }}
-                            </p>
-                            @if($appt->notes)
-                                <p class="text-xs text-gray-400 mt-0.5 truncate max-w-sm"><i class="bi bi-chat-left-text mr-1"></i>{{ $appt->notes }}</p>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 shrink-0">
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {{ $appt->status_badge_class }}">{{ ucfirst($appt->status) }}</span>
-                        <i class="bi bi-chevron-right text-gray-500"></i>
-                    </div>
-                </div>
-            @empty
-                <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
-                    <i class="bi bi-calendar-x text-4xl text-gray-300 mb-3 block"></i>
-                    <p class="text-gray-500">No appointments found.</p>
-                </div>
-            @endforelse
-        </div>
+<!-- Date nav + Filters -->
+<form method="GET" action="{{ route($prefix . '.appointments') }}"
+      class="flex flex-wrap items-center gap-3 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
 
-        @if($appointments->hasPages())
-            <div class="mt-8 flex justify-center">{{ $appointments->withQueryString()->links() }}</div>
-        @endif
+    <div class="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200">
+        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $prevDate])) }}"
+           class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">&lt; Prev</a>
+        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $todayDate])) }}"
+           class="px-3 py-2 rounded-lg text-sm bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all">Today</a>
+        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $nextDate])) }}"
+           class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">Next &gt;</a>
+    </div>
+
+    <input type="date" name="date" value="{{ $date->toDateString() }}" onchange="this.form.submit()"
+           class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all shadow-sm">
+
+    <select name="status" onchange="this.form.submit()" class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all appearance-none shadow-sm">
+        <option value="">All Statuses</option>
+        @foreach($statusOptions as $s)
+            <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
+        @endforeach
+    </select>
+
+    <select name="service" onchange="this.form.submit()" class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all appearance-none shadow-sm">
+        <option value="">All Services</option>
+        @foreach($serviceTypes as $key => $label)
+            <option value="{{ $key }}" {{ request('service') === $key ? 'selected' : '' }}>{{ $label }}</option>
+        @endforeach
+    </select>
+
+    @if(request()->hasAny(['status','service']))
+        <a href="{{ route($prefix . '.appointments', ['date' => $date->toDateString()]) }}"
+           class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition-all">Clear</a>
+    @endif
+</form>
+
+<p class="text-gray-500 mb-4 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+    {{ $date->format('l, F j, Y') }}
+</p>
+
+<!-- Time Slot Grid -->
+<div class="bg-white border-gray-200 border rounded-2xl overflow-hidden shadow-sm reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+    <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-50/50 border-gray-200 border-b">
+            <tr class="text-xs uppercase text-gray-500 tracking-wider">
+                <th class="px-6 py-4">Time</th>
+                <th class="px-6 py-4">Owner</th>
+                <th class="px-6 py-4">Package / Service</th>
+                <th class="px-6 py-4">Notes</th>
+                <th class="px-6 py-4">Status</th>
+                <th class="px-6 py-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            @foreach($timeSlots as $slot)
+                @php $appt = $slot['appointment']; @endphp
+
+                @if(!$appt)
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
+                        <td colspan="4" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
+                        <td class="px-6 py-5">
+    <button type="button"
+            onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+            class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
+        + Book
+    </button>
+</td>
+                    </tr>
+                @else
+                    @php
+                        $approveRoute   = route($prefix.'.appointments.approve',  $appt);
+                        $rejectRoute    = route($prefix.'.appointments.reject',   $appt);
+                        $completeRoute  = route($prefix.'.appointments.complete', $appt);
+                        $cancelRoute    = route($prefix.'.appointments.cancel',   $appt);
+                        $editNotesRoute = route($prefix.'.appointments.notes',    $appt);
+                    @endphp
+                    <tr onclick="openDetailModal(
+                            {{ $appt->id }},
+                            '{{ addslashes($appt->pet->name . ' (' . $appt->pet->breed . ')') }}',
+                            '{{ addslashes($appt->user->name) }}',
+                            '{{ addslashes($appt->service_label) }}',
+                            '{{ $appt->appointment_date->format('M d, Y — g:i A') }}',
+                            '{{ $appt->status }}',
+                            '{{ addslashes($appt->notes ?? '') }}',
+                            '{{ $rejectRoute }}',
+                            '{{ $approveRoute }}',
+                            '{{ $completeRoute }}',
+                            '{{ $cancelRoute }}',
+                            '{{ $editNotesRoute }}'
+                         )"
+                        class="cursor-pointer hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
+                        <td class="px-6 py-5 font-medium">{{ $appt->user->name }}</td>
+                        <td class="px-6 py-5">{{ $appt->service_label }} <span class="text-gray-400 text-xs">({{ $appt->pet->name }})</span></td>
+                        <td class="px-6 py-5 text-gray-500 text-sm truncate max-w-xs">{{ $appt->notes ?? '—' }}</td>
+                        <td class="px-6 py-5">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {{ $appt->status_badge_class }}">{{ ucfirst($appt->status) }}</span>
+                        </td>
+                        <td class="px-6 py-5">
+                            <span class="text-xs text-violet-600 underline">View / Manage</span>
+                        </td>
+                    </tr>
+                @endif
+            @endforeach
+        </tbody>
+    </table>
+</div>
     </main>
 
     <!-- Detail Modal -->
@@ -362,5 +392,170 @@
             </form>
         </div>
     </div>
+    <!-- Book Walk-in Modal -->
+<div id="book-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/80 backdrop-blur-sm transition-opacity duration-300 ease-out"
+     onclick="if(event.target===this) closeModal('book-modal','book-modal-content')">
+    <div id="book-modal-content" class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out max-h-[90vh] overflow-y-auto">
+        <h2 class="text-xl font-bold text-gray-900 mb-1">Book Appointment</h2>
+        <p id="book-modal-time" class="text-sm text-gray-500 mb-6"></p>
+
+        <!-- Mode toggle -->
+        <div class="flex gap-2 mb-5 bg-gray-100 p-1 rounded-xl">
+            <button type="button" id="mode-btn-existing" onclick="setBookingMode('existing')"
+                    class="flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all bg-white shadow text-gray-900">
+                Existing Owner
+            </button>
+            <button type="button" id="mode-btn-walkin" onclick="setBookingMode('walkin')"
+                    class="flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all text-gray-500">
+                Walk-in
+            </button>
+        </div>
+
+        <form id="book-form" method="POST" action="{{ route($prefix . '.appointments.store') }}">
+            @csrf
+            <input type="hidden" name="appointment_date" id="book-appointment-date">
+            <input type="hidden" name="booking_mode" id="book-mode" value="existing">
+            <input type="hidden" name="pet_id" id="book-pet-id">
+
+            <!-- Existing owner search -->
+            <div id="existing-fields" class="space-y-3 mb-4">
+                <div class="relative">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Search Owner or Pet</label>
+                    <input type="text" id="pet-search-input" oninput="searchPets(this.value)" autocomplete="off"
+                           placeholder="Start typing a name..."
+                           class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                    <div id="pet-search-results" class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden max-h-48 overflow-y-auto"></div>
+                </div>
+                <div id="pet-selected-display" class="hidden bg-violet-50 border border-violet-200 rounded-lg p-3 text-sm">
+                    <span class="font-semibold text-gray-900" id="pet-selected-text"></span>
+                    <button type="button" onclick="clearSelectedPet()" class="text-red-500 text-xs ml-2">Change</button>
+                </div>
+            </div>
+
+            <!-- Walk-in fields -->
+            <div id="walkin-fields" class="space-y-3 mb-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Owner Name</label>
+                    <input type="text" name="owner_name" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Pet Name</label>
+                        <input type="text" name="pet_name" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Type</label>
+                        <select name="pet_type" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                            <option value="dog">Dog</option>
+                            <option value="cat">Cat</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Breed (optional)</label>
+                    <input type="text" name="pet_breed" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                </div>
+            </div>
+
+            <!-- Shared fields -->
+            <div class="mb-4">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Service</label>
+                <select name="service_type" required class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                    @foreach(\App\Models\Appointment::SERVICE_TYPES as $key => $label)
+                        <option value="{{ $key }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="mb-6">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Notes (optional)</label>
+                <textarea name="notes" rows="2" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500 resize-none"></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal('book-modal','book-modal-content')"
+                        class="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all font-semibold">Cancel</button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all">Book & Approve</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openBookModal(datetime, label) {
+        document.getElementById('book-appointment-date').value = datetime;
+        document.getElementById('book-modal-time').innerText = label;
+        setBookingMode('existing');
+        clearSelectedPet();
+        document.getElementById('pet-search-input').value = '';
+        document.getElementById('pet-search-results').classList.add('hidden');
+        showModal('book-modal', 'book-modal-content');
+    }
+
+    function setBookingMode(mode) {
+        document.getElementById('book-mode').value = mode;
+        const isExisting = mode === 'existing';
+
+        document.getElementById('existing-fields').classList.toggle('hidden', !isExisting);
+        document.getElementById('walkin-fields').classList.toggle('hidden', isExisting);
+
+        document.getElementById('mode-btn-existing').classList.toggle('bg-white', isExisting);
+        document.getElementById('mode-btn-existing').classList.toggle('shadow', isExisting);
+        document.getElementById('mode-btn-existing').classList.toggle('text-gray-900', isExisting);
+        document.getElementById('mode-btn-existing').classList.toggle('text-gray-500', !isExisting);
+
+        document.getElementById('mode-btn-walkin').classList.toggle('bg-white', !isExisting);
+        document.getElementById('mode-btn-walkin').classList.toggle('shadow', !isExisting);
+        document.getElementById('mode-btn-walkin').classList.toggle('text-gray-900', !isExisting);
+        document.getElementById('mode-btn-walkin').classList.toggle('text-gray-500', isExisting);
+    }
+
+    let searchTimeout;
+    function searchPets(q) {
+        clearTimeout(searchTimeout);
+        const resultsBox = document.getElementById('pet-search-results');
+
+        if (q.length < 2) {
+            resultsBox.classList.add('hidden');
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetch(`{{ route($prefix . '.appointments.search-pets') }}?q=${encodeURIComponent(q)}`)
+                .then(res => res.json())
+                .then(pets => {
+                    resultsBox.innerHTML = '';
+                    if (pets.length === 0) {
+                        resultsBox.innerHTML = '<div class="p-3 text-sm text-gray-400">No matches found.</div>';
+                    } else {
+                        pets.forEach(pet => {
+                            const item = document.createElement('div');
+                            item.className = 'p-3 text-sm hover:bg-violet-50 cursor-pointer border-b border-gray-100 last:border-0';
+                            item.innerHTML = `<span class="font-semibold">${pet.pet_name}</span> <span class="text-gray-400">(${pet.breed})</span> — ${pet.owner_name}`;
+                            item.onclick = () => selectPet(pet);
+                            resultsBox.appendChild(item);
+                        });
+                    }
+                    resultsBox.classList.remove('hidden');
+                });
+        }, 250);
+    }
+
+    function selectPet(pet) {
+        document.getElementById('book-pet-id').value = pet.pet_id;
+        document.getElementById('pet-selected-text').innerText = `${pet.pet_name} (${pet.breed}) — ${pet.owner_name}`;
+        document.getElementById('pet-selected-display').classList.remove('hidden');
+        document.getElementById('pet-search-input').classList.add('hidden');
+        document.getElementById('pet-search-results').classList.add('hidden');
+    }
+
+    function clearSelectedPet() {
+        document.getElementById('book-pet-id').value = '';
+        document.getElementById('pet-selected-display').classList.add('hidden');
+        document.getElementById('pet-search-input').classList.remove('hidden');
+        document.getElementById('pet-search-input').value = '';
+    }
+</script>
 </body>
 </html>
