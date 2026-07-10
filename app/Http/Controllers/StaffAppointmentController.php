@@ -25,7 +25,7 @@ class StaffAppointmentController extends Controller
         ->whereDate('appointment_date', $date)
         ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
         ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
-        ->when($request->filled('service'), fn($q) => $q->where('service_type', $request->service))
+        ->when($request->filled('service'), fn($q) => $q->where('service_id', $request->service))
         ->get()
         ->keyBy(fn($appt) => $appt->appointment_date->format('H:i'));
 
@@ -38,7 +38,7 @@ class StaffAppointmentController extends Controller
         ];
     });
 
-    $serviceTypes  = Appointment::SERVICE_TYPES;
+    $serviceTypes = \App\Models\Service::active()->orderBy('category')->orderBy('name')->get();
     $statusOptions = [
         Appointment::STATUS_PENDING,
         Appointment::STATUS_APPROVED,

@@ -155,10 +155,14 @@
                         <div class="relative">
                             <i class="bi bi-scissors absolute left-3 top-3 text-emerald-500 pointer-events-none text-sm"></i>
                             <select id="service_select" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-9 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all appearance-none text-sm">
-                                @foreach($serviceTypes as $key => $label)
-                                    <option value="{{ $key }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
+    @foreach($services as $category => $items)
+        <optgroup label="{{ $category }}">
+            @foreach($items as $svc)
+                <option value="{{ $svc->id }}">{{ $svc->name }}</option>
+            @endforeach
+        </optgroup>
+    @endforeach
+</select>
                             <i class="bi bi-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none text-sm"></i>
                         </div>
                     </div>
@@ -264,7 +268,7 @@
                 <input type="hidden" name="appointment_time" id="appointment_time">
                 <input type="hidden" name="appointment_date" id="hidden_date">
                 <input type="hidden" name="pet_id"           id="hidden_pet_id">
-                <input type="hidden" name="service_type"     id="hidden_service_type">
+                <input type="hidden" name="service_id"     id="hidden_service_type">
                 <div class="space-y-3 mb-5">
                     <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Time</label>
                         <p id="selected_time_display" class="text-emerald-700 font-bold bg-emerald-50 p-3 rounded-lg border border-emerald-200 text-sm"></p></div>

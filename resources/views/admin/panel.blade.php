@@ -3,6 +3,7 @@
     $owners          = App\Models\User::where('role', 'owner')->with('pets')->orderBy('name')->get();
     $groomingStyles  = App\Models\GroomingOption::where('type','style')->orderBy('name')->get();
     $groomingAddons  = App\Models\GroomingOption::where('type','addon')->orderBy('name')->get();
+    $bookingServices = App\Models\Service::orderBy('category')->orderBy('name')->get()->groupBy('category');
 @endphp
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
@@ -45,6 +46,13 @@
             document.getElementById('grooming-type-input').value = type;
             document.getElementById('grooming-modal-title').innerText = type === 'style' ? 'Add Grooming Style' : 'Add Grooming Add-on';
             toggleModal('add-grooming-modal','add-grooming-modal-content');
+        }
+
+        function openEditService(id, name, category) {
+            document.getElementById('edit-service-form').action = `/admin/services/${id}`;
+            document.getElementById('edit-service-name').value = name;
+            document.getElementById('edit-service-category').value = category;
+            toggleModal('edit-service-modal','edit-service-modal-content');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -101,6 +109,7 @@
                 <button id="btn-staff"    onclick="showTab('staff')"    class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all"><i class="bi bi-person-badge mr-2"></i> Staff Management</button>
                 <button id="btn-owners"   onclick="showTab('owners')"   class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-people mr-2"></i> Owner Accounts</button>
                 <button id="btn-services" onclick="showTab('services')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-scissors mr-2"></i> Grooming Options</button>
+                <button id="btn-booking-services" onclick="showTab('booking-services')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-list-check mr-2"></i> Booking Services</button>
                 <button id="btn-settings" onclick="showTab('settings')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-gear mr-2"></i> System Settings</button>
             </div>
 
@@ -167,7 +176,7 @@
                     </div>
                 </div>
 
-                 <!-- Grooming Options -->
+                <!-- Grooming Options -->
                 <div id="panel-services" class="tab-panel hidden">
                     <div class="mb-6 flex items-center justify-between">
                         <div>
@@ -175,7 +184,7 @@
                             <p class="text-gray-500 text-sm">Manage styles and add-ons shown to clients. Upload images for each.</p>
                         </div>
                     </div>
- 
+
                     <!-- Styles -->
                     <div class="mb-8">
                         <div class="flex items-center justify-between mb-4">
@@ -191,7 +200,6 @@
                             @forelse($groomingStyles as $opt)
                                 <div class="bg-gray-50/40 border {{ $opt->is_active ? 'border-gray-200' : 'border-gray-300/30 opacity-60' }} rounded-xl p-4">
                                     <div class="flex items-start justify-between gap-4">
-                                        <!-- Image preview or placeholder -->
                                         <div class="shrink-0">
                                             @if($opt->image)
                                                 <img src="{{ asset('storage/' . $opt->image) }}"
@@ -203,7 +211,7 @@
                                                 </div>
                                             @endif
                                         </div>
- 
+
                                         <div class="flex-1 min-w-0">
                                             <p class="font-semibold text-gray-900 text-sm">
                                                 {{ $opt->name }}
@@ -212,8 +220,7 @@
                                             @if($opt->description)
                                                 <p class="text-xs text-gray-500 mt-0.5">{{ $opt->description }}</p>
                                             @endif
- 
-                                            <!-- Image upload form -->
+
                                             <form method="POST" action="{{ route('admin.grooming.image', $opt) }}"
                                                   enctype="multipart/form-data" class="mt-2 flex items-center gap-2">
                                                 @csrf
@@ -228,7 +235,7 @@
                                                 @endif
                                             </form>
                                         </div>
- 
+
                                         <div class="flex items-center gap-2 shrink-0">
                                             <form method="POST" action="{{ route('admin.grooming.toggle', $opt) }}">
                                                 @csrf @method('PATCH')
@@ -252,7 +259,7 @@
                             @endforelse
                         </div>
                     </div>
- 
+
                     <!-- Add-ons -->
                     <div>
                         <div class="flex items-center justify-between mb-4">
@@ -279,7 +286,7 @@
                                                 </div>
                                             @endif
                                         </div>
- 
+
                                         <div class="flex-1 min-w-0">
                                             <p class="font-semibold text-gray-900 text-sm">
                                                 {{ $opt->name }}
@@ -288,7 +295,7 @@
                                             @if($opt->description)
                                                 <p class="text-xs text-gray-500 mt-0.5">{{ $opt->description }}</p>
                                             @endif
- 
+
                                             <form method="POST" action="{{ route('admin.grooming.image', $opt) }}"
                                                   enctype="multipart/form-data" class="mt-2 flex items-center gap-2">
                                                 @csrf
@@ -303,7 +310,7 @@
                                                 @endif
                                             </form>
                                         </div>
- 
+
                                         <div class="flex items-center gap-2 shrink-0">
                                             <form method="POST" action="{{ route('admin.grooming.toggle', $opt) }}">
                                                 @csrf @method('PATCH')
@@ -328,6 +335,65 @@
                         </div>
                     </div>
                 </div>
+                <!-- panel-services closes here, correctly, before booking-services starts -->
+
+                <!-- Booking Services (customer-facing appointment services) -->
+                <div id="panel-booking-services" class="tab-panel hidden">
+                    <div class="mb-6 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">Booking Services</h2>
+                            <p class="text-gray-500 text-sm">Services customers can select when requesting an appointment.</p>
+                        </div>
+                        <button onclick="toggleModal('add-service-modal','add-service-modal-content')"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-semibold transition-all hover:scale-105 text-white">
+                            <i class="bi bi-plus-circle mr-1"></i> Add Service
+                        </button>
+                    </div>
+
+                    @foreach(\App\Models\Service::CATEGORIES as $category)
+                        <div class="mb-8">
+                            <h3 class="font-bold text-gray-900 mb-4">{{ $category }}</h3>
+                            <div class="space-y-2">
+                                @forelse($bookingServices->get($category, collect()) as $svc)
+                                    <div class="bg-gray-50/40 border {{ $svc->is_active ? 'border-gray-200' : 'border-gray-300/30 opacity-60' }} rounded-xl p-4 flex items-center justify-between">
+                                        <div>
+                                            <p class="font-semibold text-gray-900 text-sm">
+                                                {{ $svc->name }}
+                                                @if(!$svc->is_active)<span class="ml-2 text-xs text-gray-400">(disabled)</span>@endif
+                                            </p>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <button type="button"
+                                                    onclick="openEditService({{ $svc->id }}, '{{ addslashes($svc->name) }}', '{{ $svc->category }}')"
+                                                    class="px-3 py-1 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </button>
+                                            <form method="POST" action="{{ route('admin.services.toggle', $svc) }}">
+                                                @csrf @method('PATCH')
+                                                <button type="submit" class="px-3 py-1 rounded-lg text-xs {{ $svc->is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' }} transition-all">
+                                                    {{ $svc->is_active ? 'Disable' : 'Enable' }}
+                                                </button>
+                                            </form>
+                                            <form id="delete-service-{{ $svc->id }}" method="POST" action="{{ route('admin.services.destroy', $svc) }}">@csrf @method('DELETE')</form>
+                                            <button onclick="confirmDelete('delete-service-{{ $svc->id }}','Remove \'{{ addslashes($svc->name) }}\'?')"
+                                                    class="p-2 rounded-lg text-rose-600 hover:bg-rose-100 transition-all"><i class="bi bi-trash text-sm"></i></button>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-gray-400 text-sm italic py-2">No services in this category yet.</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Settings placeholder (referenced by sidebar button, add real content later) -->
+                <div id="panel-settings" class="tab-panel hidden">
+                    <h2 class="text-xl font-bold text-gray-900 mb-2">System Settings</h2>
+                    <p class="text-gray-500 text-sm italic">Coming soon.</p>
+                </div>
+
+            </div>
         </div>
     </main>
 
@@ -374,6 +440,52 @@
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="toggleModal('add-grooming-modal','add-grooming-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all">Cancel</button>
                     <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-[1.02]">Add Option</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Service Modal -->
+    <div id="add-service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
+         onclick="if(event.target===this) toggleModal('add-service-modal','add-service-modal-content')">
+        <div id="add-service-modal-content" class="bg-white border border-gray-300 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Add New Service</h2>
+            <form method="POST" action="{{ route('admin.services.store') }}" class="space-y-4">
+                @csrf
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Service Name</label>
+                    <input type="text" name="name" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all" placeholder="e.g. Spa Treatment"></div>
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Category</label>
+                    <select name="category" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all">
+                        @foreach(\App\Models\Service::CATEGORIES as $cat)
+                            <option value="{{ $cat }}">{{ $cat }}</option>
+                        @endforeach
+                    </select></div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="toggleModal('add-service-modal','add-service-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-[1.02]">Add Service</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Service Modal -->
+    <div id="edit-service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
+         onclick="if(event.target===this) toggleModal('edit-service-modal','edit-service-modal-content')">
+        <div id="edit-service-modal-content" class="bg-white border border-gray-300 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Edit Service</h2>
+            <form id="edit-service-form" method="POST" class="space-y-4">
+                @csrf @method('PATCH')
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Service Name</label>
+                    <input type="text" id="edit-service-name" name="name" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all"></div>
+                <div><label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Category</label>
+                    <select id="edit-service-category" name="category" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 outline-none focus:border-indigo-400 transition-all">
+                        @foreach(\App\Models\Service::CATEGORIES as $cat)
+                            <option value="{{ $cat }}">{{ $cat }}</option>
+                        @endforeach
+                    </select></div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="toggleModal('edit-service-modal','edit-service-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-[1.02]">Save Changes</button>
                 </div>
             </form>
         </div>

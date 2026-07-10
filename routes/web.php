@@ -113,6 +113,11 @@ Route::delete('/grooming/{groomingOption}', [\App\Http\Controllers\GroomingOptio
 
 // Grooming image upload
 Route::post('/grooming/{groomingOption}/image', [\App\Http\Controllers\GroomingOptionController::class, 'updateImage'])->name('grooming.image');
+
+Route::post('/services', [\App\Http\Controllers\ServiceController::class, 'store'])->name('services.store');
+Route::patch('/services/{service}', [\App\Http\Controllers\ServiceController::class, 'update'])->name('services.update');
+Route::patch('/services/{service}/toggle', [\App\Http\Controllers\ServiceController::class, 'toggle'])->name('services.toggle');
+Route::delete('/services/{service}', [\App\Http\Controllers\ServiceController::class, 'destroy'])->name('services.destroy');
 });
 
 // ── Staff Routes ───────────────────────────────────────────────────────────────

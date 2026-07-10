@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\Pet;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,9 +14,9 @@ class AppointmentController extends Controller
     {
         $pets = Pet::where('user_id', Auth::id())->get();
         return view('pets.booking-request', [
-            'pets'         => $pets,
-            'serviceTypes' => Appointment::SERVICE_TYPES,
-            'clinicHours'  => Appointment::CLINIC_HOURS,
+            'pets'        => $pets,
+            'services'    => Service::groupedActive(),
+            'clinicHours' => Appointment::CLINIC_HOURS,
         ]);
     }
 
@@ -25,7 +26,7 @@ class AppointmentController extends Controller
             'pet_id'           => ['required', 'exists:pets,id'],
             'appointment_date' => ['required', 'date', 'after:today'],
             'appointment_time' => ['required', 'in:' . implode(',', array_keys(Appointment::CLINIC_HOURS))],
-            'service_type'     => ['required', 'in:' . implode(',', array_keys(Appointment::SERVICE_TYPES))],
+            'service_id'       => ['required', 'exists:services,id'],
             'notes'            => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -36,7 +37,7 @@ class AppointmentController extends Controller
             'user_id'          => Auth::id(),
             'pet_id'           => $pet->id,
             'appointment_date' => $appointmentDatetime,
-            'service_type'     => $validated['service_type'],
+            'service_id'       => $validated['service_id'],
             'status'           => Appointment::STATUS_PENDING,
             'notes'            => $validated['notes'] ?? null,
         ]);
@@ -47,7 +48,7 @@ class AppointmentController extends Controller
 
     public function index()
     {
-        $appointments = Appointment::with('pet')
+        $appointments = Appointment::with(['pet', 'service'])
             ->where('user_id', Auth::id())
             ->orderByDesc('appointment_date')
             ->paginate(10);
@@ -61,7 +62,7 @@ class AppointmentController extends Controller
      */
     public function history()
     {
-        $appointments = Appointment::with('pet')
+        $appointments = Appointment::with(['pet', 'service'])
             ->where('user_id', Auth::id())
             ->orderByDesc('appointment_date')
             ->paginate(15);
@@ -78,11 +79,11 @@ class AppointmentController extends Controller
         abort_if($appointment->user_id !== Auth::id(), 403);
         abort_if(!$appointment->isPending() && !$appointment->isApproved(), 403);
 
-        $pets         = Pet::where('user_id', Auth::id())->get();
-        $serviceTypes = Appointment::SERVICE_TYPES;
-        $clinicHours  = Appointment::CLINIC_HOURS;
+        $pets        = Pet::where('user_id', Auth::id())->get();
+        $services    = Service::groupedActive();
+        $clinicHours = Appointment::CLINIC_HOURS;
 
-        return view('pets.appointment-edit', compact('appointment', 'pets', 'serviceTypes', 'clinicHours'));
+        return view('pets.appointment-edit', compact('appointment', 'pets', 'services', 'clinicHours'));
     }
 
     /**
@@ -97,7 +98,7 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'appointment_date' => ['required', 'date', 'after:today'],
             'appointment_time' => ['required', 'in:' . implode(',', array_keys(Appointment::CLINIC_HOURS))],
-            'service_type'     => ['required', 'in:' . implode(',', array_keys(Appointment::SERVICE_TYPES))],
+            'service_id'       => ['required', 'exists:services,id'],
             'notes'            => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -106,7 +107,7 @@ class AppointmentController extends Controller
 
         $appointment->update([
             'appointment_date' => $appointmentDatetime,
-            'service_type'     => $validated['service_type'],
+            'service_id'       => $validated['service_id'],
             'notes'            => $validated['notes'] ?? null,
             'status'           => $wasApproved ? Appointment::STATUS_PENDING : $appointment->status,
         ]);

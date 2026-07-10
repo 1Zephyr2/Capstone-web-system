@@ -37,6 +37,7 @@ class Appointment extends Model
         'pet_id',
         'appointment_date',
         'service_type',
+        'service_id',
         'status',
         'notes',
         'rejection_reason',
@@ -58,12 +59,20 @@ class Appointment extends Model
         return $this->belongsTo(Pet::class);
     }
 
+    public function service(): BelongsTo
+{
+    return $this->belongsTo(Service::class);
+}
+
     // ── Helpers ────────────────────────────────────────────────────
 
     public function getServiceLabelAttribute(): string
-    {
-        return self::SERVICE_TYPES[$this->service_type] ?? ucfirst($this->service_type);
+{
+    if ($this->service_id && $this->service) {
+        return $this->service->name;
     }
+    return self::SERVICE_TYPES[$this->service_type] ?? ucfirst($this->service_type ?? 'Service');
+}
 
     public function getStatusBadgeClassAttribute(): string
     {

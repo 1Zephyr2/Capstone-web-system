@@ -115,14 +115,25 @@
                 <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Service Type</label>
                 <div class="relative">
                     <i class="bi bi-scissors absolute left-4 top-3 text-emerald-500 pointer-events-none"></i>
-                    <select name="service_type" required
+                    <select name="service_id" required
                             class="w-full bg-gray-50 border border-gray-200 rounded-xl px-10 py-3 text-gray-900 outline-none focus:border-emerald-500 transition-all appearance-none text-sm">
-                        @foreach($serviceTypes as $key => $label)
-                            <option value="{{ $key }}" {{ old('service_type', $appointment->service_type) === $key ? 'selected' : '' }}>{{ $label }}</option>
+                        @foreach($services as $category => $items)
+                            <optgroup label="{{ $category }}">
+                                @foreach($items as $svc)
+                                    <option value="{{ $svc->id }}" {{ (int) old('service_id', $appointment->service_id) === $svc->id ? 'selected' : '' }}>
+                                        {{ $svc->name }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
                         @endforeach
                     </select>
                     <i class="bi bi-chevron-down absolute right-4 top-3 text-gray-400 pointer-events-none"></i>
                 </div>
+                @if(!$appointment->service_id)
+                    <p class="text-amber-500 text-xs mt-1">
+                        <i class="bi bi-exclamation-circle mr-1"></i>This appointment used an older service type ("{{ $appointment->service_label }}"). Please pick a current service to continue.
+                    </p>
+                @endif
             </div>
 
             <!-- Notes -->
