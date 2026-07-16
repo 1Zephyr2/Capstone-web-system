@@ -163,7 +163,7 @@ public function store(Request $request)
 {
     $validated = $request->validate([
         'appointment_date' => ['required', 'date'],
-        'service_type'     => ['required', 'in:' . implode(',', array_keys(Appointment::SERVICE_TYPES))],
+        'service_id'       => ['required', 'exists:services,id'],
         'notes'            => ['nullable', 'string', 'max:500'],
         'booking_mode'     => ['required', 'in:existing,walkin'],
         'pet_id'           => ['required_if:booking_mode,existing', 'nullable', 'exists:pets,id'],
@@ -211,7 +211,7 @@ public function store(Request $request)
         'user_id'          => $userId,
         'pet_id'           => $petId,
         'appointment_date' => $slotDateTime,
-        'service_type'     => $validated['service_type'],
+        'service_id'       => $validated['service_id'],
         'status'           => Appointment::STATUS_APPROVED,
         'notes'            => $validated['notes'] ?? null,
     ]);

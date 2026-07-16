@@ -276,35 +276,6 @@
         </div>
     </section>
 
-    <!-- Testimonials -->
-    <section class="py-24 bg-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-14 reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
-                <span class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3 block">Loved by pet owners</span>
-                <h2 class="text-3xl md:text-4xl font-display font-bold text-gray-900">Don't just take our word for it</h2>
-            </div>
-            <div class="grid md:grid-cols-3 gap-6 reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
-                @foreach([
-                    ['Jamie R.', 'Owner of Buddy', 'I get a text the moment Buddy\'s groom is done. No more calling the front desk to check.', '🐶'],
-                    ['Priya N.', 'Owner of Milo & Luna', 'Two cats, two schedules, zero confusion. Everything lives in one place now.', '🐱'],
-                    ['Dan O.', 'Owner of Rex', 'Booking took less time than making coffee. Rex\'s vet history is all right there too.', '🐾'],
-                ] as $t)
-                <div class="bg-white border border-gray-200 rounded-2xl p-7">
-                    <div class="text-amber-400 mb-4 text-sm">★★★★★</div>
-                    <p class="text-gray-600 text-sm leading-relaxed mb-6">"{{ $t[2] }}"</p>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-lg">{{ $t[3] }}</div>
-                        <div>
-                            <p class="font-bold text-gray-900 text-sm">{{ $t[0] }}</p>
-                            <p class="text-xs text-gray-400">{{ $t[1] }}</p>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
     <!-- FAQ -->
     <section id="faq" class="py-24 bg-white">
         <div class="container mx-auto px-6 max-w-3xl">

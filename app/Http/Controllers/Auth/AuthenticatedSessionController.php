@@ -26,6 +26,22 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = Auth::user();
+
+        if (strtolower($user->role) !== 'owner') {
+            Auth::logout();
+
+            $portal = match (strtolower($user->role)) {
+                'admin' => 'admin.login',
+                'staff' => 'staff.login',
+                default => 'login',
+            };
+
+            return redirect()->route($portal)->withErrors([
+                'email' => 'Please use the ' . ucfirst(strtolower($user->role)) . ' login page.',
+            ]);
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));

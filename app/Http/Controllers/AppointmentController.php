@@ -7,6 +7,7 @@ use App\Models\Pet;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class AppointmentController extends Controller
 {
@@ -33,6 +34,12 @@ class AppointmentController extends Controller
         $pet = Pet::where('id', $validated['pet_id'])->where('user_id', Auth::id())->firstOrFail();
         $appointmentDatetime = $validated['appointment_date'] . ' ' . $validated['appointment_time'] . ':00';
 
+        if ($this->slotIsTaken($appointmentDatetime)) {
+            return back()
+                ->withErrors(['appointment_time' => 'That time slot was just booked by someone else. Please choose another.'])
+                ->withInput();
+        }
+
         Appointment::create([
             'user_id'          => Auth::id(),
             'pet_id'           => $pet->id,
@@ -56,10 +63,7 @@ class AppointmentController extends Controller
         return view('pets.appointments', compact('appointments'));
     }
 
-    /**
-     * Full appointment history — all statuses, paginated.
-     * GET /appointments/history
-     */
+   
     public function history()
     {
         $appointments = Appointment::with(['pet', 'service'])
@@ -70,10 +74,7 @@ class AppointmentController extends Controller
         return view('pets.appointment-history', compact('appointments'));
     }
 
-    /**
-     * Show edit form for a pending or approved appointment.
-     * GET /appointments/{appointment}/edit-form
-     */
+    
     public function edit(Appointment $appointment)
     {
         abort_if($appointment->user_id !== Auth::id(), 403);
@@ -86,10 +87,7 @@ class AppointmentController extends Controller
         return view('pets.appointment-edit', compact('appointment', 'pets', 'services', 'clinicHours'));
     }
 
-    /**
-     * Update a pending or approved appointment.
-     * PATCH /appointments/{appointment}
-     */
+    
     public function update(Request $request, Appointment $appointment)
     {
         abort_if($appointment->user_id !== Auth::id(), 403);
@@ -104,6 +102,12 @@ class AppointmentController extends Controller
 
         $wasApproved = $appointment->isApproved();
         $appointmentDatetime = $validated['appointment_date'] . ' ' . $validated['appointment_time'] . ':00';
+
+        if ($this->slotIsTaken($appointmentDatetime, $appointment->id)) {
+            return back()
+                ->withErrors(['appointment_time' => 'That time slot is already booked. Please choose another.'])
+                ->withInput();
+        }
 
         $appointment->update([
             'appointment_date' => $appointmentDatetime,
@@ -130,5 +134,57 @@ class AppointmentController extends Controller
 
         $appointment->update(['status' => Appointment::STATUS_CANCELLED]);
         return back()->with('success', 'Appointment cancelled successfully.');
+    }
+
+    
+    public function availability(Request $request)
+    {
+        $request->validate(['date' => ['required', 'date']]);
+
+        $bookedTimes = Appointment::whereDate('appointment_date', $request->date)
+            ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
+            ->get()
+            ->map(fn($a) => $a->appointment_date->format('H:i'))
+            ->values();
+
+        $totalSlots = count(Appointment::CLINIC_HOURS);
+        $isPastDate = Carbon::parse($request->date)->startOfDay()->lt(today());
+
+        return response()->json([
+            'booked'       => $bookedTimes,
+            'fully_booked' => !$isPastDate && $bookedTimes->count() >= $totalSlots,
+        ]);
+    }
+
+   
+    public function monthAvailability(Request $request)
+    {
+        $request->validate([
+            'year'  => ['required', 'integer'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+        ]);
+
+        $start = Carbon::createFromDate($request->year, $request->month, 1)->startOfDay();
+        $end   = $start->copy()->endOfMonth()->endOfDay();
+        $totalSlots = count(Appointment::CLINIC_HOURS);
+
+        $counts = Appointment::whereBetween('appointment_date', [$start, $end])
+            ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
+            ->get()
+            ->groupBy(fn($a) => $a->appointment_date->format('Y-m-d'))
+            ->map->count();
+
+        $fullyBookedDates = $counts->filter(fn($count) => $count >= $totalSlots)->keys()->values();
+
+        return response()->json(['fully_booked_dates' => $fullyBookedDates]);
+    }
+
+    
+    private function slotIsTaken(string $datetime, ?int $excludingAppointmentId = null): bool
+    {
+        return Appointment::where('appointment_date', $datetime)
+            ->when($excludingAppointmentId, fn($q) => $q->where('id', '!=', $excludingAppointmentId))
+            ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
+            ->exists();
     }
 }

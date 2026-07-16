@@ -5,7 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FURCARE | Appointments</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                    },
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -104,6 +117,7 @@
             return map[status] || 'bg-gray-100 text-gray-600';
         }
     </script>
+    <script>function toggleNav() { document.getElementById('mobile-menu').classList.toggle('hidden'); }</script>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
@@ -123,13 +137,32 @@
                 <a href="{{ route($prefix . '.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
                 <a href="{{ route($prefix . '.appointments') }}" class="text-gray-900 font-semibold transition-all hover:scale-105">Appointments</a>
                 <a href="{{ route($prefix . '.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
+                @if($isAdmin)
+                    <a href="{{ route('admin.panel') }}" class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 hover:bg-rose-100 hover:scale-105">Admin Panel</a>
+                @endif
             </div>
-            <form action="{{ route($isAdmin ? 'admin.logout' : 'staff.logout') }}" method="POST" class="m-0">
+            <form action="{{ route($isAdmin ? 'admin.logout' : 'staff.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
+            <button onclick="toggleNav()" class="md:hidden w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500">
+                <i class="bi bi-list text-xl"></i>
+            </button>
         </div>
     </nav>
+    <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
+        <a href="{{ route($prefix . '.dashboard') }}"    class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
+        <a href="{{ route($prefix . '.directory') }}"    class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pets</a>
+        <a href="{{ route($prefix . '.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-semibold"><i class="bi bi-calendar-event"></i> Appointments</a>
+        <a href="{{ route($prefix . '.insights') }}"     class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>
+        @if($isAdmin)
+            <a href="{{ route('admin.panel') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rose-50 text-rose-700 text-sm font-semibold"><i class="bi bi-gear"></i> Admin Panel</a>
+        @endif
+        <form action="{{ route($isAdmin ? 'admin.logout' : 'staff.logout') }}" method="POST">
+            @csrf
+            <button class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-50 text-red-500 text-sm"><i class="bi bi-box-arrow-right"></i> Logout</button>
+        </form>
+    </div>
 
     <main class="container mx-auto px-6 py-12">
 
@@ -150,7 +183,7 @@
 </header>
 
 <!-- Summary Cards -->
-<div class="grid grid-cols-3 gap-4 mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
     <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
         <i class="bi bi-hourglass-split text-amber-600 text-xl mb-2 block"></i>
         <p class="text-gray-500 text-xs mb-1">Pending</p>
@@ -199,8 +232,8 @@
 
     <select name="service" onchange="this.form.submit()" class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all appearance-none shadow-sm">
         <option value="">All Services</option>
-        @foreach($serviceTypes as $key => $label)
-            <option value="{{ $key }}" {{ request('service') === $key ? 'selected' : '' }}>{{ $label }}</option>
+        @foreach($serviceTypes as $svc)
+            <option value="{{ $svc->id }}" {{ (string) request('service') === (string) $svc->id ? 'selected' : '' }}>{{ $svc->name }}</option>
         @endforeach
     </select>
 
@@ -213,9 +246,70 @@
 <p class="text-gray-500 mb-4 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
     {{ $date->format('l, F j, Y') }}
 </p>
+@if($timeSlots->every(fn($slot) => $slot['appointment'] !== null))
+    <div class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-semibold flex items-center gap-2 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+        <i class="bi bi-calendar-x"></i> This date is fully booked — no open slots remain.
+    </div>
+@endif
+
+@if($timeSlots->every(fn($s) => $s['appointment'] !== null))
+    <div class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-semibold flex items-center gap-2 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+        <i class="bi bi-calendar-x"></i> This date is fully booked — no open slots remain.
+    </div>
+@endif
 
 <!-- Time Slot Grid -->
 <div class="bg-white border-gray-200 border rounded-2xl overflow-hidden shadow-sm reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+
+    <!-- Mobile cards -->
+    <div class="block sm:hidden divide-y divide-gray-200">
+        @foreach($timeSlots as $slot)
+            @php $appt = $slot['appointment']; @endphp
+            @if(!$appt)
+                <div class="p-4 flex items-center justify-between">
+                    <span class="font-bold text-violet-600 text-sm">{{ $slot['label'] }}</span>
+                    <button type="button"
+                            onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                            class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
+                        + Book
+                    </button>
+                </div>
+            @else
+                @php
+                    $approveRouteM   = route($prefix.'.appointments.approve',  $appt);
+                    $rejectRouteM    = route($prefix.'.appointments.reject',   $appt);
+                    $completeRouteM  = route($prefix.'.appointments.complete', $appt);
+                    $cancelRouteM    = route($prefix.'.appointments.cancel',   $appt);
+                    $editNotesRouteM = route($prefix.'.appointments.notes',    $appt);
+                @endphp
+                <div onclick="openDetailModal(
+                        {{ $appt->id }},
+                        '{{ addslashes($appt->pet->name . ' (' . $appt->pet->breed . ')') }}',
+                        '{{ addslashes($appt->user->name) }}',
+                        '{{ addslashes($appt->service_label) }}',
+                        '{{ $appt->appointment_date->format('M d, Y — g:i A') }}',
+                        '{{ $appt->status }}',
+                        '{{ addslashes($appt->notes ?? '') }}',
+                        '{{ $rejectRouteM }}',
+                        '{{ $approveRouteM }}',
+                        '{{ $completeRouteM }}',
+                        '{{ $cancelRouteM }}',
+                        '{{ $editNotesRouteM }}'
+                     )"
+                     class="p-4 active:bg-gray-50">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-bold text-violet-600 text-sm">{{ $slot['label'] }}</span>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold uppercase {{ $appt->status_badge_class }}">{{ ucfirst($appt->status) }}</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-900">{{ $appt->user->name }}</p>
+                    <p class="text-xs text-gray-500">{{ $appt->service_label }} &bull; {{ $appt->pet->name }}</p>
+                </div>
+            @endif
+        @endforeach
+    </div>
+
+    <!-- Desktop table -->
+    <div class="hidden sm:block overflow-x-auto">
     <table class="w-full text-left border-collapse">
         <thead class="bg-gray-50/50 border-gray-200 border-b">
             <tr class="text-xs uppercase text-gray-500 tracking-wider">
@@ -281,6 +375,7 @@
             @endforeach
         </tbody>
     </table>
+    </div>
 </div>
     </main>
 
@@ -411,7 +506,7 @@
             </button>
         </div>
 
-        <form id="book-form" method="POST" action="{{ route($prefix . '.appointments.store') }}">
+        <form id="book-form" method="POST" action="{{ route($prefix . '.appointments.store') }}" onsubmit="return validateBookForm()">
             @csrf
             <input type="hidden" name="appointment_date" id="book-appointment-date">
             <input type="hidden" name="booking_mode" id="book-mode" value="existing">
@@ -461,11 +556,25 @@
             <!-- Shared fields -->
             <div class="mb-4">
                 <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Service</label>
-                <select name="service_type" required class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
-                    @foreach(\App\Models\Appointment::SERVICE_TYPES as $key => $label)
-                        <option value="{{ $key }}">{{ $label }}</option>
+                <input type="hidden" name="service_id" id="book-service-id">
+                <button type="button" id="service-picker-btn" onclick="toggleServiceOptions()"
+                        class="w-full flex items-center justify-between bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-left outline-none focus:border-violet-500">
+                    <span id="service-picker-label" class="text-gray-400">Select a service</span>
+                    <i class="bi bi-chevron-down text-gray-400 text-xs"></i>
+                </button>
+                <p id="service-picker-error" class="hidden text-red-500 text-xs mt-1">Please select a service.</p>
+
+                <div id="service-options-panel" class="hidden mt-2 border border-gray-300 rounded-lg max-h-56 overflow-y-auto divide-y divide-gray-100">
+                    @foreach($serviceTypes->groupBy('category') as $category => $items)
+                        <div class="px-3 py-1.5 bg-gray-50 text-[11px] font-bold uppercase tracking-wider text-gray-400 sticky top-0">{{ $category }}</div>
+                        @foreach($items as $svc)
+                            <div onclick="selectService({{ $svc->id }}, '{{ addslashes($svc->name) }}')"
+                                 class="px-3 py-2.5 text-sm text-gray-700 hover:bg-violet-50 cursor-pointer transition-all">
+                                {{ $svc->name }}
+                            </div>
+                        @endforeach
                     @endforeach
-                </select>
+                </div>
             </div>
             <div class="mb-6">
                 <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Notes (optional)</label>
@@ -490,7 +599,42 @@
         clearSelectedPet();
         document.getElementById('pet-search-input').value = '';
         document.getElementById('pet-search-results').classList.add('hidden');
+        resetServicePicker();
         showModal('book-modal', 'book-modal-content');
+    }
+
+    function toggleServiceOptions() {
+        document.getElementById('service-options-panel').classList.toggle('hidden');
+    }
+
+    function selectService(id, name) {
+        document.getElementById('book-service-id').value = id;
+        const label = document.getElementById('service-picker-label');
+        label.innerText = name;
+        label.classList.remove('text-gray-400');
+        label.classList.add('text-gray-900');
+        document.getElementById('service-options-panel').classList.add('hidden');
+        document.getElementById('service-picker-error').classList.add('hidden');
+    }
+
+    function resetServicePicker() {
+        document.getElementById('book-service-id').value = '';
+        const label = document.getElementById('service-picker-label');
+        label.innerText = 'Select a service';
+        label.classList.add('text-gray-400');
+        label.classList.remove('text-gray-900');
+        document.getElementById('service-options-panel').classList.add('hidden');
+        document.getElementById('service-picker-error').classList.add('hidden');
+    }
+
+    function validateBookForm() {
+        const serviceId = document.getElementById('book-service-id').value;
+        if (!serviceId) {
+            document.getElementById('service-picker-error').classList.remove('hidden');
+            document.getElementById('service-picker-btn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+        return true;
     }
 
     function setBookingMode(mode) {

@@ -17,17 +17,28 @@ Route::get('/', function () {
 require __DIR__ . '/auth.php';
 
 // ── Customer / Owner Routes ────────────────────────────────────────────────────
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
 
     Route::get('/dashboard', function () {
         $pets = \App\Models\Pet::where('user_id', auth()->id())->get();
-        $appointments = \App\Models\Appointment::with('pet')
+        $appointments = \App\Models\Appointment::with(['pet', 'service'])
             ->where('user_id', auth()->id())
             ->whereIn('status', ['pending', 'approved'])
             ->orderBy('appointment_date')
             ->take(3)
             ->get();
-        return view('dashboard', compact('pets', 'appointments'));
+
+        $stats = [
+            'total_pets' => $pets->count(),
+            'upcoming'   => \App\Models\Appointment::where('user_id', auth()->id())
+                                ->whereIn('status', ['pending', 'approved'])
+                                ->count(),
+            'pending'    => \App\Models\Appointment::where('user_id', auth()->id())
+                                ->where('status', 'pending')
+                                ->count(),
+        ];
+
+        return view('dashboard', compact('pets', 'appointments', 'stats'));
     })->name('dashboard');
 
     // Pets
@@ -46,8 +57,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Edit appointment (owner)
     Route::get('/appointments/{appointment}/edit-form', [AppointmentController::class, 'edit'])->name('appointments.edit');
     Route::patch('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+    
 
     Route::patch('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+    Route::get('/appointments/availability', [AppointmentController::class, 'availability'])->name('appointments.availability');
+Route::get('/appointments/availability-month', [AppointmentController::class, 'monthAvailability'])->name('appointments.availability.month');
 
 
     // Profile
@@ -149,4 +163,3 @@ Route::post('/appointments', [StaffAppointmentController::class, 'store'])->name
 
 // Public services page (outside all middleware)
 Route::get('/services', fn() => view('services'))->name('services');
-

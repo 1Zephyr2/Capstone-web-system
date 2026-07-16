@@ -27,7 +27,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FURCARE | Admin Dashboard</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                    },
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -42,6 +55,7 @@
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
         });
     </script>
+    <script>function toggleNav() { document.getElementById('mobile-menu').classList.toggle('hidden'); }</script>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
@@ -58,12 +72,26 @@
                 <a href="{{ route('admin.insights') }}"     class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Insights</a>
                 <a href="{{ route('admin.panel') }}"        class="text-rose-700 font-semibold transition-all duration-300 bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100 hover:scale-105">Admin Panel</a>
             </div>
-            <form action="{{ route('admin.logout') }}" method="POST" class="m-0">
+            <form action="{{ route('admin.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
+            <button onclick="toggleNav()" class="md:hidden w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500">
+                <i class="bi bi-list text-xl"></i>
+            </button>
         </div>
     </nav>
+    <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
+            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
+            <a href="{{ route('admin.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pets</a>
+            <a href="{{ route('admin.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-calendar-event"></i> Appointments</a>
+            <a href="{{ route('admin.insights') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>
+            <a href="{{ route('admin.panel') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-gear"></i> Admin Panel</a>
+            <form action="{{ route('admin.logout') }}" method="POST" >
+                @csrf
+                <button class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-50 text-red-500 text-sm"><i class="bi bi-box-arrow-right"></i> Logout</button>
+            </form>
+    </div>
 
     <main class="container mx-auto px-6 py-12">
 
@@ -153,7 +181,13 @@
                             <i class="bi bi-calendar-event text-gray-500"></i> All Appointments
                         </a>
                         <a href="{{ route('admin.directory') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 hover:bg-indigo-50 border border-gray-100 transition-all hover:translate-x-1 text-sm">
-                            <i class="bi bi-paw text-gray-500"></i> Pet Directory
+                            <svg class="w-4 h-4 text-gray-500 shrink-0" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/>
+                                <ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/>
+                                <ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/>
+                                <path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/>
+                            </svg>
+                            Pet Directory
                         </a>
                         <a href="{{ route('admin.insights') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 hover:bg-indigo-50 border border-gray-100 transition-all hover:translate-x-1 text-sm">
                             <i class="bi bi-graph-up text-gray-500"></i> Insights
