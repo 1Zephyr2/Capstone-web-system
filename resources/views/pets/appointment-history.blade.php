@@ -147,6 +147,14 @@
                                         @if($appt->isRejected() && $appt->rejection_reason)
                                             <p class="text-red-400 text-xs mt-1">{{ $appt->rejection_reason }}</p>
                                         @endif
+                                        @if($appt->isCompleted())
+                                            @if($appt->result_photo_url)
+                                                <img src="{{ $appt->result_photo_url }}" alt="Result" class="w-12 h-12 object-cover rounded-lg border border-gray-200 mt-1">
+                                            @endif
+                                            @if($appt->different_pickup)
+                                                <p class="text-gray-400 text-xs mt-1">Picked up by: {{ $appt->picked_up_by }}</p>
+                                            @endif
+                                        @endif
                                     </td>
                                     <td class="px-5 py-4">
                                         @if($appt->isPending() || $appt->isApproved())

@@ -276,6 +276,35 @@
         </div>
     </section>
 
+    <!-- Testimonials -->
+    <section class="py-24 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-14 reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
+                <span class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3 block">Loved by pet owners</span>
+                <h2 class="text-3xl md:text-4xl font-display font-bold text-gray-900">Don't just take our word for it</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6 reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
+                @foreach([
+                    ['Jamie R.', 'Owner of Buddy', 'I get a text the moment Buddy\'s groom is done. No more calling the front desk to check.', '🐶'],
+                    ['Priya N.', 'Owner of Milo & Luna', 'Two cats, two schedules, zero confusion. Everything lives in one place now.', '🐱'],
+                    ['Dan O.', 'Owner of Rex', 'Booking took less time than making coffee. Rex\'s vet history is all right there too.', '🐾'],
+                ] as $t)
+                <div class="bg-white border border-gray-200 rounded-2xl p-7">
+                    <div class="text-amber-400 mb-4 text-sm">★★★★★</div>
+                    <p class="text-gray-600 text-sm leading-relaxed mb-6">"{{ $t[2] }}"</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-lg">{{ $t[3] }}</div>
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">{{ $t[0] }}</p>
+                            <p class="text-xs text-gray-400">{{ $t[1] }}</p>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
     <!-- FAQ -->
     <section id="faq" class="py-24 bg-white">
         <div class="container mx-auto px-6 max-w-3xl">
@@ -303,6 +332,44 @@
             </div>
         </div>
     </section>
+
+    <!-- Grooming Styles Gallery -->
+    @php
+        $homeStyles = App\Models\GroomingOption::where('type', 'style')->where('is_active', true)->orderBy('name')->get();
+    @endphp
+    @if($homeStyles->count() > 0)
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12 reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
+                <span class="inline-block px-4 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-widest mb-4">See The Options</span>
+                <h2 class="text-3xl font-display font-bold text-gray-900 mb-3">Grooming Styles</h2>
+                <p class="text-gray-500 max-w-xl mx-auto">Browse real examples so you know exactly what to expect for your pet.</p>
+            </div>
+            <div class="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+                @foreach($homeStyles as $style)
+                    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
+                        @if($style->image)
+                            <img src="{{ asset('storage/' . $style->image) }}" alt="{{ $style->name }}" class="w-full h-44 object-cover">
+                        @else
+                            <div class="w-full h-44 bg-emerald-50 flex items-center justify-center">
+                                <i class="bi bi-scissors text-emerald-400 text-4xl"></i>
+                            </div>
+                        @endif
+                        <div class="p-4">
+                            <h3 class="font-bold text-gray-900 mb-1">{{ $style->name }}</h3>
+                            @if($style->description)
+                                <p class="text-gray-400 text-sm">{{ $style->description }}</p>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            <div class="text-center mt-8">
+                <a href="{{ route('services') }}" class="text-emerald-600 hover:text-emerald-700 font-semibold text-sm transition-all">See all services →</a>
+            </div>
+        </div>
+    </section>
+    @endif
 
     <!-- CTA -->
     <section class="py-24 bg-emerald-600 relative overflow-hidden">
@@ -343,17 +410,17 @@
                     </ul>
                 </div>
                 <div>
-                    <h5 class="text-white font-semibold text-sm mb-3">Support</h5>
+                    <h5 class="text-white font-semibold text-sm mb-3">Contact Bark Park</h5>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="#faq" class="hover:text-white transition-all">FAQ</a></li>
-                        <li><a href="mailto:hello@furcare.app" class="hover:text-white transition-all">hello@furcare.app</a></li>
+                        <li><a href="tel:+639700577320" class="hover:text-white transition-all flex items-center gap-2"><i class="bi bi-telephone"></i> 0970 057 7320</a></li>
+                        <li><a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=X2RMaCnl9m4vtFp7&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o" target="_blank" rel="noopener" class="hover:text-white transition-all flex items-center gap-2"><i class="bi bi-facebook"></i> facebook.com/barkpark</a></li>
                     </ul>
                 </div>
             </div>
             <div class="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p class="text-xs">&copy; {{ date('Y') }} FURCARE | Pet Care Appointment System</p>
                 <div class="flex items-center gap-4 text-lg">
-                    <i class="bi bi-facebook hover:text-white transition-all cursor-pointer"></i>
+                    <a href="https://facebook.com/barkpark" target="_blank" rel="noopener" class="hover:text-white transition-all"><i class="bi bi-facebook"></i></a>
                     <i class="bi bi-instagram hover:text-white transition-all cursor-pointer"></i>
                     <i class="bi bi-twitter-x hover:text-white transition-all cursor-pointer"></i>
                 </div>

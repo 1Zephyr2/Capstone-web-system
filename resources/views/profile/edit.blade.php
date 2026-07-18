@@ -84,6 +84,12 @@
                                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 transition-all text-sm">
                         @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Mobile Number</label>
+                        <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}" required placeholder="e.g. 0917 123 4567"
+                               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 transition-all text-sm">
+                        @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    </div>
                     <button type="submit" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all text-sm">Save Changes</button>
                 </form>
             </div>

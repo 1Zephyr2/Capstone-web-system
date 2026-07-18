@@ -5,20 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FURCARE | Register</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
-                    },
-                }
-            }
-        }
-    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
@@ -54,6 +41,12 @@
                     <label class="block text-sm font-medium text-gray-600 mb-1">Email Address</label>
                     <input type="email" name="email" value="{{ old('email') }}" required
                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Mobile Number</label>
+                    <input type="tel" name="phone" value="{{ old('phone') }}" required placeholder="e.g. 0917 123 4567"
+                           class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition-all">
+                    @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">Password</label>

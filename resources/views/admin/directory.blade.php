@@ -193,6 +193,9 @@
                                     @endif
                                 </div>
                                 <p class="text-xs text-gray-500">{{ $owner->email }}</p>
+                                @if($owner->phone)
+                                    <p class="text-xs text-gray-500"><i class="bi bi-telephone mr-1"></i>{{ $owner->phone }}</p>
+                                @endif
                                 @if($owner->last_visit)
                                     <p class="text-xs {{ $owner->is_inactive ? 'text-red-600' : 'text-gray-400' }} mt-0.5">
                                         Last visit: {{ $owner->last_visit->format('M d, Y') }}

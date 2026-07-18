@@ -27,14 +27,16 @@ class StaffAppointmentController extends Controller
         ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
         ->when($request->filled('service'), fn($q) => $q->where('service_id', $request->service))
         ->get()
-        ->keyBy(fn($appt) => $appt->appointment_date->format('H:i'));
+        ->groupBy(fn($appt) => $appt->appointment_date->format('H:i'));
 
     $timeSlots = collect($slotTimes)->map(function ($slot) use ($dayAppointments, $date) {
+        $appointmentsInSlot = $dayAppointments->get($slot, collect());
         return [
-            'time'        => $slot,
-            'label'       => \Carbon\Carbon::parse($slot)->format('g:i A'),
-            'datetime'    => $date->copy()->setTimeFromTimeString($slot . ':00'),
-            'appointment' => $dayAppointments->get($slot),
+            'time'         => $slot,
+            'label'        => \Carbon\Carbon::parse($slot)->format('g:i A'),
+            'datetime'     => $date->copy()->setTimeFromTimeString($slot . ':00'),
+            'appointments' => $appointmentsInSlot,
+            'full'         => $appointmentsInSlot->count() >= Appointment::MAX_PER_SLOT,
         ];
     });
 
@@ -94,14 +96,33 @@ class StaffAppointmentController extends Controller
     }
 
     /**
-     * Mark an approved appointment as completed.
+     * Mark an approved appointment as completed — optionally with a result photo
+     * and pickup details if someone other than the registered owner picked up the pet.
      * PATCH /staff/appointments/{appointment}/complete
      */
-    public function complete(Appointment $appointment)
+    public function complete(Request $request, Appointment $appointment)
     {
         abort_if(!$appointment->isApproved(), 422, 'Only approved appointments can be marked complete.');
 
-        $appointment->update(['status' => Appointment::STATUS_COMPLETED]);
+        $validated = $request->validate([
+            'result_photo'     => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
+            'different_pickup' => ['nullable', 'boolean'],
+            'picked_up_by'     => ['required_if:different_pickup,1', 'nullable', 'string', 'max:100'],
+            'pickup_note'      => ['required_if:different_pickup,1', 'nullable', 'string', 'max:500'],
+        ]);
+
+        $data = [
+            'status'           => Appointment::STATUS_COMPLETED,
+            'different_pickup' => $request->boolean('different_pickup'),
+            'picked_up_by'     => $request->boolean('different_pickup') ? $validated['picked_up_by'] : null,
+            'pickup_note'      => $request->boolean('different_pickup') ? $validated['pickup_note'] : null,
+        ];
+
+        if ($request->hasFile('result_photo') && $request->file('result_photo')->isValid()) {
+            $data['result_photo'] = $request->file('result_photo')->store('appointments/results', 'public');
+        }
+
+        $appointment->update($data);
 
         return back()->with('success', "Appointment for {$appointment->pet->name} marked as completed.");
     }
@@ -175,12 +196,8 @@ public function store(Request $request)
 
     $slotDateTime = \Carbon\Carbon::parse($validated['appointment_date']);
 
-    // Prevent double-booking the same slot
-    $taken = Appointment::where('appointment_date', $slotDateTime)
-        ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
-        ->exists();
-
-    abort_if($taken, 422, 'That time slot is already booked.');
+    // Allow multiple pets per slot up to capacity (parallel stations/staff)
+    abort_if(!Appointment::slotHasCapacity($slotDateTime), 422, 'That time slot is fully booked.');
 
     if ($validated['booking_mode'] === 'existing') {
         $pet    = \App\Models\Pet::findOrFail($validated['pet_id']);

@@ -33,13 +33,22 @@
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
         });
 
-        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute) {
+        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute, resultPhotoUrl) {
             document.getElementById('modal-pet').innerText      = pet;
             document.getElementById('modal-owner').innerText    = owner;
             document.getElementById('modal-service').innerText  = service;
             document.getElementById('modal-datetime').innerText = datetime;
             document.getElementById('modal-notes-display').innerText = notes || '—';
             document.getElementById('modal-notes-input').value = notes || '';
+
+            const photoWrap = document.getElementById('modal-result-photo-wrap');
+            const photoImg  = document.getElementById('modal-result-photo');
+            if (resultPhotoUrl) {
+                photoImg.src = resultPhotoUrl;
+                photoWrap.classList.remove('hidden');
+            } else {
+                photoWrap.classList.add('hidden');
+            }
 
             const statusEl = document.getElementById('modal-status');
             statusEl.innerText = status.charAt(0).toUpperCase() + status.slice(1);
@@ -59,7 +68,42 @@
             // Reset notes edit mode
             showNotesView();
 
+            // Reset the complete panel (photo/pickup fields) for the newly opened appointment
+            document.getElementById('complete-panel').classList.add('hidden');
+            const completeForm = document.getElementById('form-complete');
+            completeForm.reset();
+            document.getElementById('pickup-fields').classList.add('hidden');
+            document.getElementById('result-photo-filename').innerText = 'Click to upload a photo';
+
             showModal('detail-modal', 'detail-modal-content');
+        }
+
+        function toggleCompletePanel() {
+            document.getElementById('complete-panel').classList.toggle('hidden');
+        }
+
+        function togglePickupFields(checkbox) {
+            const fields = document.getElementById('pickup-fields');
+            fields.classList.toggle('hidden', !checkbox.checked);
+            fields.querySelectorAll('input,textarea').forEach(el => el.required = checkbox.checked);
+        }
+
+        function openPhotoLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            const lightbox = document.getElementById('photo-lightbox');
+            lightbox.classList.remove('hidden');
+            lightbox.classList.add('flex');
+        }
+
+        function closePhotoLightbox() {
+            const lightbox = document.getElementById('photo-lightbox');
+            lightbox.classList.add('hidden');
+            lightbox.classList.remove('flex');
+        }
+
+        function updateResultPhotoFilename(input) {
+            const label = document.getElementById('result-photo-filename');
+            label.innerText = input.files.length ? input.files[0].name : 'Click to upload a photo';
         }
 
         function showNotesView() {
@@ -246,13 +290,7 @@
 <p class="text-gray-500 mb-4 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
     {{ $date->format('l, F j, Y') }}
 </p>
-@if($timeSlots->every(fn($slot) => $slot['appointment'] !== null))
-    <div class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-semibold flex items-center gap-2 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-        <i class="bi bi-calendar-x"></i> This date is fully booked — no open slots remain.
-    </div>
-@endif
-
-@if($timeSlots->every(fn($s) => $s['appointment'] !== null))
+@if($timeSlots->every(fn($slot) => $slot['full']))
     <div class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-semibold flex items-center gap-2 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
         <i class="bi bi-calendar-x"></i> This date is fully booked — no open slots remain.
     </div>
@@ -264,17 +302,7 @@
     <!-- Mobile cards -->
     <div class="block sm:hidden divide-y divide-gray-200">
         @foreach($timeSlots as $slot)
-            @php $appt = $slot['appointment']; @endphp
-            @if(!$appt)
-                <div class="p-4 flex items-center justify-between">
-                    <span class="font-bold text-violet-600 text-sm">{{ $slot['label'] }}</span>
-                    <button type="button"
-                            onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
-                            class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
-                        + Book
-                    </button>
-                </div>
-            @else
+            @forelse($slot['appointments'] as $appt)
                 @php
                     $approveRouteM   = route($prefix.'.appointments.approve',  $appt);
                     $rejectRouteM    = route($prefix.'.appointments.reject',   $appt);
@@ -294,7 +322,8 @@
                         '{{ $approveRouteM }}',
                         '{{ $completeRouteM }}',
                         '{{ $cancelRouteM }}',
-                        '{{ $editNotesRouteM }}'
+                        '{{ $editNotesRouteM }}',
+                        {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }}
                      )"
                      class="p-4 active:bg-gray-50">
                     <div class="flex items-center justify-between mb-1">
@@ -303,6 +332,25 @@
                     </div>
                     <p class="text-sm font-medium text-gray-900">{{ $appt->user->name }}</p>
                     <p class="text-xs text-gray-500">{{ $appt->service_label }} &bull; {{ $appt->pet->name }}</p>
+                </div>
+            @empty
+                <div class="p-4 flex items-center justify-between">
+                    <span class="font-bold text-violet-600 text-sm">{{ $slot['label'] }}</span>
+                    <button type="button"
+                            onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                            class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
+                        + Book
+                    </button>
+                </div>
+            @endforelse
+            @if($slot['appointments']->isNotEmpty() && !$slot['full'])
+                <div class="p-4 flex items-center justify-between bg-gray-50/50">
+                    <span class="text-gray-400 text-xs">{{ $slot['appointments']->count() }}/{{ \App\Models\Appointment::MAX_PER_SLOT }} slots used</span>
+                    <button type="button"
+                            onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                            class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-xs">
+                        + Add another pet
+                    </button>
                 </div>
             @endif
         @endforeach
@@ -323,21 +371,7 @@
         </thead>
         <tbody class="divide-y divide-gray-200">
             @foreach($timeSlots as $slot)
-                @php $appt = $slot['appointment']; @endphp
-
-                @if(!$appt)
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
-                        <td colspan="4" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
-                        <td class="px-6 py-5">
-    <button type="button"
-            onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
-            class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
-        + Book
-    </button>
-</td>
-                    </tr>
-                @else
+                @forelse($slot['appointments'] as $appt)
                     @php
                         $approveRoute   = route($prefix.'.appointments.approve',  $appt);
                         $rejectRoute    = route($prefix.'.appointments.reject',   $appt);
@@ -357,7 +391,8 @@
                             '{{ $approveRoute }}',
                             '{{ $completeRoute }}',
                             '{{ $cancelRoute }}',
-                            '{{ $editNotesRoute }}'
+                            '{{ $editNotesRoute }}',
+                            {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }}
                          )"
                         class="cursor-pointer hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
@@ -369,6 +404,30 @@
                         </td>
                         <td class="px-6 py-5">
                             <span class="text-xs text-violet-600 underline">View / Manage</span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
+                        <td colspan="4" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
+                        <td class="px-6 py-5">
+                            <button type="button"
+                                    onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                                    class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
+                                + Book
+                            </button>
+                        </td>
+                    </tr>
+                @endforelse
+                @if($slot['appointments']->isNotEmpty() && !$slot['full'])
+                    <tr class="bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-3 text-xs text-gray-400" colspan="4">{{ $slot['appointments']->count() }}/{{ \App\Models\Appointment::MAX_PER_SLOT }} slots used for {{ $slot['label'] }}</td>
+                        <td class="px-6 py-3">
+                            <button type="button"
+                                    onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                                    class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-xs">
+                                + Add another pet
+                            </button>
                         </td>
                     </tr>
                 @endif
@@ -436,6 +495,13 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Status</label>
                     <span id="modal-status" class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"></span>
                 </div>
+
+                <div id="modal-result-photo-wrap" class="hidden">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Result Photo <span class="normal-case font-normal text-gray-300">(click to enlarge)</span></label>
+                    <img id="modal-result-photo" src="" alt="Result photo"
+                         onclick="openPhotoLightbox(this.src)"
+                         class="w-full h-40 object-cover rounded-lg border border-gray-200 cursor-zoom-in hover:opacity-90 transition-all">
+                </div>
             </div>
 
             <!-- Action Buttons -->
@@ -451,11 +517,39 @@
                         <i class="bi bi-x-circle mr-2"></i>Reject Appointment
                     </button>
                 </div>
-                <form id="form-complete" method="POST">
+                <form id="form-complete" method="POST" enctype="multipart/form-data">
                     @csrf @method('PATCH')
-                    <button id="btn-complete" type="submit" class="w-full px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all hover:scale-[1.02]">
+                    <button id="btn-complete" type="button" onclick="toggleCompletePanel()" class="w-full px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all hover:scale-[1.02]">
                         <i class="bi bi-check2-all mr-2"></i>Mark as Completed
                     </button>
+                    <div id="complete-panel" class="hidden mt-3 p-4 rounded-xl bg-blue-50 border border-blue-200 space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Result Photo <span class="normal-case font-normal text-gray-400">(optional)</span></label>
+                            <label for="result-photo-input"
+                                   class="flex items-center gap-3 w-full bg-white border border-dashed border-gray-300 rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition-all">
+                                <span class="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center text-blue-600 shrink-0">
+                                    <i class="bi bi-cloud-upload"></i>
+                                </span>
+                                <span class="min-w-0">
+                                    <span id="result-photo-filename" class="block text-gray-600 truncate">Click to upload a photo</span>
+                                    <span class="block text-gray-400 text-xs">PNG, JPG, or WEBP — up to 4MB</span>
+                                </span>
+                            </label>
+                            <input type="file" name="result_photo" id="result-photo-input" accept="image/*" class="hidden"
+                                   onchange="updateResultPhotoFilename(this)">
+                        </div>
+                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" name="different_pickup" value="1" onchange="togglePickupFields(this)" class="rounded border-gray-300">
+                            Picked up by someone other than the owner?
+                        </label>
+                        <div id="pickup-fields" class="hidden space-y-2">
+                            <input type="text" name="picked_up_by" placeholder="Name of person who picked up"
+                                   class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500">
+                            <textarea name="pickup_note" rows="2" placeholder="Note (e.g. ID shown, relation to owner...)"
+                                      class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none"></textarea>
+                        </div>
+                        <button type="submit" class="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-all">Confirm Completion</button>
+                    </div>
                 </form>
                 <form id="form-cancel" method="POST">
                     @csrf @method('PATCH')
@@ -701,5 +795,15 @@
         document.getElementById('pet-search-input').value = '';
     }
 </script>
+
+<!-- Result Photo Lightbox -->
+<div id="photo-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+     onclick="if(event.target===this) closePhotoLightbox()">
+    <button type="button" onclick="closePhotoLightbox()"
+            class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
+        <i class="bi bi-x-lg"></i>
+    </button>
+    <img id="lightbox-img" src="" alt="Result photo full size" class="max-w-full max-h-full rounded-xl shadow-2xl">
+</div>
 </body>
 </html>

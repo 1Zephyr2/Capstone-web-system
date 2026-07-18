@@ -32,6 +32,9 @@ class Appointment extends Model
         '17:00' => '5:00 PM',
     ];
 
+    // Max pets that can be serviced in the same time slot (parallel stations/staff)
+    const MAX_PER_SLOT = 3;
+
     protected $fillable = [
         'user_id',
         'pet_id',
@@ -40,11 +43,17 @@ class Appointment extends Model
         'service_id',
         'status',
         'notes',
+        'result_photo',
+        'different_pickup',
+        'picked_up_by',
+        'pickup_note',
+        'booking_group_id',
         'rejection_reason',
     ];
 
     protected $casts = [
-        'appointment_date' => 'datetime',
+        'appointment_date'  => 'datetime',
+        'different_pickup'  => 'boolean',
     ];
 
     // ── Relationships ──────────────────────────────────────────────
@@ -73,6 +82,33 @@ class Appointment extends Model
     }
     return self::SERVICE_TYPES[$this->service_type] ?? ucfirst($this->service_type ?? 'Service');
 }
+
+    public function getResultPhotoUrlAttribute(): ?string
+    {
+        if ($this->result_photo) {
+            return asset('storage/' . $this->result_photo);
+        }
+        return null;
+    }
+
+    /**
+     * How many active (non-rejected/cancelled) appointments already occupy this exact slot.
+     */
+    public static function countInSlot(string $datetime, ?int $excludingId = null): int
+    {
+        return self::where('appointment_date', $datetime)
+            ->when($excludingId, fn($q) => $q->where('id', '!=', $excludingId))
+            ->whereNotIn('status', [self::STATUS_REJECTED, self::STATUS_CANCELLED])
+            ->count();
+    }
+
+    /**
+     * Whether this slot still has room for another pet.
+     */
+    public static function slotHasCapacity(string $datetime, ?int $excludingId = null): bool
+    {
+        return self::countInSlot($datetime, $excludingId) < self::MAX_PER_SLOT;
+    }
 
     public function getStatusBadgeClassAttribute(): string
     {

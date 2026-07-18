@@ -122,6 +122,19 @@
                                             <i class="bi bi-info-circle mr-1"></i><span class="font-semibold">Reason:</span> {{ $appt->rejection_reason }}
                                         </p>
                                     @endif
+                                    @if($appt->isCompleted())
+                                        @if($appt->result_photo_url)
+                                            <div class="mt-2">
+                                                <img src="{{ $appt->result_photo_url }}" alt="Result photo" class="w-24 h-24 object-cover rounded-lg border border-gray-200">
+                                            </div>
+                                        @endif
+                                        @if($appt->different_pickup)
+                                            <p class="text-gray-500 text-xs mt-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                                                <i class="bi bi-person-check mr-1"></i><span class="font-semibold">Picked up by:</span> {{ $appt->picked_up_by }}
+                                                @if($appt->pickup_note) — {{ $appt->pickup_note }} @endif
+                                            </p>
+                                        @endif
+                                    @endif
                                     @if($appt->isApproved())
                                         <p class="text-amber-500 text-xs mt-1"><i class="bi bi-exclamation-circle mr-1"></i>Editing will reset status to pending.</p>
                                     @endif

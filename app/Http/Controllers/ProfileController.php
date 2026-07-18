@@ -30,6 +30,7 @@ class ProfileController extends Controller
         }
 
         $user->email = $request->email;
+        $user->phone = $request->phone;
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;

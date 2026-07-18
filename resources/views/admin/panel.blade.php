@@ -193,6 +193,9 @@
                                     <div>
                                         <p class="font-semibold text-gray-900">{{ $owner->name }}</p>
                                         <p class="text-xs text-gray-500">{{ $owner->email }}</p>
+                                        @if($owner->phone)
+                                            <p class="text-xs text-gray-500"><i class="bi bi-telephone mr-1"></i>{{ $owner->phone }}</p>
+                                        @endif
                                         <p class="text-xs text-gray-400 mt-0.5">{{ $owner->pets->count() }} {{ Str::plural('pet',$owner->pets->count()) }}</p>
                                     </div>
                                 </div>

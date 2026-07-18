@@ -204,6 +204,51 @@
                 </div>
             </div>
         </div>
+
+        @php
+            $dashboardStyles = App\Models\GroomingOption::where('type', 'style')->where('is_active', true)->orderBy('name')->take(4)->get();
+        @endphp
+        @if($dashboardStyles->count() > 0)
+        <div class="mt-10 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Grooming Styles</h3>
+                    <p class="text-gray-400 text-sm">See what your pet could look like.</p>
+                </div>
+                <a href="{{ route('services') }}" class="text-emerald-600 hover:text-emerald-700 text-sm font-semibold transition-all">See all →</a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                @foreach($dashboardStyles as $style)
+                    <div class="rounded-xl overflow-hidden border border-gray-200">
+                        @if($style->image)
+                            <img src="{{ asset('storage/' . $style->image) }}" alt="{{ $style->name }}" class="w-full h-24 object-cover">
+                        @else
+                            <div class="w-full h-24 bg-emerald-50 flex items-center justify-center">
+                                <i class="bi bi-scissors text-emerald-400 text-xl"></i>
+                            </div>
+                        @endif
+                        <p class="text-xs font-semibold text-gray-900 p-2 truncate">{{ $style->name }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        <div class="mt-6 bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+            <div>
+                <h3 class="font-bold text-gray-900 text-sm mb-1">Need to reach Bark Park directly?</h3>
+                <p class="text-gray-500 text-xs">We're happy to help with anything not covered here.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="tel:+639700577320" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                    <i class="bi bi-telephone text-emerald-600"></i> 0970 057 7320
+                </a>
+                {{-- TODO: replace with the real Bark Park Facebook page URL --}}
+                <a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=X2RMaCnl9m4vtFp7&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                    <i class="bi bi-facebook text-emerald-600"></i> Facebook
+                </a>
+            </div>
+        </div>
     </main>
 
     <footer class="relative z-10 py-8 text-center border-t border-gray-200 text-gray-400 text-sm">
