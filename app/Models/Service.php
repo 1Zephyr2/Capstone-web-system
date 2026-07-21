@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Service extends Model
 {
-    const CATEGORIES = ['Grooming Packages', 'Grooming Services', 'Other Services'];
+    const CATEGORIES = ['Grooming Packages', 'Grooming Services'];
 
-    protected $fillable = ['name', 'category', 'is_active'];
+    protected $fillable = ['name', 'category', 'is_active', 'is_archived'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'is_archived' => 'boolean'];
 
     public function appointments(): HasMany
     {
@@ -20,7 +20,17 @@ class Service extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('is_active', true)->where('is_archived', false);
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->where('is_archived', true);
+    }
+
+    public function scopeNotArchived($query)
+    {
+        return $query->where('is_archived', false);
     }
 
     /**

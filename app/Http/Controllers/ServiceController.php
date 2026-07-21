@@ -47,10 +47,19 @@ class ServiceController extends Controller
     public function destroy(Service $service)
     {
         $name = $service->name;
-        $service->delete(); // appointments.service_id nulls out via nullOnDelete, history preserved
+        $service->update(['is_archived' => true, 'is_active' => false]);
 
         return redirect()->route('admin.panel')
-            ->with('success', "\"{$name}\" removed.")
+            ->with('success', "\"{$name}\" archived. You can restore it anytime from the Archived list.")
+            ->with('panel_tab', 'booking-services');
+    }
+
+    public function restore(Service $service)
+    {
+        $service->update(['is_archived' => false]);
+
+        return redirect()->route('admin.panel')
+            ->with('success', "\"{$service->name}\" restored.")
             ->with('panel_tab', 'booking-services');
     }
 }

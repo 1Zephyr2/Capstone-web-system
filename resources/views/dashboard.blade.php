@@ -240,11 +240,12 @@
                 <p class="text-gray-500 text-xs">We're happy to help with anything not covered here.</p>
             </div>
             <div class="flex items-center gap-3">
-                <a href="tel:+639700577320" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
-                    <i class="bi bi-telephone text-emerald-600"></i> 0970 057 7320
+                {{-- TODO: replace with the real Bark Park phone number --}}
+                <a href="tel:+639000000000" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                    <i class="bi bi-telephone text-emerald-600"></i> +63 900 000 0000
                 </a>
                 {{-- TODO: replace with the real Bark Park Facebook page URL --}}
-                <a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=X2RMaCnl9m4vtFp7&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                <a href="https://facebook.com/barkpark" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
                     <i class="bi bi-facebook text-emerald-600"></i> Facebook
                 </a>
             </div>
@@ -263,7 +264,7 @@
             <form method="POST" action="{{ route('pets.store') }}" enctype="multipart/form-data" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Pet Name</label>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Pet Name <span class="text-red-500">*</span></label>
                     <input type="text" name="name" required maxlength="100" value="{{ old('name') }}"
                            class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all" placeholder="e.g. Max">
                 </div>
@@ -277,13 +278,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Age</label>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Age <span class="text-red-500">*</span></label>
                         <input type="number" name="age" required min="0" max="100" value="{{ old('age') }}"
                                class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Breed</label>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Breed <span class="text-red-500">*</span></label>
                     <input type="text" name="breed" required maxlength="100" value="{{ old('breed') }}"
                            class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all" placeholder="e.g. Golden Retriever">
                 </div>

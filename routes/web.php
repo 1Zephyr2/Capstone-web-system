@@ -131,6 +131,7 @@ Route::post('/grooming/{groomingOption}/image', [\App\Http\Controllers\GroomingO
 Route::post('/services', [\App\Http\Controllers\ServiceController::class, 'store'])->name('services.store');
 Route::patch('/services/{service}', [\App\Http\Controllers\ServiceController::class, 'update'])->name('services.update');
 Route::patch('/services/{service}/toggle', [\App\Http\Controllers\ServiceController::class, 'toggle'])->name('services.toggle');
+Route::patch('/services/{service}/restore', [\App\Http\Controllers\ServiceController::class, 'restore'])->name('services.restore');
 Route::delete('/services/{service}', [\App\Http\Controllers\ServiceController::class, 'destroy'])->name('services.destroy');
 });
 
@@ -163,3 +164,15 @@ Route::post('/appointments', [StaffAppointmentController::class, 'store'])->name
 
 // Public services page (outside all middleware)
 Route::get('/services', fn() => view('services'))->name('services');
+
+// Fallback for serving uploaded images (pet photos, grooming images, result photos)
+// directly from storage/app/public, in case the public/storage symlink is missing —
+// e.g. after cloning or zipping the project onto a different machine, where
+// `php artisan storage:link` either wasn't run yet or the symlink didn't survive
+// the copy (this is common on Windows and with plain zip transfers).
+Route::get('/storage/{path}', function (string $path) {
+    $fullPath = storage_path('app/public/' . $path);
+    abort_unless(is_file($fullPath), 404);
+    return response()->file($fullPath);
+})->where('path', '.*')->name('storage.fallback');
+

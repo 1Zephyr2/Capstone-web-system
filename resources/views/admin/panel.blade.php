@@ -3,7 +3,8 @@
     $owners          = App\Models\User::where('role', 'owner')->with('pets')->orderBy('name')->get();
     $groomingStyles  = App\Models\GroomingOption::where('type','style')->orderBy('name')->get();
     $groomingAddons  = App\Models\GroomingOption::where('type','addon')->orderBy('name')->get();
-    $bookingServices = App\Models\Service::orderBy('category')->orderBy('name')->get()->groupBy('category');
+    $bookingServices = App\Models\Service::notArchived()->orderBy('category')->orderBy('name')->get()->groupBy('category');
+    $archivedServices = App\Models\Service::archived()->orderBy('name')->get();
 @endphp
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
@@ -406,8 +407,10 @@
                                                 </button>
                                             </form>
                                             <form id="delete-service-{{ $svc->id }}" method="POST" action="{{ route('admin.services.destroy', $svc) }}">@csrf @method('DELETE')</form>
-                                            <button onclick="confirmDelete('delete-service-{{ $svc->id }}','Remove \'{{ addslashes($svc->name) }}\'?')"
-                                                    class="p-2 rounded-lg text-rose-600 hover:bg-rose-100 transition-all"><i class="bi bi-trash text-sm"></i></button>
+                                            <button onclick="confirmDelete('delete-service-{{ $svc->id }}','Archive \'{{ addslashes($svc->name) }}\'? You can restore it later from the Archived list.')"
+                                                    class="px-3 py-1 rounded-lg text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+                                                <i class="bi bi-archive"></i> Archive
+                                            </button>
                                         </div>
                                     </div>
                                 @empty
@@ -416,6 +419,32 @@
                             </div>
                         </div>
                     @endforeach
+
+                    <!-- Archived Services -->
+                    <div class="mt-10 pt-6 border-t border-gray-200">
+                        <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                            <i class="bi bi-archive text-gray-400"></i> Archived Services
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4">Hidden from booking. Restore anytime to bring them back.</p>
+                        <div class="space-y-2">
+                            @forelse($archivedServices as $svc)
+                                <div class="bg-gray-50/40 border border-gray-200/60 rounded-xl p-4 flex items-center justify-between opacity-75">
+                                    <div>
+                                        <p class="font-semibold text-gray-700 text-sm">{{ $svc->name }}</p>
+                                        <p class="text-xs text-gray-400">{{ $svc->category }}</p>
+                                    </div>
+                                    <form method="POST" action="{{ route('admin.services.restore', $svc) }}">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="px-3 py-1 rounded-lg text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Restore
+                                        </button>
+                                    </form>
+                                </div>
+                            @empty
+                                <p class="text-gray-400 text-sm italic py-2">No archived services.</p>
+                            @endforelse
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Settings placeholder (referenced by sidebar button, add real content later) -->

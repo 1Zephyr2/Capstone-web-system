@@ -22,6 +22,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
         function toggleNav() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
+        function openPhotoLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            const lightbox = document.getElementById('photo-lightbox');
+            lightbox.classList.remove('hidden');
+            lightbox.classList.add('flex');
+        }
+        function closePhotoLightbox() {
+            const lightbox = document.getElementById('photo-lightbox');
+            lightbox.classList.add('hidden');
+            lightbox.classList.remove('flex');
+        }
     </script>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
@@ -149,7 +160,9 @@
                                         @endif
                                         @if($appt->isCompleted())
                                             @if($appt->result_photo_url)
-                                                <img src="{{ $appt->result_photo_url }}" alt="Result" class="w-12 h-12 object-cover rounded-lg border border-gray-200 mt-1">
+                                                <img src="{{ $appt->result_photo_url }}" alt="Result"
+                                                     onclick="openPhotoLightbox(this.src)"
+                                                     class="w-12 h-12 object-cover rounded-lg border border-gray-200 mt-1 cursor-zoom-in hover:opacity-90 transition-all">
                                             @endif
                                             @if($appt->different_pickup)
                                                 <p class="text-gray-400 text-xs mt-1">Picked up by: {{ $appt->picked_up_by }}</p>
@@ -180,5 +193,15 @@
             @endif
         @endif
     </main>
+
+    <!-- Result Photo Lightbox -->
+    <div id="photo-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+         onclick="if(event.target===this) closePhotoLightbox()">
+        <button type="button" onclick="closePhotoLightbox()"
+                class="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <img id="lightbox-img" src="" alt="Result photo full size" class="max-w-full max-h-full rounded-xl shadow-2xl">
+    </div>
 </body>
 </html>
