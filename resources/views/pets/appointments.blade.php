@@ -76,7 +76,7 @@
             </div>
         @endif
 
-        <header class="mb-8 flex items-start justify-between">
+        <header class="mb-6 flex items-start justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 mb-1">My Appointments</h1>
                 <p class="text-gray-400 text-sm">Track your pending, confirmed, and past appointments.</p>
@@ -84,14 +84,36 @@
             <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 text-sm font-semibold transition-all shrink-0">← Back</a>
         </header>
 
+        @php
+            $statusFilters = [
+                ''          => 'All',
+                'pending'   => 'Pending',
+                'approved'  => 'Confirmed',
+                'completed' => 'Completed',
+                'rejected'  => 'Rejected',
+                'cancelled' => 'Cancelled',
+            ];
+            $currentStatus = request('status', '');
+        @endphp
+        <div class="flex flex-wrap gap-2 mb-8">
+            @foreach($statusFilters as $value => $label)
+                <a href="{{ route('appointments.index', $value ? ['status' => $value] : []) }}"
+                   class="px-4 py-2 rounded-full text-sm font-semibold transition-all {{ $currentStatus === $value ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50' }}">
+                    {{ $label }}
+                </a>
+            @endforeach
+        </div>
+
         @if($appointments->isEmpty())
             <div class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
                 <i class="bi bi-calendar-x text-5xl text-gray-300 mb-4 block"></i>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">No Appointments Yet</h3>
-                <p class="text-gray-400 mb-6">You haven't booked any appointments.</p>
-                <a href="{{ route('request.appointment') }}" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all inline-block">
-                    <i class="bi bi-plus-circle mr-2"></i>Request Appointment
-                </a>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $currentStatus ? 'No ' . $statusFilters[$currentStatus] . ' Appointments' : 'No Appointments Yet' }}</h3>
+                <p class="text-gray-400 mb-6">{{ $currentStatus ? 'Try a different filter above.' : "You haven't booked any appointments." }}</p>
+                @if(!$currentStatus)
+                    <a href="{{ route('request.appointment') }}" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all inline-block">
+                        <i class="bi bi-plus-circle mr-2"></i>Request Appointment
+                    </a>
+                @endif
             </div>
         @else
             <div class="space-y-3">

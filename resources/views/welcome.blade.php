@@ -6,14 +6,14 @@
     <title>FURCARE | Premium Pet Care Management</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        display: ['Fredoka', 'ui-sans-serif', 'system-ui'],
+                        display: ['Inter', 'ui-sans-serif', 'system-ui'],
                         sans: ['Inter', 'ui-sans-serif', 'system-ui'],
                     },
                 }
@@ -52,7 +52,7 @@
 <body class="bg-white text-gray-800 antialiased font-sans">
 
     <!-- Navbar -->
-    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
+    <nav class="fixed w-full bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="#" class="text-xl font-display font-bold flex items-center gap-2 text-emerald-700">
                 <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE

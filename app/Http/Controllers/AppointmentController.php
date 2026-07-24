@@ -100,12 +100,25 @@ class AppointmentController extends Controller
             : 'Appointment request submitted! We will confirm your booking shortly.');
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        // Status priority so the list reads naturally: needs-attention first, done/cancelled last
+        // (CASE WHEN instead of MySQL's FIELD() — this project runs on SQLite)
+        $statusOrder = "CASE status
+            WHEN 'pending' THEN 1
+            WHEN 'approved' THEN 2
+            WHEN 'completed' THEN 3
+            WHEN 'rejected' THEN 4
+            WHEN 'cancelled' THEN 5
+            ELSE 6 END";
+
         $appointments = Appointment::with(['pet', 'service'])
             ->where('user_id', Auth::id())
+            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
+            ->orderByRaw($statusOrder)
             ->orderByDesc('appointment_date')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('pets.appointments', compact('appointments'));
     }

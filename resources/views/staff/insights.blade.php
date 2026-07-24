@@ -9,31 +9,62 @@
     $pendingCount       = Appointment::where('status', 'pending')->count();
     $cancelledCount     = Appointment::whereIn('status', ['cancelled', 'rejected'])->count();
 
-    // Service breakdown (real counts)
-    $serviceStats = Appointment::selectRaw('service_type, count(*) as total')
-        ->groupBy('service_type')
-        ->orderByDesc('total')
-        ->get();
+    // Service breakdown (real counts, all active services shown even with zero bookings)
+    $allServices = \App\Models\Service::notArchived()->orderBy('category')->orderBy('name')->get();
+    $serviceCounts = Appointment::whereNotNull('service_id')
+        ->selectRaw('service_id, count(*) as total')
+        ->groupBy('service_id')
+        ->pluck('total', 'service_id');
+
+    $serviceStats = $allServices->map(function ($svc) use ($serviceCounts) {
+        return (object) ['name' => $svc->name, 'total' => $serviceCounts[$svc->id] ?? 0];
+    })->sortByDesc('total')->values();
 
     $maxService = $serviceStats->max('total') ?: 1;
+    $topServices = $serviceStats->take(6);
 
     // Appointments by status for summary
     $statusBreakdown = Appointment::selectRaw('status, count(*) as total')
         ->groupBy('status')
         ->pluck('total', 'status');
 
-    // Monthly appointments (last 6 months)
+    // Appointments trend (period-selectable: week / month / 6 months / year)
+    $trendPeriod = request('period', '6months');
+
     $monthly = [];
-    for ($i = 5; $i >= 0; $i--) {
-        $month = now()->subMonths($i);
-        $monthly[] = [
-            'label' => $month->format('M'),
-            'count' => Appointment::whereYear('appointment_date', $month->year)
-                                  ->whereMonth('appointment_date', $month->month)
-                                  ->count(),
-        ];
+    if ($trendPeriod === 'week') {
+        for ($i = 6; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $monthly[] = ['label' => $day->format('D'), 'count' => Appointment::whereDate('appointment_date', $day->toDateString())->count()];
+        }
+        $trendTitle = 'Appointments (Last 7 Days)';
+    } elseif ($trendPeriod === 'month') {
+        for ($i = 4; $i >= 0; $i--) {
+            $weekStart = now()->subWeeks($i)->startOfWeek();
+            $weekEnd = $weekStart->copy()->endOfWeek();
+            $monthly[] = ['label' => $weekStart->format('M d'), 'count' => Appointment::whereBetween('appointment_date', [$weekStart, $weekEnd])->count()];
+        }
+        $trendTitle = 'Appointments (Last 5 Weeks)';
+    } elseif ($trendPeriod === 'year') {
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthly[] = ['label' => $month->format('M'), 'count' => Appointment::whereYear('appointment_date', $month->year)->whereMonth('appointment_date', $month->month)->count()];
+        }
+        $trendTitle = 'Appointments (Last 12 Months)';
+    } else {
+        $trendPeriod = '6months';
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthly[] = ['label' => $month->format('M'), 'count' => Appointment::whereYear('appointment_date', $month->year)->whereMonth('appointment_date', $month->month)->count()];
+        }
+        $trendTitle = 'Appointments (Last 6 Months)';
     }
     $maxMonthly = max(array_column($monthly, 'count')) ?: 1;
+
+    $periodTotal   = array_sum(array_column($monthly, 'count'));
+    $periodAverage = count($monthly) > 0 ? round($periodTotal / count($monthly), 1) : 0;
+    $busiestBucket = collect($monthly)->sortByDesc('count')->first();
+    $bucketNoun    = match($trendPeriod) { 'week' => 'day', 'month' => 'week', 'year' => 'month', default => 'month' };
 
     // Top pets by appointment count
     $topPets = Pet::withCount('appointments')
@@ -81,6 +112,13 @@
         });
     </script>
     <script>function toggleNav() { document.getElementById('mobile-menu').classList.toggle('hidden'); }</script>
+    <script>
+        function toggleServiceModal() {
+            const modal = document.getElementById('service-modal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+    </script>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
@@ -146,45 +184,70 @@
             </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div class="grid md:grid-cols-2 gap-6 mb-6 items-start">
 
             <!-- Monthly Appointments Bar Chart -->
             <div class="bg-white border border-gray-200 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out shadow-sm">
-                <h3 class="font-bold text-gray-900 mb-2">Appointments (Last 6 Months)</h3>
-                <p class="text-gray-400 text-xs mb-6">Based on appointment date</p>
+                <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+                    <div>
+                        <h3 class="font-bold text-gray-900 mb-1">{{ $trendTitle }}</h3>
+                        <p class="text-gray-400 text-xs">Based on appointment date</p>
+                    </div>
+                    <div class="flex gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
+                        @foreach(['week' => 'Week', 'month' => 'Month', '6months' => '6 Months', 'year' => 'Year'] as $key => $label)
+                            <a href="{{ route('staff.insights', ['period' => $key]) }}"
+                               class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all {{ $trendPeriod === $key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">
+                                {{ $label }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
                 <div class="h-48 flex items-end justify-between gap-3 px-2">
                     @foreach($monthly as $m)
                         @php $pct = $maxMonthly > 0 ? ($m['count'] / $maxMonthly) * 100 : 0; @endphp
-                        <div class="flex-1 flex flex-col items-center gap-2">
+                        <div class="flex-1 h-full flex flex-col items-center justify-end gap-2">
                             <span class="text-xs text-gray-500 font-semibold">{{ $m['count'] }}</span>
                             <div class="w-full rounded-t-lg transition-all duration-700 hover:bg-violet-500"
                                  style="height: {{ max($pct, 4) }}%; background: rgba(139,92,246,0.75);">
                             </div>
-                            <span class="text-xs text-gray-400">{{ $m['label'] }}</span>
+                            <span class="text-xs text-gray-400 whitespace-nowrap">{{ $m['label'] }}</span>
                         </div>
                     @endforeach
+                </div>
+
+                <div class="mt-6 pt-5 border-t border-gray-100 grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <p class="text-lg font-bold text-gray-900">{{ $periodTotal }}</p>
+                        <p class="text-xs text-gray-400">Total this period</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-gray-900">{{ $periodAverage }}</p>
+                        <p class="text-xs text-gray-400">Avg per {{ $bucketNoun }}</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold text-gray-900">{{ $busiestBucket['label'] ?? '—' }}</p>
+                        <p class="text-xs text-gray-400">Busiest ({{ $busiestBucket['count'] ?? 0 }})</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Service Breakdown -->
             <div class="bg-white border border-gray-200 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out shadow-sm">
-                <h3 class="font-bold text-gray-900 mb-2">Service Popularity</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-bold text-gray-900">Service Popularity</h3>
+                    @if($serviceStats->count() > 6)
+                        <button type="button" onclick="toggleServiceModal()" class="text-xs text-violet-600 hover:text-violet-700 font-semibold transition-all">
+                            View All ({{ $serviceStats->count() }}) →
+                        </button>
+                    @endif
+                </div>
                 <p class="text-gray-400 text-xs mb-6">Based on completed + all appointments</p>
                 <div class="space-y-5">
-                    @forelse($serviceStats as $s)
-                        @php
-                            $pct = round(($s->total / $maxService) * 100);
-                            $label = match($s->service_type) {
-                                'grooming'    => 'Grooming',
-                                'veterinary'  => 'Veterinary Checkup',
-                                'vaccination' => 'Vaccination',
-                                'boarding'    => 'Boarding',
-                                default       => ucfirst($s->service_type),
-                            };
-                        @endphp
+                    @forelse($topServices as $s)
+                        @php $pct = round(($s->total / $maxService) * 100); @endphp
                         <div>
                             <div class="flex justify-between text-sm mb-1.5">
-                                <span class="text-gray-600">{{ $label }}</span>
+                                <span class="text-gray-600">{{ $s->name }}</span>
                                 <span class="font-medium text-violet-600">{{ $s->total }} appts</span>
                             </div>
                             <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -195,6 +258,34 @@
                     @empty
                         <p class="text-gray-400 text-sm italic">No appointment data yet.</p>
                     @endforelse
+                </div>
+            </div>
+
+            <!-- All Services Modal -->
+            <div id="service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
+                 onclick="if(event.target===this) toggleServiceModal()">
+                <div class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[80vh] overflow-y-auto">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-lg font-bold text-gray-900">All Services — Popularity</h3>
+                        <button type="button" onclick="toggleServiceModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-400 text-xs mb-6">Total appointments per service, most to least popular</p>
+                    <div class="space-y-5">
+                        @foreach($serviceStats as $s)
+                            @php $pct = round(($s->total / $maxService) * 100); @endphp
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-gray-600">{{ $s->name }}</span>
+                                    <span class="font-medium text-violet-600">{{ $s->total }} appts</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-violet-500 rounded-full transition-all duration-1000" style="width: {{ $pct }}%"></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>
