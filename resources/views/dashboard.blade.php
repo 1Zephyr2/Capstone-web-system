@@ -240,12 +240,11 @@
                 <p class="text-gray-500 text-xs">We're happy to help with anything not covered here.</p>
             </div>
             <div class="flex items-center gap-3">
-                {{-- TODO: replace with the real Bark Park phone number --}}
-                <a href="tel:+639000000000" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
-                    <i class="bi bi-telephone text-emerald-600"></i> +63 900 000 0000
+                <a href=" 0970 057 7320" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                    <i class="bi bi-telephone text-emerald-600"></i>  0970 057 7320
                 </a>
                 {{-- TODO: replace with the real Bark Park Facebook page URL --}}
-                <a href="https://facebook.com/barkpark" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                <a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=ycNK9JclMmGrBA10&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o#" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
                     <i class="bi bi-facebook text-emerald-600"></i> Facebook
                 </a>
             </div>
