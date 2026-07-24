@@ -107,13 +107,7 @@
                         View Services
                     </a>
                 </div>
-                <div class="flex items-center gap-8">
-                    <div><p class="text-2xl font-display font-bold text-gray-900">2,400+</p><p class="text-xs text-gray-400">Pets cared for</p></div>
-                    <div class="w-px h-9 bg-gray-200"></div>
-                    <div><p class="text-2xl font-display font-bold text-gray-900">4.9<span class="text-amber-400">★</span></p><p class="text-xs text-gray-400">Average rating</p></div>
-                    <div class="w-px h-9 bg-gray-200"></div>
-                    <div><p class="text-2xl font-display font-bold text-gray-900">98%</p><p class="text-xs text-gray-400">On-time visits</p></div>
-                </div>
+                <!-- Statistics removed -->
             </div>
 
             <!-- Right: floating product mockup -->
@@ -272,35 +266,6 @@
                     <h4 class="font-display font-bold mb-2 text-teal-800"><i class="bi bi-people mr-2"></i>For Pet Owners</h4>
                     <p class="text-gray-500 text-sm">View appointments, manage pets, and access account details through a simple self-service experience.</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="py-24 bg-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-14 reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
-                <span class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3 block">Loved by pet owners</span>
-                <h2 class="text-3xl md:text-4xl font-display font-bold text-gray-900">Don't just take our word for it</h2>
-            </div>
-            <div class="grid md:grid-cols-3 gap-6 reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
-                @foreach([
-                    ['Jamie R.', 'Owner of Buddy', 'I get a text the moment Buddy\'s groom is done. No more calling the front desk to check.', '🐶'],
-                    ['Priya N.', 'Owner of Milo & Luna', 'Two cats, two schedules, zero confusion. Everything lives in one place now.', '🐱'],
-                    ['Dan O.', 'Owner of Rex', 'Booking took less time than making coffee. Rex\'s vet history is all right there too.', '🐾'],
-                ] as $t)
-                <div class="bg-white border border-gray-200 rounded-2xl p-7">
-                    <div class="text-amber-400 mb-4 text-sm">★★★★★</div>
-                    <p class="text-gray-600 text-sm leading-relaxed mb-6">"{{ $t[2] }}"</p>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-lg">{{ $t[3] }}</div>
-                        <div>
-                            <p class="font-bold text-gray-900 text-sm">{{ $t[0] }}</p>
-                            <p class="text-xs text-gray-400">{{ $t[1] }}</p>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
             </div>
         </div>
     </section>
