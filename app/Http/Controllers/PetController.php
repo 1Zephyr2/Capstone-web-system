@@ -16,12 +16,16 @@ class PetController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'          => ['required', 'string', 'max:100'],
-            'type'          => ['required', 'in:dog,cat,other'],
-            'breed'         => ['required', 'string', 'max:100'],
-            'age'           => ['required', 'integer', 'min:0', 'max:100'],
-            'special_notes' => ['nullable', 'string', 'max:500'],
-            'photo'         => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'name'                => ['required', 'string', 'max:100'],
+            'type'                => ['required', 'in:dog,cat,other'],
+            'breed'               => ['required', 'string', 'max:100'],
+            'size'                => ['required', 'in:' . implode(',', \App\Models\Pet::SIZES)],
+            'age'                 => ['required', 'integer', 'min:0', 'max:100'],
+            'special_notes'       => ['nullable', 'string', 'max:500'],
+            'vaccination_record'  => ['nullable', 'string', 'max:1000'],
+            'medical_conditions'  => ['nullable', 'string', 'max:1000'],
+            'grooming_triggers'   => ['nullable', 'string', 'max:1000'],
+            'photo'               => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ]);
 
         $photoPath = null;
@@ -31,13 +35,17 @@ class PetController extends Controller
         }
 
         Pet::create([
-            'user_id'       => Auth::id(),
-            'name'          => $validated['name'],
-            'type'          => $validated['type'],
-            'breed'         => $validated['breed'],
-            'age'           => $validated['age'],
-            'special_notes' => $validated['special_notes'] ?? null,
-            'photo'         => $photoPath,
+            'user_id'             => Auth::id(),
+            'name'                => $validated['name'],
+            'type'                => $validated['type'],
+            'breed'               => $validated['breed'],
+            'size'                => $validated['size'],
+            'age'                 => $validated['age'],
+            'special_notes'       => $validated['special_notes'] ?? null,
+            'vaccination_record'  => $validated['vaccination_record'] ?? null,
+            'medical_conditions'  => $validated['medical_conditions'] ?? null,
+            'grooming_triggers'   => $validated['grooming_triggers'] ?? null,
+            'photo'               => $photoPath,
         ]);
 
         return redirect()->route('dashboard')
@@ -54,12 +62,16 @@ class PetController extends Controller
         abort_if($pet->user_id !== Auth::id(), 403);
 
         $validated = $request->validate([
-            'name'          => ['required', 'string', 'max:100'],
-            'type'          => ['required', 'in:dog,cat,other'],
-            'breed'         => ['required', 'string', 'max:100'],
-            'age'           => ['required', 'integer', 'min:0', 'max:100'],
-            'special_notes' => ['nullable', 'string', 'max:500'],
-            'photo'         => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'name'                => ['required', 'string', 'max:100'],
+            'type'                => ['required', 'in:dog,cat,other'],
+            'breed'               => ['required', 'string', 'max:100'],
+            'size'                => ['required', 'in:' . implode(',', \App\Models\Pet::SIZES)],
+            'age'                 => ['required', 'integer', 'min:0', 'max:100'],
+            'special_notes'       => ['nullable', 'string', 'max:500'],
+            'vaccination_record'  => ['nullable', 'string', 'max:1000'],
+            'medical_conditions'  => ['nullable', 'string', 'max:1000'],
+            'grooming_triggers'   => ['nullable', 'string', 'max:1000'],
+            'photo'               => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ]);
 
         if ($request->hasFile('photo') && $request->file('photo')->isValid()) {

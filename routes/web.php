@@ -61,7 +61,17 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
 
     Route::patch('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
     Route::get('/appointments/availability', [AppointmentController::class, 'availability'])->name('appointments.availability');
-Route::get('/appointments/availability-month', [AppointmentController::class, 'monthAvailability'])->name('appointments.availability.month');
+    Route::get('/appointments/availability-month', [AppointmentController::class, 'monthAvailability'])->name('appointments.availability.month');
+
+    // Medical records (owner can log records for their own pets only — enforced in the controller)
+    Route::post('/pets/{pet}/records', [\App\Http\Controllers\PetRecordController::class, 'store'])->name('records.store');
+    Route::patch('/records/{record}', [\App\Http\Controllers\PetRecordController::class, 'update'])->name('records.update');
+    Route::delete('/records/{record}', [\App\Http\Controllers\PetRecordController::class, 'destroy'])->name('records.destroy');
+
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
 
     // Profile
@@ -80,8 +90,11 @@ Route::middleware(['auth'])->group(function () {
         return view('pets.owner-details', ['id' => $id]);
     })->name('pets.details');
 
+    // Legacy standalone edit page was a static mockup that was never wired up
+    // (hardcoded data, form action="#"). Editing now happens via the modal on
+    // the pet's own page, so this route just forwards there.
     Route::get('/pets/{id}/edit', function ($id) {
-        return view('pets.edit', ['id' => $id]);
+        return redirect()->route('pets.details', ['id' => $id, 'edit' => 1]);
     })->name('pets.edit');
 });
 
@@ -98,13 +111,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/', fn() => redirect()->route('admin.dashboard'));
     Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
     Route::get('/directory', fn() => view('admin.directory'))->name('directory');
-    Route::get('/insights', fn() => view('admin.insights'))->name('insights');
+    Route::get('/insights', [\App\Http\Controllers\AdminInsightsController::class, 'index'])->name('insights');
     Route::get('/panel', fn() => view('admin.panel'))->name('panel');
 
     Route::get('/appointments', [StaffAppointmentController::class, 'index'])->name('appointments');
     Route::patch('/appointments/{appointment}/approve', [StaffAppointmentController::class, 'approve'])->name('appointments.approve');
     Route::patch('/appointments/{appointment}/reject', [StaffAppointmentController::class, 'reject'])->name('appointments.reject');
     Route::patch('/appointments/{appointment}/complete', [StaffAppointmentController::class, 'complete'])->name('appointments.complete');
+    Route::patch('/appointments/{appointment}/notify-almost-done', [StaffAppointmentController::class, 'notifyAlmostDone'])->name('appointments.notify-almost-done');
     Route::patch('/appointments/{appointment}/cancel', [StaffAppointmentController::class, 'cancel'])->name('appointments.cancel');
     Route::post('/staff', [\App\Http\Controllers\AdminStaffController::class, 'store'])->name('staff.store');
 Route::delete('/staff/{user}', [\App\Http\Controllers\AdminStaffController::class, 'destroy'])->name('staff.destroy');
@@ -133,6 +147,11 @@ Route::patch('/services/{service}', [\App\Http\Controllers\ServiceController::cl
 Route::patch('/services/{service}/toggle', [\App\Http\Controllers\ServiceController::class, 'toggle'])->name('services.toggle');
 Route::patch('/services/{service}/restore', [\App\Http\Controllers\ServiceController::class, 'restore'])->name('services.restore');
 Route::delete('/services/{service}', [\App\Http\Controllers\ServiceController::class, 'destroy'])->name('services.destroy');
+
+// Notifications
+Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+Route::patch('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
+Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 });
 
 // ── Staff Routes ───────────────────────────────────────────────────────────────
@@ -140,12 +159,13 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
     Route::get('/', fn() => redirect()->route('staff.dashboard'));
     Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
     Route::get('/directory', fn() => view('staff.directory'))->name('directory');
-    Route::get('/insights', fn() => view('staff.insights'))->name('insights');
+    Route::get('/insights', [\App\Http\Controllers\AdminInsightsController::class, 'index'])->name('insights');
 
     Route::get('/appointments', [StaffAppointmentController::class, 'index'])->name('appointments');
     Route::patch('/appointments/{appointment}/approve', [StaffAppointmentController::class, 'approve'])->name('appointments.approve');
     Route::patch('/appointments/{appointment}/reject', [StaffAppointmentController::class, 'reject'])->name('appointments.reject');
     Route::patch('/appointments/{appointment}/complete', [StaffAppointmentController::class, 'complete'])->name('appointments.complete');
+    Route::patch('/appointments/{appointment}/notify-almost-done', [StaffAppointmentController::class, 'notifyAlmostDone'])->name('appointments.notify-almost-done');
     Route::patch('/appointments/{appointment}/cancel', [StaffAppointmentController::class, 'cancel'])->name('appointments.cancel');
 
     // Medical records
@@ -158,6 +178,11 @@ Route::patch('/appointments/{appointment}/notes', [\App\Http\Controllers\StaffAp
 
 Route::get('/appointments/search-pets', [StaffAppointmentController::class, 'searchPets'])->name('appointments.search-pets');
 Route::post('/appointments', [StaffAppointmentController::class, 'store'])->name('appointments.store');
+
+// Notifications
+Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+Route::patch('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
+Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 });
 
 

@@ -61,6 +61,52 @@
     $busiestBucket = collect($monthly)->sortByDesc('count')->first();
     $bucketNoun    = match($trendPeriod) { 'week' => 'day', 'month' => 'week', 'year' => 'month', default => 'month' };
 
+    // ── Predictive Insights ──────────────────────────────────────────
+    // Busiest day-of-week, based on the last 8 weeks of history
+    $historyStart = now()->subWeeks(8)->startOfDay();
+    $dayOfWeekCounts = Appointment::where('appointment_date', '>=', $historyStart)
+        ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
+        ->get()
+        ->groupBy(fn($a) => $a->appointment_date->dayOfWeek)
+        ->map->count();
+
+    $dayNames = [0=>'Sunday',1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',5=>'Friday',6=>'Saturday'];
+    $busiestDayOfWeek = $dayOfWeekCounts->isNotEmpty() ? $dayOfWeekCounts->sortDesc()->keys()->first() : null;
+    $busiestDayLabel  = $busiestDayOfWeek !== null ? $dayNames[$busiestDayOfWeek] : null;
+    $busiestDayAvg    = $busiestDayOfWeek !== null ? round($dayOfWeekCounts[$busiestDayOfWeek] / 8, 1) : 0;
+
+    $nextBusiestDate = null;
+    if ($busiestDayOfWeek !== null) {
+        $nextBusiestDate = today()->addDay();
+        while ((int) $nextBusiestDate->dayOfWeek !== (int) $busiestDayOfWeek) {
+            $nextBusiestDate->addDay();
+        }
+    }
+
+    // Trending service — booking growth over the last 30 days vs. the 30 before that
+    $last30Start  = now()->subDays(30);
+    $prior30Start = now()->subDays(60);
+
+    $recentCounts = Appointment::where('appointment_date', '>=', $last30Start)
+        ->whereNotNull('service_id')
+        ->selectRaw('service_id, count(*) as total')->groupBy('service_id')->pluck('total', 'service_id');
+
+    $priorCounts = Appointment::whereBetween('appointment_date', [$prior30Start, $last30Start])
+        ->whereNotNull('service_id')
+        ->selectRaw('service_id, count(*) as total')->groupBy('service_id')->pluck('total', 'service_id');
+
+    $trendingService = null;
+    $trendingGrowth  = 0;
+    foreach ($recentCounts as $svcId => $recentCount) {
+        if ($recentCount < 2) continue; // avoid noise from a single booking
+        $priorCount = $priorCounts[$svcId] ?? 0;
+        $growth = $priorCount > 0 ? (($recentCount - $priorCount) / $priorCount) * 100 : 100;
+        if ($growth > $trendingGrowth) {
+            $trendingGrowth  = $growth;
+            $trendingService = \App\Models\Service::find($svcId);
+        }
+    }
+
     $topPets = Pet::withCount('appointments')->orderByDesc('appointments_count')->take(5)->get();
 
     $completionRate = $totalAppointments > 0 ? round(($completedCount / $totalAppointments) * 100) : 0;
@@ -127,6 +173,7 @@
                 <a href="{{ route('admin.insights') }}"     class="text-gray-900 font-semibold transition-all duration-300 hover:scale-105">Insights</a>
                 <a href="{{ route('admin.panel') }}"        class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100">Admin Panel</a>
             </div>
+            @include('components.notification-bell', ['notifRoutePrefix' => 'admin.'])
             <form action="{{ route('admin.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
@@ -281,6 +328,33 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Predictive Insights -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-8 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="bi bi-graph-up-arrow text-indigo-600"></i> Predictive Insights</h3>
+            <p class="text-gray-400 text-xs mb-6">Based on your booking history over the last 8 weeks.</p>
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-1">Predicted Busiest Day</p>
+                    @if($busiestDayLabel)
+                        <p class="text-lg font-bold text-gray-900">{{ $busiestDayLabel }}</p>
+                        <p class="text-xs text-gray-500 mt-1">~{{ $busiestDayAvg }} appointments/week on average. Next occurrence: {{ $nextBusiestDate->format('M j, Y') }}</p>
+                    @else
+                        <p class="text-sm text-gray-400 italic mt-1">Not enough booking history yet.</p>
+                    @endif
+                </div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-5">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-1">Trending Service</p>
+                    @if($trendingService)
+                        <p class="text-lg font-bold text-gray-900">{{ $trendingService->name }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Bookings up {{ round($trendingGrowth) }}% vs. the previous 30 days</p>
+                    @else
+                        <p class="text-sm text-gray-400 italic mt-1">Not enough booking history yet.</p>
+                    @endif
+                </div>
+            </div>
+            <p class="text-gray-300 text-[11px] mt-4 italic">This is a statistical estimate based on your own past bookings — not a guarantee of future demand.</p>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6">

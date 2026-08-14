@@ -62,11 +62,49 @@
             toggleModal('add-grooming-modal','add-grooming-modal-content');
         }
 
-        function openEditService(id, name, category) {
+        function openEditService(id, name, category, prices) {
             document.getElementById('edit-service-form').action = `/admin/services/${id}`;
             document.getElementById('edit-service-name').value = name;
             document.getElementById('edit-service-category').value = category;
+
+            const sizes = ['XS','S','M','L','XL','G'];
+            if (prices && prices.flat !== undefined) {
+                setEditPricingMode('flat');
+                document.getElementById('edit-price-flat').value = prices.flat;
+            } else {
+                setEditPricingMode('size');
+                sizes.forEach(s => {
+                    document.getElementById('edit-price-' + s).value = (prices && prices[s] !== undefined) ? prices[s] : '';
+                });
+            }
+
             toggleModal('edit-service-modal','edit-service-modal-content');
+        }
+
+        function setAddPricingMode(mode) {
+            document.getElementById('add-pricing-mode').value = mode;
+            document.getElementById('add-size-prices').classList.toggle('hidden', mode !== 'size');
+            document.getElementById('add-flat-price').classList.toggle('hidden', mode !== 'flat');
+            togglePricingModeButtons('add', mode);
+        }
+
+        function setEditPricingMode(mode) {
+            document.getElementById('edit-pricing-mode').value = mode;
+            document.getElementById('edit-size-prices').classList.toggle('hidden', mode !== 'size');
+            document.getElementById('edit-flat-price').classList.toggle('hidden', mode !== 'flat');
+            togglePricingModeButtons('edit', mode);
+        }
+
+        function togglePricingModeButtons(prefix, mode) {
+            const sizeBtn = document.getElementById(prefix + '-mode-btn-size');
+            const flatBtn = document.getElementById(prefix + '-mode-btn-flat');
+            [sizeBtn, flatBtn].forEach(btn => {
+                btn.classList.remove('bg-white','shadow','text-gray-900');
+                btn.classList.add('text-gray-500');
+            });
+            const active = mode === 'size' ? sizeBtn : flatBtn;
+            active.classList.add('bg-white','shadow','text-gray-900');
+            active.classList.remove('text-gray-500');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -92,6 +130,7 @@
                 <a href="{{ route('admin.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
                 <a href="{{ route('admin.panel') }}"        class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100">Admin Panel</a>
             </div>
+            @include('components.notification-bell', ['notifRoutePrefix' => 'admin.'])
             <form action="{{ route('admin.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
@@ -393,10 +432,11 @@
                                                 {{ $svc->name }}
                                                 @if(!$svc->is_active)<span class="ml-2 text-xs text-gray-400">(disabled)</span>@endif
                                             </p>
+                                            <p class="text-xs text-gray-500 mt-0.5">{{ $svc->price_range }}</p>
                                         </div>
                                         <div class="flex items-center gap-2 shrink-0">
                                             <button type="button"
-                                                    onclick="openEditService({{ $svc->id }}, '{{ addslashes($svc->name) }}', '{{ $svc->category }}')"
+                                                    onclick='openEditService({{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name) }}, {{ Illuminate\Support\Js::from($svc->category) }}, {{ Illuminate\Support\Js::from($svc->prices ?? []) }})'
                                                     class="px-3 py-1 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
                                                 <i class="bi bi-pencil"></i> Edit
                                             </button>
@@ -508,7 +548,7 @@
     <!-- Add Service Modal -->
     <div id="add-service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
          onclick="if(event.target===this) toggleModal('add-service-modal','add-service-modal-content')">
-        <div id="add-service-modal-content" class="bg-white border border-gray-300 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+        <div id="add-service-modal-content" class="bg-white border border-gray-300 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out max-h-[85vh] overflow-y-auto">
             <h2 class="text-xl font-bold text-gray-900 mb-6">Add New Service</h2>
             <form method="POST" action="{{ route('admin.services.store') }}" class="space-y-4">
                 @csrf
@@ -520,6 +560,31 @@
                             <option value="{{ $cat }}">{{ $cat }}</option>
                         @endforeach
                     </select></div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Pricing</label>
+                    <div class="flex gap-2 mb-3 bg-gray-100 p-1 rounded-xl">
+                        <button type="button" onclick="setAddPricingMode('size')" id="add-mode-btn-size" class="flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-white shadow text-gray-900">By Pet Size</button>
+                        <button type="button" onclick="setAddPricingMode('flat')" id="add-mode-btn-flat" class="flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-gray-500">Flat Rate</button>
+                    </div>
+                    <input type="hidden" name="pricing_mode" id="add-pricing-mode" value="size">
+
+                    <div id="add-size-prices" class="grid grid-cols-3 gap-2">
+                        @foreach(\App\Models\Service::SIZES as $size)
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 mb-1">{{ $size }}</label>
+                                <input type="number" step="0.01" min="0" name="prices[{{ $size }}]" placeholder="0.00"
+                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-2 py-2 text-sm outline-none focus:border-indigo-400 transition-all">
+                            </div>
+                        @endforeach
+                    </div>
+                    <div id="add-flat-price" class="hidden">
+                        <input type="number" step="0.01" min="0" name="flat_price" placeholder="0.00"
+                               class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-400 transition-all">
+                        <p class="text-gray-400 text-xs mt-1">One price regardless of pet size (e.g. per-pack treatments).</p>
+                    </div>
+                </div>
+
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="toggleModal('add-service-modal','add-service-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all">Cancel</button>
                     <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-[1.02]">Add Service</button>
@@ -531,7 +596,7 @@
     <!-- Edit Service Modal -->
     <div id="edit-service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
          onclick="if(event.target===this) toggleModal('edit-service-modal','edit-service-modal-content')">
-        <div id="edit-service-modal-content" class="bg-white border border-gray-300 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
+        <div id="edit-service-modal-content" class="bg-white border border-gray-300 rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out max-h-[85vh] overflow-y-auto">
             <h2 class="text-xl font-bold text-gray-900 mb-6">Edit Service</h2>
             <form id="edit-service-form" method="POST" class="space-y-4">
                 @csrf @method('PATCH')
@@ -543,6 +608,30 @@
                             <option value="{{ $cat }}">{{ $cat }}</option>
                         @endforeach
                     </select></div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Pricing</label>
+                    <div class="flex gap-2 mb-3 bg-gray-100 p-1 rounded-xl">
+                        <button type="button" onclick="setEditPricingMode('size')" id="edit-mode-btn-size" class="flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-white shadow text-gray-900">By Pet Size</button>
+                        <button type="button" onclick="setEditPricingMode('flat')" id="edit-mode-btn-flat" class="flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-gray-500">Flat Rate</button>
+                    </div>
+                    <input type="hidden" name="pricing_mode" id="edit-pricing-mode" value="size">
+
+                    <div id="edit-size-prices" class="grid grid-cols-3 gap-2">
+                        @foreach(\App\Models\Service::SIZES as $size)
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 mb-1">{{ $size }}</label>
+                                <input type="number" step="0.01" min="0" name="prices[{{ $size }}]" id="edit-price-{{ $size }}" placeholder="0.00"
+                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-2 py-2 text-sm outline-none focus:border-indigo-400 transition-all">
+                            </div>
+                        @endforeach
+                    </div>
+                    <div id="edit-flat-price" class="hidden">
+                        <input type="number" step="0.01" min="0" name="flat_price" id="edit-price-flat" placeholder="0.00"
+                               class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-400 transition-all">
+                    </div>
+                </div>
+
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="toggleModal('edit-service-modal','edit-service-modal-content')" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all">Cancel</button>
                     <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-[1.02]">Save Changes</button>

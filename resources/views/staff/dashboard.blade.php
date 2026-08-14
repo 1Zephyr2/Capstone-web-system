@@ -49,6 +49,7 @@
                 <a href="{{ route('staff.appointments') }}" class="hover:text-violet-600 transition-all hover:scale-105">Appointments</a>
                 <a href="{{ route('staff.insights') }}"     class="hover:text-violet-600 transition-all hover:scale-105">Insights</a>
             </div>
+            @include('components.notification-bell', ['notifRoutePrefix' => 'staff.'])
             <form action="{{ route('staff.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>

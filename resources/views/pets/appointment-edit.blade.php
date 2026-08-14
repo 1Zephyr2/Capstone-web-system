@@ -36,6 +36,7 @@
             <a href="{{ route('dashboard') }}" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
                 <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> FURCARE
             </a>
+            @include('components.notification-bell', ['notifRoutePrefix' => ''])
             <form action="{{ route('logout') }}" method="POST" class="m-0">
                 @csrf <button class="px-4 py-2 rounded-full text-sm bg-red-50 border border-red-100 text-red-500 transition-all">Logout</button>
             </form>

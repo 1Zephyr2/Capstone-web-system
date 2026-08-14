@@ -101,12 +101,15 @@
             showModal('profile-modal','profile-modal-content');
         }
 
-        function openEditRecord(id, date, diagnosis, medications, vet_notes, action) {
+        function openEditRecord(id, date, diagnosis, medications, vet_notes, action, record_type, vaccine_name) {
             document.getElementById('edit-record-date').value        = date;
             document.getElementById('edit-record-diagnosis').value   = diagnosis;
             document.getElementById('edit-record-medications').value = medications;
             document.getElementById('edit-record-vet_notes').value   = vet_notes;
             document.getElementById('edit-record-form').action       = action;
+            document.getElementById('edit-record-type').value        = record_type || 'note';
+            document.getElementById('edit-record-vaccine_name').value = vaccine_name || '';
+            document.getElementById('edit-vaccine-name-wrap').classList.toggle('hidden', (record_type || 'note') !== 'vaccination');
             showModal('edit-record-modal','edit-record-modal-content');
         }
     </script>
@@ -126,6 +129,7 @@
                 <a href="{{ route($prefix.'.appointments') }}" class="hover:text-gray-900 transition-all hover:scale-105">Appointments</a>
                 <a href="{{ route($prefix.'.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
             </div>
+            @include('components.notification-bell', ['notifRoutePrefix' => ($isAdmin ?? false) ? 'admin.' : 'staff.'])
             <form action="{{ route($isAdmin ? 'admin.logout' : 'staff.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
@@ -267,15 +271,29 @@
                             <input type="hidden" name="redirect_tab" value="records">
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Record Type</label>
+                                    <select name="record_type" required onchange="document.getElementById('add-vaccine-name-wrap').classList.toggle('hidden', this.value !== 'vaccination')"
+                                            class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
+                                        @foreach(\App\Models\PetRecord::TYPES as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
                                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Date</label>
                                     <input type="date" name="record_date" value="{{ date('Y-m-d') }}" required
                                            class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Diagnosis</label>
-                                    <input type="text" name="diagnosis" required placeholder="e.g. Skin infection"
-                                           class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
-                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Diagnosis</label>
+                                <input type="text" name="diagnosis" required placeholder="e.g. Skin infection"
+                                       class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
+                            </div>
+                            <div id="add-vaccine-name-wrap" class="hidden">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Vaccine Name</label>
+                                <input type="text" name="vaccine_name" placeholder="e.g. Rabies"
+                                       class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Medications</label>
@@ -328,7 +346,9 @@
                                                         '{{ addslashes($record->diagnosis) }}',
                                                         '{{ addslashes($record->medications ?? '') }}',
                                                         '{{ addslashes($record->vet_notes ?? '') }}',
-                                                        '{{ route($prefix . '.records.update', $record) }}'
+                                                        '{{ route($prefix . '.records.update', $record) }}',
+                                                        '{{ $record->record_type }}',
+                                                        '{{ addslashes($record->vaccine_name ?? '') }}'
                                                     )" class="p-1.5 rounded-lg {{ $isAdmin ? 'text-gray-500 hover:bg-indigo-100' : 'text-violet-600 hover:bg-violet-100' }} transition-all">
                                                         <i class="bi bi-pencil text-xs"></i>
                                                     </button>
@@ -379,6 +399,30 @@
 
                 <div class="{{ $cardBg }} border {{ $cardBorder }} rounded-2xl shadow-sm p-5">
                     <h4 class="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
+                        <i class="bi bi-clipboard2-heart {{ $accentText }}"></i> Medical Background
+                    </h4>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Size</p>
+                            <p class="text-gray-700">{{ $pet->size ? (\App\Models\Pet::SIZE_LABELS[$pet->size] ?? $pet->size) : 'Not set' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Vaccination Record</p>
+                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->vaccination_record ?: 'None on file.' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Existing Medical Conditions</p>
+                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->medical_conditions ?: 'None on file.' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Grooming Triggers / Trauma</p>
+                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->grooming_triggers ?: 'None on file.' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="{{ $cardBg }} border {{ $cardBorder }} rounded-2xl shadow-sm p-5">
+                    <h4 class="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
                         <i class="bi bi-person {{ $accentText }}"></i> Owner
                     </h4>
                     <p class="text-gray-900 font-semibold text-sm">{{ $pet->user->name }}</p>
@@ -419,6 +463,15 @@
             <form id="edit-record-form" method="POST" class="space-y-4">
                 @csrf @method('PATCH')
                 <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Record Type</label>
+                    <select id="edit-record-type" name="record_type" required onchange="document.getElementById('edit-vaccine-name-wrap').classList.toggle('hidden', this.value !== 'vaccination')"
+                            class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
+                        @foreach(\App\Models\PetRecord::TYPES as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Date</label>
                     <input type="date" id="edit-record-date" name="record_date" required
                            class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
@@ -426,6 +479,11 @@
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Diagnosis</label>
                     <input type="text" id="edit-record-diagnosis" name="diagnosis" required
+                           class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
+                </div>
+                <div id="edit-vaccine-name-wrap" class="hidden">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Vaccine Name</label>
+                    <input type="text" id="edit-record-vaccine_name" name="vaccine_name"
                            class="w-full {{ $inputBg }} border rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-violet-500 transition-all text-sm">
                 </div>
                 <div>

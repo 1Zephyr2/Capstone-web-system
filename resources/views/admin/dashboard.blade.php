@@ -72,6 +72,7 @@
                 <a href="{{ route('admin.insights') }}"     class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Insights</a>
                 <a href="{{ route('admin.panel') }}"        class="text-rose-700 font-semibold transition-all duration-300 bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100 hover:scale-105">Admin Panel</a>
             </div>
+            @include('components.notification-bell', ['notifRoutePrefix' => 'admin.'])
             <form action="{{ route('admin.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>

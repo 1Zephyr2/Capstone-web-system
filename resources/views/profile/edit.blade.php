@@ -30,7 +30,8 @@
             </a>
             <div class="flex items-center gap-3">
                 <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-full text-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all">← Dashboard</a>
-                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                @include('components.notification-bell', ['notifRoutePrefix' => ''])
+            <form action="{{ route('logout') }}" method="POST" class="m-0">
                     @csrf <button class="px-4 py-2 rounded-full text-sm bg-red-50 border border-red-100 text-red-500 hover:bg-red-100 transition-all">Logout</button>
                 </form>
             </div>

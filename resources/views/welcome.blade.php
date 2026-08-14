@@ -375,17 +375,19 @@
                     </ul>
                 </div>
                 <div>
-                    <h5 class="text-white font-semibold text-sm mb-3">Contact Bark Park</h5>
+                    <h5 class="text-white font-semibold text-sm mb-3">Contact Bark Pack</h5>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="tel:+639700577320" class="hover:text-white transition-all flex items-center gap-2"><i class="bi bi-telephone"></i> 0970 057 7320</a></li>
-                        <li><a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=X2RMaCnl9m4vtFp7&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o" target="_blank" rel="noopener" class="hover:text-white transition-all flex items-center gap-2"><i class="bi bi-facebook"></i> facebook.com/barkpark</a></li>
+                        <li><a href="tel:+639088751557" class="hover:text-white transition-all flex items-center gap-2"><i class="bi bi-telephone"></i> 0908-875-1557</a></li>
+                        <li><a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=X2RMaCnl9m4vtFp7&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o" target="_blank" rel="noopener" class="hover:text-white transition-all flex items-center gap-2"><i class="bi bi-facebook"></i> Bark Pack - Guisad Baguio</a></li>
+                        <li class="flex items-center gap-2 text-gray-400"><i class="bi bi-geo-alt"></i> L. Ferguson, Guisad, Baguio</li>
+                        <li class="flex items-center gap-2 text-gray-400"><i class="bi bi-clock"></i> Monday–Sunday, 9AM–6PM</li>
                     </ul>
                 </div>
             </div>
             <div class="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p class="text-xs">&copy; {{ date('Y') }} FURCARE | Pet Care Appointment System</p>
                 <div class="flex items-center gap-4 text-lg">
-                    <a href="https://facebook.com/barkpark" target="_blank" rel="noopener" class="hover:text-white transition-all"><i class="bi bi-facebook"></i></a>
+                    <a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=X2RMaCnl9m4vtFp7&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o" target="_blank" rel="noopener" class="hover:text-white transition-all"><i class="bi bi-facebook"></i></a>
                     <i class="bi bi-instagram hover:text-white transition-all cursor-pointer"></i>
                     <i class="bi bi-twitter-x hover:text-white transition-all cursor-pointer"></i>
                 </div>

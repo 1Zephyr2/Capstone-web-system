@@ -10,11 +10,24 @@ class ServiceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'category' => ['required', 'in:' . implode(',', Service::CATEGORIES)],
+            'name'         => ['required', 'string', 'max:100'],
+            'category'     => ['required', 'in:' . implode(',', Service::CATEGORIES)],
+            'pricing_mode' => ['required', 'in:size,flat'],
+            'prices'       => ['required_if:pricing_mode,size', 'array'],
+            'prices.*'     => ['nullable', 'numeric', 'min:0'],
+            'flat_price'   => ['required_if:pricing_mode,flat', 'nullable', 'numeric', 'min:0'],
         ]);
 
-        Service::create(array_merge($validated, ['is_active' => true]));
+        $prices = $validated['pricing_mode'] === 'flat'
+            ? ['flat' => $validated['flat_price']]
+            : collect($validated['prices'] ?? [])->filter(fn($v) => $v !== null && $v !== '')->toArray();
+
+        Service::create([
+            'name'     => $validated['name'],
+            'category' => $validated['category'],
+            'prices'   => $prices,
+            'is_active' => true,
+        ]);
 
         return redirect()->route('admin.panel')
             ->with('success', "Service \"{$validated['name']}\" added.")
@@ -24,11 +37,23 @@ class ServiceController extends Controller
     public function update(Request $request, Service $service)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'category' => ['required', 'in:' . implode(',', Service::CATEGORIES)],
+            'name'         => ['required', 'string', 'max:100'],
+            'category'     => ['required', 'in:' . implode(',', Service::CATEGORIES)],
+            'pricing_mode' => ['required', 'in:size,flat'],
+            'prices'       => ['required_if:pricing_mode,size', 'array'],
+            'prices.*'     => ['nullable', 'numeric', 'min:0'],
+            'flat_price'   => ['required_if:pricing_mode,flat', 'nullable', 'numeric', 'min:0'],
         ]);
 
-        $service->update($validated);
+        $prices = $validated['pricing_mode'] === 'flat'
+            ? ['flat' => $validated['flat_price']]
+            : collect($validated['prices'] ?? [])->filter(fn($v) => $v !== null && $v !== '')->toArray();
+
+        $service->update([
+            'name'     => $validated['name'],
+            'category' => $validated['category'],
+            'prices'   => $prices,
+        ]);
 
         return redirect()->route('admin.panel')
             ->with('success', "Service \"{$service->name}\" updated.")

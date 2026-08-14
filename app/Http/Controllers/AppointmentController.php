@@ -29,7 +29,12 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'appointment_date' => ['required', 'date', 'after:today'],
+            'appointment_date' => ['required', 'date', 'after:today', function ($attribute, $value, $fail) {
+                $day = \Carbon\Carbon::parse($value)->dayOfWeek;
+                if (in_array($day, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) {
+                    $fail('We are closed on weekends. Please choose a weekday.');
+                }
+            }],
             'time_mode'        => ['required', 'in:same,separate'],
             'appointment_time' => ['required_if:time_mode,same', 'nullable', 'in:' . implode(',', array_keys(Appointment::CLINIC_HOURS))],
             'pets'             => ['required', 'array', 'min:1'],
@@ -80,6 +85,7 @@ class AppointmentController extends Controller
         }
 
         $groupId = (string) Str::uuid();
+        $petNames = [];
 
         foreach ($bookings as $booking) {
             Appointment::create([
@@ -91,6 +97,20 @@ class AppointmentController extends Controller
                 'notes'            => $validated['notes'] ?? null,
                 'booking_group_id' => $groupId,
             ]);
+            $petNames[] = \App\Models\Pet::find($booking['pet_id'])?->name;
+        }
+
+        // Notify all staff/admin so nobody misses a new request
+        $staffAndAdmin = \App\Models\User::whereIn('role', ['staff', 'admin'])->get(['id', 'role']);
+        $petList = implode(', ', array_filter($petNames));
+        foreach ($staffAndAdmin as $recipient) {
+            \App\Models\AppNotification::notify(
+                $recipient->id,
+                'new_request',
+                'New Appointment Request',
+                Auth::user()->name . " requested an appointment for {$petList}.",
+                route($recipient->role . '.appointments')
+            );
         }
 
         $count = count($bookings);
@@ -164,7 +184,12 @@ class AppointmentController extends Controller
         abort_if(!$appointment->isPending() && !$appointment->isApproved(), 403);
 
         $validated = $request->validate([
-            'appointment_date' => ['required', 'date', 'after:today'],
+            'appointment_date' => ['required', 'date', 'after:today', function ($attribute, $value, $fail) {
+                $day = \Carbon\Carbon::parse($value)->dayOfWeek;
+                if (in_array($day, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) {
+                    $fail('We are closed on weekends. Please choose a weekday.');
+                }
+            }],
             'appointment_time' => ['required', 'in:' . implode(',', array_keys(Appointment::CLINIC_HOURS))],
             'service_id'       => ['required', 'exists:services,id'],
             'notes'            => ['nullable', 'string', 'max:500'],

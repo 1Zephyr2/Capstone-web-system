@@ -53,18 +53,20 @@
             for (let d = 1; d <= daysInMonth; d++) {
                 const cellDate = new Date(year, month, d); cellDate.setHours(0,0,0,0);
                 const isPast = cellDate <= today;
+                const isWeekend = cellDate.getDay() === 0 || cellDate.getDay() === 6;
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const isSelected = selectedDate === dateStr;
                 const isFull = fullyBookedDates.has(dateStr);
                 const el = document.createElement('button');
                 el.type = 'button'; el.innerText = d;
-                el.title = isFull ? 'Fully booked' : '';
+                el.title = isWeekend ? 'Closed on weekends' : (isFull ? 'Fully booked' : '');
                 el.className = ['rounded-lg py-1.5 text-sm font-medium transition-all w-full',
                     isPast ? 'text-gray-300 cursor-not-allowed' :
+                    isWeekend ? 'text-gray-300 cursor-not-allowed line-through' :
                     isSelected ? 'bg-emerald-600 text-white font-bold shadow-md' :
                     isFull ? 'bg-red-50 text-red-400 border border-red-200 line-through hover:bg-red-100' :
                     'text-gray-700 hover:bg-emerald-100 hover:text-emerald-700'].join(' ');
-                if (!isPast) el.onclick = () => selectDate(dateStr, d, months[month], year);
+                if (!isPast && !isWeekend) el.onclick = () => selectDate(dateStr, d, months[month], year);
                 grid.appendChild(el);
             }
         }
@@ -172,7 +174,8 @@
                 <a href="{{ route('appointments.index') }}" class="px-4 py-2 rounded-full text-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all">
                     <i class="bi bi-calendar-check mr-1 text-emerald-600"></i> My Appointments
                 </a>
-                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                @include('components.notification-bell', ['notifRoutePrefix' => ''])
+            <form action="{{ route('logout') }}" method="POST" class="m-0">
                     @csrf <button class="px-4 py-2 rounded-full text-sm bg-red-50 border border-red-100 text-red-500 transition-all">Logout</button>
                 </form>
             </div>
@@ -241,6 +244,7 @@
                         <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span> Open — click to select</div>
                         <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-300 inline-block"></span> Fully booked</div>
                         <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block"></span> Past date</div>
+                        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block"></span> Closed (weekends)</div>
                     </div>
                 </div>
 
@@ -257,13 +261,22 @@
                                         <input type="checkbox" class="pet-checkbox rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                                name="pets[]" value="{{ $pet->id }}" data-name="{{ $pet->name }}">
                                         <span class="text-sm font-semibold text-gray-900">{{ $pet->name }}</span>
-                                        <span class="text-xs text-gray-400">({{ $pet->breed }})</span>
+                                        <span class="text-xs text-gray-400">({{ $pet->breed }}{{ $pet->size ? ' · ' . $pet->size : '' }})</span>
                                     </label>
+                                    @if(!$pet->size)
+                                        <p class="text-amber-500 text-xs mt-1">
+                                            <i class="bi bi-exclamation-circle mr-1"></i>No size set —
+                                            <a href="{{ route('pets.details', ['id' => $pet->id, 'edit' => 1]) }}" class="underline">add one</a> to see accurate prices.
+                                        </p>
+                                    @endif
                                     <select name="services[{{ $pet->id }}]" class="pet-service-select hidden mt-2 w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500">
                                         @foreach($services as $category => $items)
                                             <optgroup label="{{ $category }}">
                                                 @foreach($items as $svc)
-                                                    <option value="{{ $svc->id }}">{{ $svc->name }}</option>
+                                                    @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
+                                                    <option value="{{ $svc->id }}">
+                                                        {{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}
+                                                    </option>
                                                 @endforeach
                                             </optgroup>
                                         @endforeach

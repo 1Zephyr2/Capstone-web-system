@@ -65,7 +65,8 @@
                 <a href="{{ route('profile.edit') }}" class="w-9 h-9 rounded-full border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-all">
                     <i class="bi bi-person"></i>
                 </a>
-                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                @include('components.notification-bell', ['notifRoutePrefix' => ''])
+            <form action="{{ route('logout') }}" method="POST" class="m-0">
                     @csrf <button class="px-4 py-2 rounded-full text-sm bg-red-50 border border-red-100 text-red-500 hover:bg-red-100 transition-all">Logout</button>
                 </form>
             </div>
@@ -145,7 +146,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <a href="{{ route('pets.details', $pet->id) }}" class="flex-1 text-center px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold transition-all">View</a>
-                                <a href="{{ route('pets.edit', $pet->id) }}" class="flex-1 text-center px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold transition-all">Edit</a>
+                                <a href="{{ route('pets.details', ['id' => $pet->id, 'edit' => 1]) }}" class="flex-1 text-center px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold transition-all">Edit</a>
                                 <form id="delete-pet-{{ $pet->id }}" method="POST" action="{{ route('pets.destroy', $pet) }}">@csrf @method('DELETE')</form>
                                 <button type="button" onclick="confirmDelete('delete-pet-{{ $pet->id }}','Remove {{ addslashes($pet->name) }}?')"
                                         class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-all"><i class="bi bi-trash text-xs"></i></button>
@@ -234,19 +235,24 @@
         </div>
         @endif
 
-        <div class="mt-6 bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
-            <div>
-                <h3 class="font-bold text-gray-900 text-sm mb-1">Need to reach Bark Park directly?</h3>
-                <p class="text-gray-500 text-xs">We're happy to help with anything not covered here.</p>
+        <div class="mt-6 bg-emerald-50 border border-emerald-100 rounded-2xl p-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-sm mb-1">Need to reach Bark Pack directly?</h3>
+                    <p class="text-gray-500 text-xs">We're happy to help with anything not covered here.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="tel:+639088751557" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                        <i class="bi bi-telephone text-emerald-600"></i> 0908-875-1557
+                    </a>
+                    <a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=ycNK9JclMmGrBA10&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o#" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                        <i class="bi bi-facebook text-emerald-600"></i> Facebook
+                    </a>
+                </div>
             </div>
-            <div class="flex items-center gap-3">
-                <a href=" 0970 057 7320" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
-                    <i class="bi bi-telephone text-emerald-600"></i>  0970 057 7320
-                </a>
-                {{-- TODO: replace with the real Bark Park Facebook page URL --}}
-                <a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=ycNK9JclMmGrBA10&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o#" target="_blank" rel="noopener" class="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
-                    <i class="bi bi-facebook text-emerald-600"></i> Facebook
-                </a>
+            <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500 border-t border-emerald-100 pt-4">
+                <span><i class="bi bi-geo-alt text-emerald-600 mr-1"></i> L. Ferguson, Guisad, Baguio</span>
+                <span><i class="bi bi-clock text-emerald-600 mr-1"></i> Monday–Sunday, 9AM–6PM</span>
             </div>
         </div>
     </main>
@@ -288,8 +294,33 @@
                            class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all" placeholder="e.g. Golden Retriever">
                 </div>
                 <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Size <span class="text-red-500">*</span></label>
+                    <select name="size" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all">
+                        <option value="">Select size</option>
+                        @foreach(\App\Models\Pet::SIZE_LABELS as $key => $label)
+                            <option value="{{ $key }}" {{ old('size') === $key ? 'selected' : '' }}>{{ $key }} — {{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-gray-400 text-xs mt-1">Used to calculate grooming prices for this pet.</p>
+                </div>
+                <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Special Notes <span class="normal-case font-normal text-gray-300">(optional)</span></label>
                     <textarea name="special_notes" rows="2" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all resize-none">{{ old('special_notes') }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Vaccination Record <span class="normal-case font-normal text-gray-300">(optional)</span></label>
+                    <textarea name="vaccination_record" rows="2" placeholder="e.g. Rabies - June 2026, 5-in-1 - March 2026"
+                              class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all resize-none">{{ old('vaccination_record') }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Existing Medical Conditions <span class="normal-case font-normal text-gray-300">(optional)</span></label>
+                    <textarea name="medical_conditions" rows="2" placeholder="e.g. Skin allergies, joint issues, none"
+                              class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all resize-none">{{ old('medical_conditions') }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Grooming Triggers / Trauma <span class="normal-case font-normal text-gray-300">(optional)</span></label>
+                    <textarea name="grooming_triggers" rows="2" placeholder="e.g. Scared of dryers, sensitive paws, had a bad experience with nail trims"
+                              class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all resize-none">{{ old('grooming_triggers') }}</textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Photo <span class="normal-case font-normal text-gray-300">(optional)</span></label>

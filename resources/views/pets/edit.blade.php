@@ -78,7 +78,8 @@
                 <button onclick="toggleModal()" class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-slate-800/50">
                     <i class="bi bi-person-circle text-xl"></i>
                 </button>
-                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                @include('components.notification-bell', ['notifRoutePrefix' => ''])
+            <form action="{{ route('logout') }}" method="POST" class="m-0">
                     @csrf
                     <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-900/30 hover:bg-red-900/50 text-red-400 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-red-900/10">Logout</button>
                 </form>

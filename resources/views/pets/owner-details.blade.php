@@ -33,6 +33,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             switchTab('appointments');
+
+            @if(request('edit'))
+                showModal('edit-pet-modal', 'edit-pet-modal-content');
+            @endif
+
             document.getElementById('edit-photo-input')?.addEventListener('change', function() {
                 const file = this.files[0];
                 if (!file) return;
@@ -79,7 +84,8 @@
             </a>
             <div class="hidden sm:flex items-center gap-3">
                 <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-full text-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all">← Dashboard</a>
-                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                @include('components.notification-bell', ['notifRoutePrefix' => ''])
+            <form action="{{ route('logout') }}" method="POST" class="m-0">
                     @csrf <button class="px-4 py-2 rounded-full text-sm bg-red-50 border border-red-100 text-red-500 hover:bg-red-100 transition-all">Logout</button>
                 </form>
             </div>
@@ -273,6 +279,30 @@
                 </div>
 
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <h4 class="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
+                        <i class="bi bi-clipboard2-heart text-emerald-600"></i> Medical Background
+                    </h4>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Size</p>
+                            <p class="text-gray-700">{{ $pet->size ? (\App\Models\Pet::SIZE_LABELS[$pet->size] ?? $pet->size) : 'Not set' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Vaccination Record</p>
+                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->vaccination_record ?: 'None on file.' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Existing Medical Conditions</p>
+                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->medical_conditions ?: 'None on file.' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Grooming Triggers / Trauma</p>
+                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->grooming_triggers ?: 'None on file.' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                     <h4 class="font-bold text-gray-900 text-sm mb-3">Quick Actions</h4>
                     <div class="space-y-2">
                         <a href="{{ route('request.appointment') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm transition-all">
@@ -340,9 +370,35 @@
                     </label>
                 </div>
                 <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Size</label>
+                    <select name="size" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all appearance-none text-sm">
+                        @foreach(\App\Models\Pet::SIZE_LABELS as $key => $label)
+                            <option value="{{ $key }}" {{ $pet->size === $key ? 'selected' : '' }}>{{ $key }} — {{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-gray-400 text-xs mt-1">Used to calculate grooming prices for this pet.</p>
+                </div>
+                <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Special Notes</label>
                     <textarea name="special_notes" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all resize-none text-sm">{{ $pet->special_notes }}</textarea>
                 </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Vaccination Record <span class="normal-case font-normal text-gray-300">(optional)</span></label>
+                    <textarea name="vaccination_record" rows="2" placeholder="e.g. Rabies - June 2026, 5-in-1 - March 2026" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all resize-none text-sm">{{ $pet->vaccination_record }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Existing Medical Conditions <span class="normal-case font-normal text-gray-300">(optional)</span></label>
+                    <textarea name="medical_conditions" rows="2" placeholder="e.g. Skin allergies, joint issues, none" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all resize-none text-sm">{{ $pet->medical_conditions }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Grooming Triggers / Trauma <span class="normal-case font-normal text-gray-300">(optional)</span></label>
+                    <textarea name="grooming_triggers" rows="2" placeholder="e.g. Scared of dryers, sensitive paws, had a bad experience with nail trims" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all resize-none text-sm">{{ $pet->grooming_triggers }}</textarea>
+                </div>
+                @if($errors->any())
+                    <div class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm space-y-1">
+                        @foreach($errors->all() as $error)<p>• {{ $error }}</p>@endforeach
+                    </div>
+                @endif
                 <div class="flex gap-3 pt-1">
                     <button type="button" onclick="closeModal('edit-pet-modal','edit-pet-modal-content')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold transition-all text-sm">Cancel</button>
                     <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all text-sm">Save Changes</button>

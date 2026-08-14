@@ -58,6 +58,10 @@ class AppointmentSeeder extends Seeder
                     'type'    => $type,
                     'breed'   => $breed,
                     'age'     => $age,
+                    // Without a size, priceForSize() has nothing to match and every
+                    // seeded appointment's price silently ends up null — pick one
+                    // roughly matching breed so revenue numbers look plausible too.
+                    'size'    => self::sizeForBreed($breed),
                 ]));
             }
         }
@@ -74,7 +78,8 @@ class AppointmentSeeder extends Seeder
             Appointment::STATUS_PENDING,
             Appointment::STATUS_APPROVED,
             Appointment::STATUS_COMPLETED,
-            Appointment::STATUS_COMPLETED, // weighted so "completed" is common, like a real shop history
+            Appointment::STATUS_COMPLETED,
+            Appointment::STATUS_COMPLETED, // weighted heavier so most of the past reads as resolved history
             Appointment::STATUS_REJECTED,
             Appointment::STATUS_CANCELLED,
         ];
@@ -88,17 +93,47 @@ class AppointmentSeeder extends Seeder
             null, null, null,
         ];
 
+        // Mild, believable seasonality (not a sine wave, just plausible highs/
+        // lows a real grooming shop might see) so the forecasting engine has
+        // an actual seasonal pattern to detect instead of flat noise:
+        // slower right after New Year, busier around summer and December.
+        $monthWeight = [
+            1 => 0.7, 2 => 0.8, 3 => 0.9, 4 => 1.0, 5 => 1.1, 6 => 1.2,
+            7 => 1.15, 8 => 1.0, 9 => 0.9, 10 => 1.0, 11 => 1.1, 12 => 1.35,
+        ];
+
         $created = 0;
         $slotUsage = []; // track "date|time" => count, so we respect MAX_PER_SLOT within this seed run
 
-        // Spread across the last 2 months through the next 3 weeks, so Insights'
-        // monthly trend and service popularity both have real variety to show.
+        // Span roughly one full year back (so the ensemble has a whole
+        // seasonal cycle to learn from) through 3 weeks into the future
+        // (so there's still a pending/upcoming queue to work with).
+        $startDate = now()->copy()->subYear()->startOfMonth();
+        $endDate   = now()->copy()->addWeeks(3);
+        $totalDays = $startDate->diffInDays($endDate);
+
         foreach ($services as $service) {
-            $bookingsForThisService = rand(3, 6);
+            // More bookings per service since this now spans a year instead
+            // of ~80 days — keeps the same "appointments per week" density.
+            $bookingsForThisService = rand(45, 90);
 
             for ($b = 0; $b < $bookingsForThisService; $b++) {
-                $dayOffset = rand(-60, 21);
-                $date = now()->addDays($dayOffset)->startOfDay();
+                $date = $startDate->copy()->addDays(rand(0, $totalDays));
+
+                // Clinic is closed weekends (matches the real booking rules) —
+                // nudge onto the nearest weekday instead of just skipping,
+                // so the requested density still roughly holds.
+                if ($date->isWeekend()) {
+                    $date = $date->isSaturday() ? $date->addDays(2) : $date->addDay();
+                }
+
+                // Seasonal thinning: roll again against that month's weight,
+                // more likely to be discarded in a historically "slow" month.
+                if (mt_rand() / mt_getrandmax() > ($monthWeight[$date->month] ?? 1.0)) {
+                    continue;
+                }
+
+                $dayOffset = (int) now()->startOfDay()->diffInDays($date, false);
                 $hour = $hours[array_rand($hours)];
                 $datetimeKey = $date->format('Y-m-d') . '|' . $hour;
 
@@ -128,6 +163,7 @@ class AppointmentSeeder extends Seeder
                     'service_id'       => $service->id,
                     'appointment_date' => $datetime,
                     'status'           => $status,
+                    'price'            => $service->priceForSize($pet->size),
                     'notes'            => $notesPool[array_rand($notesPool)],
                     'rejection_reason' => $status === Appointment::STATUS_REJECTED ? 'Slot unavailable, please reschedule.' : null,
                     'booking_group_id' => (string) Str::uuid(),
@@ -138,6 +174,22 @@ class AppointmentSeeder extends Seeder
             }
         }
 
-        $this->command->info('Seeded ' . count($owners) . " sample owners, {$pets->count()} pets, and {$created} appointments across " . $services->count() . ' active services.');
+        $this->command->info('Seeded ' . count($owners) . " sample owners, {$pets->count()} pets, and {$created} appointments spanning " . $startDate->format('M Y') . ' – ' . $endDate->format('M Y') . ' across ' . $services->count() . ' active services.');
+    }
+
+    /**
+     * Rough, plausible pet size for a given breed, matching Pet::SIZES —
+     * only used so seeded appointments have a real price instead of null.
+     */
+    private static function sizeForBreed(string $breed): string
+    {
+        return match (true) {
+            str_contains($breed, 'Chihuahua') => 'XS',
+            str_contains($breed, 'Shih Tzu'), str_contains($breed, 'Pomeranian') => 'S',
+            str_contains($breed, 'Beagle'), str_contains($breed, 'Siamese'), str_contains($breed, 'Persian') => 'S',
+            str_contains($breed, 'Maine Coon') => 'M',
+            str_contains($breed, 'Golden Retriever') => 'L',
+            default => ['XS', 'S', 'M', 'L'][array_rand(['XS', 'S', 'M', 'L'])],
+        };
     }
 }

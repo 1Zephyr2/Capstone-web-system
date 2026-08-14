@@ -1,11 +1,14 @@
 @php
     $styles = App\Models\GroomingOption::where('type','style')->where('is_active',true)->orderBy('name')->get();
     $addons = App\Models\GroomingOption::where('type','addon')->where('is_active',true)->orderBy('name')->get();
+    $realServices = App\Models\Service::groupedActive();
     $sizes = [
-        ['Small','Under 10kg','Chihuahua, Pomeranian, Shih Tzu, Maltese','Delicate handling with gentle grooming techniques.','bg-emerald-100 text-emerald-700 border-emerald-200','bi-emoji-smile'],
-        ['Medium','10–25kg','Beagle, Cocker Spaniel, French Bulldog','Balanced grooming for medium breeds.','bg-teal-100 text-teal-700 border-teal-200','bi-emoji-laughing'],
-        ['Large','25–45kg','Golden Retriever, Labrador, Husky','Full-service grooming including double coats.','bg-amber-100 text-amber-700 border-amber-200','bi-emoji-heart-eyes'],
-        ['Extra Large','45kg+','Saint Bernard, Great Dane, Rottweiler','Specialized grooming requiring extended sessions.','bg-orange-100 text-orange-700 border-orange-200','bi-award'],
+        ['XS','Under 4kg','Chihuahua, Toy Poodle, Yorkshire Terrier','bg-emerald-100 text-emerald-700 border-emerald-200','bi-emoji-smile'],
+        ['S','4–9kg','Pomeranian, Shih Tzu, Maltese','bg-teal-100 text-teal-700 border-teal-200','bi-emoji-laughing'],
+        ['M','9–15kg','Beagle, Cocker Spaniel, French Bulldog','bg-sky-100 text-sky-700 border-sky-200','bi-emoji-sunglasses'],
+        ['L','15–25kg','Border Collie, Standard Poodle, Bulldog','bg-amber-100 text-amber-700 border-amber-200','bi-emoji-heart-eyes'],
+        ['XL','25–40kg','Golden Retriever, Labrador, Husky','bg-orange-100 text-orange-700 border-orange-200','bi-award'],
+        ['G','40kg+','Saint Bernard, Great Dane, Rottweiler','bg-rose-100 text-rose-700 border-rose-200','bi-award-fill'],
     ];
 @endphp
 <!DOCTYPE html>
@@ -75,44 +78,108 @@
                 <p class="text-gray-500 max-w-xl mx-auto">Professional pet care services tailored to every breed and size.</p>
             </div>
 
-            <!-- Core Services -->
+            <!-- Grooming Packages -->
             <section class="mb-16">
-                <h2 class="text-xl font-bold text-gray-900 mb-6">Core Services</h2>
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Grooming Packages</h2>
                 <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
-                    @foreach([
-                        ['bi-scissors',    'Grooming',           'Professional coat styling and hygiene.', 'bg-emerald-100 text-emerald-600'],
-                        ['bi-heart-pulse', 'Veterinary Checkup', 'Health assessments and clinical care.',  'bg-red-100 text-red-500'],
-                        ['bi-shield-plus', 'Vaccination',         'Scheduled immunizations and protection.','bg-blue-100 text-blue-600'],
-                        ['bi-house-heart', 'Boarding',            'Safe and comfortable overnight stays.',  'bg-violet-100 text-violet-600'],
-                    ] as $svc)
+                    @forelse($realServices->get('Grooming Packages', collect()) as $svc)
                     <div class="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md hover:-translate-y-1 transition-all">
-                        <div class="w-12 h-12 {{ explode(' ',$svc[3])[0] }} rounded-xl flex items-center justify-center mb-4">
-                            <i class="{{ $svc[0] }} {{ explode(' ',$svc[3])[1] }} text-xl"></i>
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+                            <i class="bi bi-scissors text-xl"></i>
                         </div>
-                        <h3 class="font-bold text-gray-900 mb-1">{{ $svc[1] }}</h3>
-                        <p class="text-gray-400 text-sm">{{ $svc[2] }}</p>
+                        <h3 class="font-bold text-gray-900 mb-1">{{ $svc->name }}</h3>
+                        <p class="text-emerald-600 text-sm font-semibold">{{ $svc->price_range }}</p>
+                    </div>
+                    @empty
+                        <p class="text-gray-400 text-sm italic sm:col-span-2 md:col-span-4">Packages coming soon.</p>
+                    @endforelse
+                </div>
+            </section>
+
+            <!-- Add-ons / Treatments -->
+            @if($realServices->get('Add-ons', collect())->isNotEmpty())
+            <section class="mb-16">
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Add-ons &amp; Treatments</h2>
+                <p class="text-gray-400 text-sm mb-6">Extra treatments you can add to any package.</p>
+                <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
+                    @foreach($realServices->get('Add-ons') as $svc)
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md hover:-translate-y-1 transition-all">
+                        <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center mb-4">
+                            <i class="bi bi-droplet text-xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-900 mb-1 text-sm">{{ $svc->name }}</h3>
+                        <p class="text-teal-600 text-sm font-semibold">{{ $svc->price_range }}</p>
                     </div>
                     @endforeach
                 </div>
             </section>
+            @endif
+
+            <!-- Ala Carte -->
+            @if($realServices->get('Ala Carte', collect())->isNotEmpty())
+            <section class="mb-16">
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Ala Carte</h2>
+                <p class="text-gray-400 text-sm mb-6">Individual services you can book on their own.</p>
+                <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
+                    @foreach($realServices->get('Ala Carte') as $svc)
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md hover:-translate-y-1 transition-all">
+                        <div class="w-12 h-12 bg-violet-100 text-violet-600 rounded-xl flex items-center justify-center mb-4">
+                            <i class="bi bi-check2-circle text-xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-900 mb-1 text-sm">{{ $svc->name }}</h3>
+                        <p class="text-violet-600 text-sm font-semibold">{{ $svc->price_range }}</p>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
 
             <!-- Size Categories -->
             <section class="mb-16">
                 <h2 class="text-xl font-bold text-gray-900 mb-2">Service by Pet Size</h2>
-                <p class="text-gray-400 text-sm mb-6">Tailored based on your pet's weight and breed characteristics.</p>
-                <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
-                    @foreach($sizes as [$label,$range,$breeds,$desc,$cls,$icon])
+                <p class="text-gray-400 text-sm mb-6">Prices vary by your pet's size — tell us during booking so we quote accurately.</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    @foreach($sizes as [$label,$range,$breeds,$cls,$icon])
                         @php $parts = explode(' ',$cls); @endphp
-                        <div class="border {{ $parts[2] }} {{ $parts[0] }} rounded-2xl p-5 hover:-translate-y-1 transition-all">
+                        <div class="border {{ $parts[2] }} {{ $parts[0] }} rounded-2xl p-5 hover:-translate-y-1 transition-all text-center">
                             <i class="bi {{ $icon }} {{ $parts[1] }} text-xl mb-3 block"></i>
-                            <div class="flex items-baseline gap-2 mb-1">
-                                <h3 class="font-bold {{ $parts[1] }}">{{ $label }}</h3>
-                                <span class="text-xs {{ $parts[1] }} opacity-75 font-semibold">{{ $range }}</span>
-                            </div>
-                            <p class="text-gray-500 text-xs mb-2 italic">{{ $breeds }}</p>
-                            <p class="text-gray-600 text-sm">{{ $desc }}</p>
+                            <h3 class="font-bold {{ $parts[1] }}">{{ $label }}</h3>
+                            <p class="text-xs {{ $parts[1] }} opacity-75 font-semibold mb-2">{{ $range }}</p>
+                            <p class="text-gray-500 text-xs">{{ $breeds }}</p>
                         </div>
                     @endforeach
+                </div>
+            </section>
+
+            <!-- Aggressive Fee Notice -->
+            <section class="mb-16">
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 sm:p-8">
+                    <div class="flex items-start gap-3 mb-4">
+                        <i class="bi bi-exclamation-triangle text-amber-600 text-xl mt-0.5"></i>
+                        <div>
+                            <h3 class="font-bold text-gray-900">Aggressive Pet Handling Fee</h3>
+                            <p class="text-gray-500 text-sm">An additional fee may apply if a pet requires extra care due to aggressive behavior during the session. This is assessed on-site by our groomers and communicated to you before proceeding.</p>
+                        </div>
+                    </div>
+                    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div class="bg-white border border-amber-100 rounded-xl p-3">
+                            <p class="font-semibold text-gray-900">Level 1</p>
+                            <p class="text-gray-500 text-xs">Scratching</p>
+                        </div>
+                        <div class="bg-white border border-amber-100 rounded-xl p-3">
+                            <p class="font-semibold text-gray-900">Level 2</p>
+                            <p class="text-gray-500 text-xs">Single bite, shallow wound</p>
+                        </div>
+                        <div class="bg-white border border-amber-100 rounded-xl p-3">
+                            <p class="font-semibold text-gray-900">Level 3</p>
+                            <p class="text-gray-500 text-xs">Single bite, deep wound</p>
+                        </div>
+                        <div class="bg-white border border-amber-100 rounded-xl p-3">
+                            <p class="font-semibold text-gray-900">Level 4</p>
+                            <p class="text-gray-500 text-xs">Multiple bites, deep wounds</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-xs mt-4">Fees for each level are determined at the shop and are not fixed prices.</p>
                 </div>
             </section>
 

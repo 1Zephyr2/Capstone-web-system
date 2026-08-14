@@ -13,6 +13,8 @@ class StaffAppointmentController extends Controller
      */
     public function index(Request $request)
 {
+    $viewMode = $request->get('view', 'day'); // 'day' or 'week'
+
     // The day being viewed in the schedule grid (defaults to today)
     $date = $request->filled('date')
         ? \Carbon\Carbon::parse($request->date)->startOfDay()
@@ -20,6 +22,43 @@ class StaffAppointmentController extends Controller
 
     // Business hours shown in the grid (skips the 12:00 PM lunch slot)
     $slotTimes = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+
+    $weekDays = null;
+    $weekStart = null;
+    $weekEnd = null;
+
+    if ($viewMode === 'week') {
+        $weekStart = $date->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+        $weekEnd   = $weekStart->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+
+        $weekAppointments = Appointment::with(['user', 'pet'])
+            ->whereBetween('appointment_date', [$weekStart, $weekEnd->copy()->endOfDay()])
+            ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
+            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
+            ->when($request->filled('service'), fn($q) => $q->where('service_id', $request->service))
+            ->get()
+            ->groupBy(fn($appt) => $appt->appointment_date->format('Y-m-d') . ' ' . $appt->appointment_date->format('H:i'));
+
+        $weekDays = collect(range(0, 6))->map(function ($i) use ($weekStart, $slotTimes, $weekAppointments) {
+            $day = $weekStart->copy()->addDays($i);
+            $dayKey = $day->format('Y-m-d');
+
+            return [
+                'date'       => $day,
+                'label'      => $day->format('D'),
+                'day_num'    => $day->format('j'),
+                'is_today'   => $day->isToday(),
+                'is_weekend' => in_array($day->dayOfWeek, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY]),
+                'slots'      => collect($slotTimes)->map(function ($slot) use ($weekAppointments, $dayKey) {
+                    $appts = $weekAppointments->get($dayKey . ' ' . $slot, collect());
+                    return [
+                        'time'         => $slot,
+                        'appointments' => $appts,
+                    ];
+                }),
+            ];
+        });
+    }
 
     $dayAppointments = Appointment::with(['user', 'pet'])
         ->whereDate('appointment_date', $date)
@@ -58,7 +97,8 @@ class StaffAppointmentController extends Controller
     ];
 
     return view('staff.appointments', compact(
-        'timeSlots', 'date', 'serviceTypes', 'statusOptions', 'stats'
+        'timeSlots', 'date', 'serviceTypes', 'statusOptions', 'stats',
+        'viewMode', 'weekDays', 'weekStart', 'weekEnd'
     ));
 }
 
@@ -71,6 +111,14 @@ class StaffAppointmentController extends Controller
         abort_if(!$appointment->isPending(), 422, 'Only pending appointments can be approved.');
 
         $appointment->update(['status' => Appointment::STATUS_APPROVED]);
+
+        \App\Models\AppNotification::notify(
+            $appointment->user_id,
+            'appointment_approved',
+            'Appointment Confirmed',
+            "Your appointment for {$appointment->pet->name} ({$appointment->service_label}) on {$appointment->appointment_date->format('M d, Y g:i A')} has been approved.",
+            route('appointments.index')
+        );
 
         return back()->with('success', "Appointment for {$appointment->pet->name} approved.");
     }
@@ -92,7 +140,35 @@ class StaffAppointmentController extends Controller
             'rejection_reason' => $request->rejection_reason,
         ]);
 
+        \App\Models\AppNotification::notify(
+            $appointment->user_id,
+            'appointment_rejected',
+            'Appointment Rejected',
+            "Your appointment for {$appointment->pet->name} on {$appointment->appointment_date->format('M d, Y g:i A')} was rejected." . ($request->rejection_reason ? ' Reason: ' . $request->rejection_reason : ''),
+            route('appointments.index')
+        );
+
         return back()->with('success', "Appointment for {$appointment->pet->name} rejected.");
+    }
+
+    /**
+     * Send a heads-up to the owner before actually marking the service complete
+     * (e.g. "almost done, please prepare for pickup").
+     * PATCH /staff/appointments/{appointment}/notify-almost-done
+     */
+    public function notifyAlmostDone(Appointment $appointment)
+    {
+        abort_if(!$appointment->isApproved(), 422, 'Only in-progress appointments can send this notice.');
+
+        \App\Models\AppNotification::notify(
+            $appointment->user_id,
+            'almost_done',
+            'Almost Done!',
+            "{$appointment->pet->name}'s {$appointment->service_label} is almost done — please get ready for pickup soon.",
+            route('appointments.index')
+        );
+
+        return back()->with('success', "Owner notified that {$appointment->pet->name} is almost ready.");
     }
 
     /**
@@ -123,6 +199,14 @@ class StaffAppointmentController extends Controller
         }
 
         $appointment->update($data);
+
+        \App\Models\AppNotification::notify(
+            $appointment->user_id,
+            'appointment_completed',
+            'Service Completed',
+            "{$appointment->pet->name}'s {$appointment->service_label} is complete and ready for pickup.",
+            route('appointments.index')
+        );
 
         return back()->with('success', "Appointment for {$appointment->pet->name} marked as completed.");
     }
@@ -166,6 +250,8 @@ public function searchPets(Request $request)
         })
         ->limit(10)
         ->get()
+        ->sortBy(fn($pet) => $pet->user->name)
+        ->values()
         ->map(fn($pet) => [
             'pet_id'     => $pet->id,
             'pet_name'   => $pet->name,
@@ -183,7 +269,15 @@ public function searchPets(Request $request)
 public function store(Request $request)
 {
     $validated = $request->validate([
-        'appointment_date' => ['required', 'date'],
+        'appointment_date' => ['required', 'date', function ($attribute, $value, $fail) {
+            $day = \Carbon\Carbon::parse($value)->dayOfWeek;
+            if (in_array($day, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) {
+                $fail('We are closed on weekends. Please choose a weekday.');
+            }
+            if (\Carbon\Carbon::parse($value)->isPast()) {
+                $fail('That time slot has already passed. Please choose a current or upcoming time.');
+            }
+        }],
         'service_id'       => ['required', 'exists:services,id'],
         'notes'            => ['nullable', 'string', 'max:500'],
         'booking_mode'     => ['required', 'in:existing,walkin'],
@@ -192,6 +286,7 @@ public function store(Request $request)
         'pet_name'         => ['required_if:booking_mode,walkin', 'nullable', 'string', 'max:100'],
         'pet_type'         => ['required_if:booking_mode,walkin', 'nullable', 'in:dog,cat,other'],
         'pet_breed'        => ['nullable', 'string', 'max:100'],
+        'pet_size'         => ['nullable', 'in:' . implode(',', \App\Models\Pet::SIZES)],
     ]);
 
     $slotDateTime = \Carbon\Carbon::parse($validated['appointment_date']);
@@ -209,7 +304,7 @@ public function store(Request $request)
             'name'     => $validated['owner_name'],
             'email'    => 'walkin_' . uniqid() . '@furcare.local',
             'password' => bcrypt(str()->random(32)),
-            'role'     => 'customer',
+            'role'     => 'owner',
         ]);
 
         $pet = \App\Models\Pet::create([
@@ -217,6 +312,7 @@ public function store(Request $request)
             'name'    => $validated['pet_name'],
             'type'    => $validated['pet_type'],
             'breed'   => $validated['pet_breed'] ?? 'N/A',
+            'size'    => $validated['pet_size'] ?? null,
             'age'     => 0,
         ]);
 

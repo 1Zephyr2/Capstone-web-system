@@ -33,7 +33,7 @@
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
         });
 
-        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute, resultPhotoUrl) {
+        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute, resultPhotoUrl, notifyRoute) {
             document.getElementById('modal-pet').innerText      = pet;
             document.getElementById('modal-owner').innerText    = owner;
             document.getElementById('modal-service').innerText  = service;
@@ -57,6 +57,7 @@
             document.getElementById('btn-approve').classList.toggle('hidden', status !== 'pending');
             document.getElementById('btn-reject-wrap').classList.toggle('hidden', status !== 'pending');
             document.getElementById('btn-complete').classList.toggle('hidden', status !== 'approved');
+            document.getElementById('btn-notify-wrap').classList.toggle('hidden', status !== 'approved');
             document.getElementById('btn-cancel').classList.toggle('hidden', status !== 'approved');
 
             document.getElementById('form-approve').action  = approveRoute;
@@ -64,6 +65,7 @@
             document.getElementById('form-cancel').action   = cancelRoute;
             document.getElementById('form-reject').action   = rejectRoute;
             document.getElementById('form-edit-notes').action = editNotesRoute;
+            document.getElementById('form-notify').action    = notifyRoute;
 
             // Reset notes edit mode
             showNotesView();
@@ -185,6 +187,7 @@
                     <a href="{{ route('admin.panel') }}" class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 hover:bg-rose-100 hover:scale-105">Admin Panel</a>
                 @endif
             </div>
+            @include('components.notification-bell', ['notifRoutePrefix' => ($isAdmin ?? false) ? 'admin.' : 'staff.'])
             <form action="{{ route($isAdmin ? 'admin.logout' : 'staff.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
@@ -220,6 +223,12 @@
                 <i class="bi bi-exclamation-circle-fill"></i> {{ session('error') }}
             </div>
         @endif
+        @if($errors->any())
+            <div class="mb-6 px-6 py-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-3">
+                <i class="bi bi-exclamation-circle-fill mt-0.5"></i>
+                <div>@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>
+            </div>
+        @endif
 
         <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
     <h1 class="text-2xl font-bold text-gray-900">Appointment Management</h1>
@@ -249,23 +258,50 @@
     $prevDate  = $date->copy()->subDay()->toDateString();
     $nextDate  = $date->copy()->addDay()->toDateString();
     $todayDate = today()->toDateString();
+    $viewMode  = $viewMode ?? 'day';
 @endphp
+
+<!-- Day / Week toggle -->
+<div class="flex items-center gap-2 mb-4 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+    <div class="flex gap-1 bg-gray-100 p-1 rounded-xl">
+        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('view'), ['view' => 'day'])) }}"
+           class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $viewMode === 'day' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Day</a>
+        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('view'), ['view' => 'week'])) }}"
+           class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $viewMode === 'week' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Week</a>
+    </div>
+</div>
 
 <!-- Date nav + Filters -->
 <form method="GET" action="{{ route($prefix . '.appointments') }}"
       class="flex flex-wrap items-center gap-3 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+    <input type="hidden" name="view" value="{{ $viewMode }}">
 
-    <div class="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200">
-        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $prevDate])) }}"
-           class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">&lt; Prev</a>
-        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $todayDate])) }}"
-           class="px-3 py-2 rounded-lg text-sm bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all">Today</a>
-        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $nextDate])) }}"
-           class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">Next &gt;</a>
-    </div>
-
-    <input type="date" name="date" value="{{ $date->toDateString() }}" onchange="this.form.submit()"
-           class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all shadow-sm">
+    @if($viewMode === 'day')
+        <div class="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200">
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $prevDate])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">&lt; Prev</a>
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $todayDate])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all">Today</a>
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $nextDate])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">Next &gt;</a>
+        </div>
+        <input type="date" name="date" value="{{ $date->toDateString() }}" onchange="this.form.submit()"
+               class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all shadow-sm">
+    @else
+        @php
+            $prevWeekDate = $weekStart->copy()->subWeek()->toDateString();
+            $nextWeekDate = $weekStart->copy()->addWeek()->toDateString();
+        @endphp
+        <div class="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200">
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $prevWeekDate, 'view' => 'week'])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">&lt; Prev Week</a>
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $todayDate, 'view' => 'week'])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all">This Week</a>
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $nextWeekDate, 'view' => 'week'])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">Next Week &gt;</a>
+        </div>
+        <p class="text-gray-500 text-sm font-medium">{{ $weekStart->format('M j') }} – {{ $weekEnd->format('M j, Y') }}</p>
+    @endif
 
     <select name="status" onchange="this.form.submit()" class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all appearance-none shadow-sm">
         <option value="">All Statuses</option>
@@ -282,10 +318,57 @@
     </select>
 
     @if(request()->hasAny(['status','service']))
-        <a href="{{ route($prefix . '.appointments', ['date' => $date->toDateString()]) }}"
+        <a href="{{ route($prefix . '.appointments', ['date' => $date->toDateString(), 'view' => $viewMode]) }}"
            class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition-all">Clear</a>
     @endif
 </form>
+
+@if($viewMode === 'week')
+    <!-- Week Grid -->
+    <div class="bg-white border-gray-200 border rounded-2xl overflow-hidden shadow-sm reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[800px]">
+            <thead class="bg-gray-50/50 border-gray-200 border-b">
+                <tr class="text-xs uppercase text-gray-500 tracking-wider">
+                    <th class="px-4 py-3 w-20">Time</th>
+                    @foreach($weekDays as $day)
+                        <th class="px-3 py-3 text-center {{ $day['is_today'] ? 'bg-violet-50 text-violet-700' : '' }} {{ $day['is_weekend'] ? 'text-gray-300' : '' }}">
+                            <a href="{{ route($prefix . '.appointments', ['date' => $day['date']->toDateString(), 'view' => 'day']) }}" class="hover:underline">
+                                {{ $day['label'] }} <span class="block text-sm font-bold normal-case">{{ $day['day_num'] }}</span>
+                            </a>
+                        </th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @foreach($timeSlots as $slotIndex => $referenceSlot)
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="px-4 py-3 text-xs font-bold text-violet-600 whitespace-nowrap">{{ $referenceSlot['label'] }}</td>
+                        @foreach($weekDays as $day)
+                            @php $slotAppointments = $day['slots'][$slotIndex]['appointments'] ?? collect(); @endphp
+                            <td class="px-3 py-3 text-center {{ $day['is_weekend'] ? 'bg-gray-50/50' : '' }}">
+                                @if($day['is_weekend'])
+                                    <span class="text-gray-300 text-xs">Closed</span>
+                                @elseif($slotAppointments->isEmpty())
+                                    <a href="{{ route($prefix . '.appointments', ['date' => $day['date']->toDateString(), 'view' => 'day']) }}" class="text-gray-300 text-xs hover:text-emerald-500 transition-all">—</a>
+                                @else
+                                    <a href="{{ route($prefix . '.appointments', ['date' => $day['date']->toDateString(), 'view' => 'day']) }}"
+                                       class="inline-flex flex-col items-center gap-0.5 hover:opacity-75 transition-all">
+                                        @foreach($slotAppointments->take(2) as $appt)
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $appt->status_badge_class }} whitespace-nowrap">{{ $appt->pet->name }}</span>
+                                        @endforeach
+                                        @if($slotAppointments->count() > 2)
+                                            <span class="text-[10px] text-gray-400">+{{ $slotAppointments->count() - 2 }} more</span>
+                                        @endif
+                                    </a>
+                                @endif
+                            </td>
+                        @endforeach
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@else
 
 <p class="text-gray-500 mb-4 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
     {{ $date->format('l, F j, Y') }}
@@ -309,6 +392,7 @@
                     $completeRouteM  = route($prefix.'.appointments.complete', $appt);
                     $cancelRouteM    = route($prefix.'.appointments.cancel',   $appt);
                     $editNotesRouteM = route($prefix.'.appointments.notes',    $appt);
+                    $notifyRouteM    = route($prefix.'.appointments.notify-almost-done', $appt);
                 @endphp
                 <div onclick="openDetailModal(
                         {{ $appt->id }},
@@ -323,7 +407,8 @@
                         '{{ $completeRouteM }}',
                         '{{ $cancelRouteM }}',
                         '{{ $editNotesRouteM }}',
-                        {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }}
+                        {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }},
+                        '{{ $notifyRouteM }}'
                      )"
                      class="p-4 active:bg-gray-50">
                     <div class="flex items-center justify-between mb-1">
@@ -336,14 +421,18 @@
             @empty
                 <div class="p-4 flex items-center justify-between">
                     <span class="font-bold text-violet-600 text-sm">{{ $slot['label'] }}</span>
-                    <button type="button"
-                            onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
-                            class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
-                        + Book
-                    </button>
+                    @if($slot['datetime']->isPast())
+                        <span class="text-gray-300 text-sm italic">Past</span>
+                    @else
+                        <button type="button"
+                                onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                                class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
+                            + Book
+                        </button>
+                    @endif
                 </div>
             @endforelse
-            @if($slot['appointments']->isNotEmpty() && !$slot['full'])
+            @if($slot['appointments']->isNotEmpty() && !$slot['full'] && !$slot['datetime']->isPast())
                 <div class="p-4 flex items-center justify-between bg-gray-50/50">
                     <span class="text-gray-400 text-xs">{{ $slot['appointments']->count() }}/{{ \App\Models\Appointment::MAX_PER_SLOT }} slots used</span>
                     <button type="button"
@@ -378,6 +467,7 @@
                         $completeRoute  = route($prefix.'.appointments.complete', $appt);
                         $cancelRoute    = route($prefix.'.appointments.cancel',   $appt);
                         $editNotesRoute = route($prefix.'.appointments.notes',    $appt);
+                        $notifyRoute    = route($prefix.'.appointments.notify-almost-done', $appt);
                     @endphp
                     <tr onclick="openDetailModal(
                             {{ $appt->id }},
@@ -392,7 +482,8 @@
                             '{{ $completeRoute }}',
                             '{{ $cancelRoute }}',
                             '{{ $editNotesRoute }}',
-                            {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }}
+                            {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }},
+                            '{{ $notifyRoute }}'
                          )"
                         class="cursor-pointer hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
@@ -411,15 +502,19 @@
                         <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
                         <td colspan="4" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
                         <td class="px-6 py-5">
-                            <button type="button"
-                                    onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
-                                    class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
-                                + Book
-                            </button>
+                            @if($slot['datetime']->isPast())
+                                <span class="text-gray-300 text-sm italic">Past</span>
+                            @else
+                                <button type="button"
+                                        onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                                        class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
+                                    + Book
+                                </button>
+                            @endif
                         </td>
                     </tr>
                 @endforelse
-                @if($slot['appointments']->isNotEmpty() && !$slot['full'])
+                @if($slot['appointments']->isNotEmpty() && !$slot['full'] && !$slot['datetime']->isPast())
                     <tr class="bg-gray-50/50 hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-3 text-xs text-gray-400" colspan="4">{{ $slot['appointments']->count() }}/{{ \App\Models\Appointment::MAX_PER_SLOT }} slots used for {{ $slot['label'] }}</td>
                         <td class="px-6 py-3">
@@ -436,6 +531,7 @@
     </table>
     </div>
 </div>
+@endif
     </main>
 
     <!-- Detail Modal -->
@@ -516,6 +612,14 @@
                     <button type="button" onclick="openRejectModal()" class="w-full px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-semibold transition-all">
                         <i class="bi bi-x-circle mr-2"></i>Reject Appointment
                     </button>
+                </div>
+                <div id="btn-notify-wrap">
+                    <form id="form-notify" method="POST" onsubmit="return confirm('Send an \'almost done\' notice to the owner?')">
+                        @csrf @method('PATCH')
+                        <button type="submit" class="w-full px-4 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold transition-all">
+                            <i class="bi bi-bell mr-2"></i>Notify Owner — Almost Done
+                        </button>
+                    </form>
                 </div>
                 <form id="form-complete" method="POST" enctype="multipart/form-data">
                     @csrf @method('PATCH')
@@ -641,9 +745,20 @@
                         </select>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Breed (optional)</label>
-                    <input type="text" name="pet_breed" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Breed (optional)</label>
+                        <input type="text" name="pet_breed" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Size</label>
+                        <select name="pet_size" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500">
+                            <option value="">—</option>
+                            @foreach(\App\Models\Pet::SIZES as $size)
+                                <option value="{{ $size }}">{{ $size }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -663,8 +778,9 @@
                         <div class="px-3 py-1.5 bg-gray-50 text-[11px] font-bold uppercase tracking-wider text-gray-400 sticky top-0">{{ $category }}</div>
                         @foreach($items as $svc)
                             <div onclick="selectService({{ $svc->id }}, '{{ addslashes($svc->name) }}')"
-                                 class="px-3 py-2.5 text-sm text-gray-700 hover:bg-violet-50 cursor-pointer transition-all">
-                                {{ $svc->name }}
+                                 class="px-3 py-2.5 text-sm text-gray-700 hover:bg-violet-50 cursor-pointer transition-all flex items-center justify-between gap-2">
+                                <span>{{ $svc->name }}</span>
+                                <span class="text-gray-400 text-xs shrink-0">{{ $svc->price_range }}</span>
                             </div>
                         @endforeach
                     @endforeach

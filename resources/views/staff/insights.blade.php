@@ -1,140 +1,82 @@
 @php
-    use App\Models\Appointment;
-    use App\Models\Pet;
-    use App\Models\User;
+    $isAdmin = auth()->user()->role === 'admin';
+    $prefix  = $isAdmin ? 'admin' : 'staff';
+    $accent  = $isAdmin ? 'indigo' : 'violet';
 
-    // Summary stats
-    $totalAppointments  = Appointment::count();
-    $completedCount     = Appointment::where('status', 'completed')->count();
-    $pendingCount       = Appointment::where('status', 'pending')->count();
-    $cancelledCount     = Appointment::whereIn('status', ['cancelled', 'rejected'])->count();
-
-    // Service breakdown (real counts, all active services shown even with zero bookings)
-    $allServices = \App\Models\Service::notArchived()->orderBy('category')->orderBy('name')->get();
-    $serviceCounts = Appointment::whereNotNull('service_id')
-        ->selectRaw('service_id, count(*) as total')
-        ->groupBy('service_id')
-        ->pluck('total', 'service_id');
-
-    $serviceStats = $allServices->map(function ($svc) use ($serviceCounts) {
-        return (object) ['name' => $svc->name, 'total' => $serviceCounts[$svc->id] ?? 0];
-    })->sortByDesc('total')->values();
-
-    $maxService = $serviceStats->max('total') ?: 1;
-    $topServices = $serviceStats->take(6);
-
-    // Appointments by status for summary
-    $statusBreakdown = Appointment::selectRaw('status, count(*) as total')
-        ->groupBy('status')
-        ->pluck('total', 'status');
-
-    // Appointments trend (period-selectable: week / month / 6 months / year)
-    $trendPeriod = request('period', '6months');
-
-    $monthly = [];
-    if ($trendPeriod === 'week') {
-        for ($i = 6; $i >= 0; $i--) {
-            $day = now()->subDays($i);
-            $monthly[] = ['label' => $day->format('D'), 'count' => Appointment::whereDate('appointment_date', $day->toDateString())->count()];
-        }
-        $trendTitle = 'Appointments (Last 7 Days)';
-    } elseif ($trendPeriod === 'month') {
-        for ($i = 4; $i >= 0; $i--) {
-            $weekStart = now()->subWeeks($i)->startOfWeek();
-            $weekEnd = $weekStart->copy()->endOfWeek();
-            $monthly[] = ['label' => $weekStart->format('M d'), 'count' => Appointment::whereBetween('appointment_date', [$weekStart, $weekEnd])->count()];
-        }
-        $trendTitle = 'Appointments (Last 5 Weeks)';
-    } elseif ($trendPeriod === 'year') {
-        for ($i = 11; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $monthly[] = ['label' => $month->format('M'), 'count' => Appointment::whereYear('appointment_date', $month->year)->whereMonth('appointment_date', $month->month)->count()];
-        }
-        $trendTitle = 'Appointments (Last 12 Months)';
-    } else {
-        $trendPeriod = '6months';
-        for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $monthly[] = ['label' => $month->format('M'), 'count' => Appointment::whereYear('appointment_date', $month->year)->whereMonth('appointment_date', $month->month)->count()];
-        }
-        $trendTitle = 'Appointments (Last 6 Months)';
+    // ── Build Chart.js-ready series for the volume + revenue charts ──────
+    // Two datasets each (actual / forecast) so the line can render solid
+    // up to "now" and dashed afterward, with a shared point at the seam
+    // so the two segments connect visually instead of leaving a gap.
+    $volLabels = array_column($monthlyWithForecast, 'label');
+    $volActual = [];
+    $volForecast = [];
+    foreach ($monthlyWithForecast as $i => $m) {
+        $isF = $m['is_forecast'] ?? false;
+        $volActual[]   = $isF ? null : $m['count'];
+        $volForecast[] = $isF ? $m['count'] : null;
     }
-    $maxMonthly = max(array_column($monthly, 'count')) ?: 1;
+    // seam point: carry the last actual value into the first forecast slot
+    foreach ($volForecast as $i => $v) {
+        if ($v !== null && $i > 0 && $volForecast[$i - 1] === null && $volActual[$i - 1] !== null) {
+            $volForecast[$i - 1] = $volActual[$i - 1];
+        }
+    }
 
-    $periodTotal   = array_sum(array_column($monthly, 'count'));
-    $periodAverage = count($monthly) > 0 ? round($periodTotal / count($monthly), 1) : 0;
-    $busiestBucket = collect($monthly)->sortByDesc('count')->first();
-    $bucketNoun    = match($trendPeriod) { 'week' => 'day', 'month' => 'week', 'year' => 'month', default => 'month' };
-
-    // Top pets by appointment count
-    $topPets = Pet::withCount('appointments')
-        ->orderByDesc('appointments_count')
-        ->take(5)
-        ->get();
-
-    $completionRate = $totalAppointments > 0
-        ? round(($completedCount / $totalAppointments) * 100)
-        : 0;
+    $revLabels = array_column($revenueMonthlyWithForecast, 'label');
+    $revActual = [];
+    $revForecast = [];
+    foreach ($revenueMonthlyWithForecast as $i => $m) {
+        $isF = $m['is_forecast'] ?? false;
+        $revActual[]   = $isF ? null : $m['total'];
+        $revForecast[] = $isF ? $m['total'] : null;
+    }
+    foreach ($revForecast as $i => $v) {
+        if ($v !== null && $i > 0 && $revForecast[$i - 1] === null && $revActual[$i - 1] !== null) {
+            $revForecast[$i - 1] = $revActual[$i - 1];
+        }
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Staff Insights</title>
+    <title>FURCARE | {{ $isAdmin ? 'Admin' : 'Staff' }} Insights</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
-                    },
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] } } } }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('opacity-100', 'translate-y-0');
-                        entry.target.classList.remove('opacity-0', 'translate-y-10');
-                    }
-                });
-            }, { threshold: 0.1 });
-            document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script>function toggleNav() { document.getElementById('mobile-menu').classList.toggle('hidden'); }</script>
-    <script>
-        function toggleServiceModal() {
-            const modal = document.getElementById('service-modal');
-            modal.classList.toggle('hidden');
-            modal.classList.toggle('flex');
-        }
-    </script>
+    <script>function toggleModalById(id) { const m = document.getElementById(id); m.classList.toggle('hidden'); m.classList.toggle('flex'); }</script>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
     <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
+            <a href="{{ route($prefix.'.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
                 <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
-                <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
+                @if($isAdmin)
+                    <span class="text-rose-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-100 border border-rose-200">ADMIN PORTAL</span>
+                @else
+                    <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
+                @endif
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-                <a href="{{ route('staff.dashboard') }}"    class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Dashboard</a>
-                <a href="{{ route('staff.directory') }}"    class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Pets</a>
-                <a href="{{ route('staff.appointments') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Appointments</a>
-                <a href="{{ route('staff.insights') }}"     class="text-gray-900 font-semibold transition-all duration-300 hover:scale-105">Insights</a>
+                <a href="{{ route($prefix.'.dashboard') }}"    class="hover:text-gray-900 transition-all">Dashboard</a>
+                <a href="{{ route($prefix.'.directory') }}"    class="hover:text-gray-900 transition-all">Pets</a>
+                <a href="{{ route($prefix.'.appointments') }}" class="hover:text-gray-900 transition-all">Appointments</a>
+                <a href="{{ route($prefix.'.insights') }}"     class="text-gray-900 font-semibold transition-all">Insights</a>
+                @if($isAdmin)
+                    <a href="{{ route('admin.panel') }}" class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100">Admin Panel</a>
+                @endif
             </div>
-            <form action="{{ route('staff.logout') }}" method="POST" class="m-0 hidden md:block">
+            @include('components.notification-bell', ['notifRoutePrefix' => $prefix.'.'])
+            <form action="{{ route($prefix.'.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
@@ -144,213 +86,345 @@
         </div>
     </nav>
     <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
-            <a href="{{ route('staff.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
-            <a href="{{ route('staff.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pets</a>
-            <a href="{{ route('staff.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-calendar-event"></i> Appointments</a>
-            <a href="{{ route('staff.insights') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>
-            <form action="{{ route('staff.logout') }}" method="POST" >
-                @csrf
-                <button class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-50 text-red-500 text-sm"><i class="bi bi-box-arrow-right"></i> Logout</button>
-            </form>
+        <a href="{{ route($prefix.'.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
+        <a href="{{ route($prefix.'.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-heart"></i> Pets</a>
+        <a href="{{ route($prefix.'.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-calendar-event"></i> Appointments</a>
+        <a href="{{ route($prefix.'.insights') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>
+        @if($isAdmin)
+            <a href="{{ route('admin.panel') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-gear"></i> Admin Panel</a>
+        @endif
+        <form action="{{ route($prefix.'.logout') }}" method="POST">
+            @csrf
+            <button class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-50 text-red-500 text-sm"><i class="bi bi-box-arrow-right"></i> Logout</button>
+        </form>
     </div>
 
     <main class="container mx-auto px-6 py-12">
-        <header class="mb-10 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+        <header class="mb-10">
             <h1 class="text-2xl font-bold text-gray-900">Clinic Insights</h1>
-            <p class="text-gray-500 text-sm">Real-time operational performance overview.</p>
+            <p class="text-gray-500 text-sm">Real-time operational performance, with hybrid-ensemble forecasts.</p>
         </header>
 
+        <!-- Period toggle -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div class="flex gap-1 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+                @foreach(['week' => 'Week', 'month' => 'Month', '6months' => '6 Months', 'year' => 'Year'] as $key => $label)
+                    <a href="{{ route($prefix.'.insights', ['period' => $key]) }}"
+                       class="px-4 py-2 rounded-md text-sm font-semibold transition-all {{ $trendPeriod === $key ? "bg-$accent-600 text-white shadow-sm" : 'text-gray-500 hover:text-gray-700' }}">
+                        {{ $label }}
+                    </a>
+                @endforeach
+            </div>
+            @if($trendPeriod === 'year')
+                <div class="text-xs text-gray-400"><i class="bi bi-calendar3 mr-1"></i>{{ now()->year }} (Jan 1 – Dec 31, {{ now()->year }})</div>
+            @endif
+        </div>
+
         <!-- Summary Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <i class="bi bi-calendar-check text-violet-600 text-xl mb-2 block"></i>
-                <p class="text-gray-500 text-xs mb-1">Total Appointments</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $totalAppointments }}</p>
-            </div>
-            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <i class="bi bi-check2-all text-emerald-600 text-xl mb-2 block"></i>
-                <p class="text-gray-500 text-xs mb-1">Completed</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $completedCount }}</p>
-            </div>
-            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <i class="bi bi-hourglass-split text-amber-600 text-xl mb-2 block"></i>
-                <p class="text-gray-500 text-xs mb-1">Pending</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5">
+                <p class="text-amber-700 text-xs font-semibold uppercase tracking-wider mb-1">Pending</p>
                 <p class="text-2xl font-bold text-gray-900">{{ $pendingCount }}</p>
+                <p class="text-xs text-amber-600 mt-0.5">{{ $totalAppointments > 0 ? round(($pendingCount/$totalAppointments)*100) : 0 }}% of total</p>
             </div>
-            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <i class="bi bi-graph-up text-teal-600 text-xl mb-2 block"></i>
-                <p class="text-gray-500 text-xs mb-1">Completion Rate</p>
+            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5">
+                <p class="text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-1">Completed</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $completedCount }}</p>
+                <p class="text-xs text-emerald-600 mt-0.5">₱{{ number_format($totalRevenue, 0) }} revenue</p>
+            </div>
+            <div class="bg-red-50 border border-red-100 rounded-2xl p-5">
+                <p class="text-red-700 text-xs font-semibold uppercase tracking-wider mb-1">Cancelled / Rejected</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $cancelledCount }}</p>
+                <p class="text-xs text-red-600 mt-0.5">{{ $totalAppointments > 0 ? round(($cancelledCount/$totalAppointments)*100) : 0 }}% of total</p>
+            </div>
+            <div class="bg-{{ $accent }}-50 border border-{{ $accent }}-100 rounded-2xl p-5">
+                <p class="text-{{ $accent }}-700 text-xs font-semibold uppercase tracking-wider mb-1">Completion Rate</p>
                 <p class="text-2xl font-bold text-gray-900">{{ $completionRate }}%</p>
+                <p class="text-xs text-{{ $accent }}-600 mt-0.5">{{ $totalOwners }} owners on file</p>
             </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6 mb-6 items-start">
-
-            <!-- Monthly Appointments Bar Chart -->
-            <div class="bg-white border border-gray-200 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out shadow-sm">
-                <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-                    <div>
-                        <h3 class="font-bold text-gray-900 mb-1">{{ $trendTitle }}</h3>
-                        <p class="text-gray-400 text-xs">Based on appointment date</p>
+        <!-- Volume + Revenue trend charts -->
+        <div class="grid lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h3 class="font-bold text-gray-900 mb-1">{{ $trendTitle }}</h3>
+                <p class="text-gray-400 text-xs mb-4">Solid = actual · dashed = hybrid ensemble forecast</p>
+                <div class="h-56"><canvas id="volumeChart"></canvas></div>
+                @if($volumeMeta)
+                    <div class="mt-4 pt-4 border-t border-gray-100 text-xs bg-{{ $volumeMeta['pct_diff'] >= 0 ? 'emerald' : 'red' }}-50 border border-{{ $volumeMeta['pct_diff'] >= 0 ? 'emerald' : 'red' }}-100 rounded-lg p-3">
+                        <span class="font-semibold text-{{ $volumeMeta['pct_diff'] >= 0 ? 'emerald' : 'red' }}-700">
+                            Forecast is {{ abs($volumeMeta['pct_diff']) }}% {{ $volumeMeta['pct_diff'] >= 0 ? 'above' : 'below' }} actual so far this year
+                        </span>
+                        <span class="text-gray-500">— Actual: {{ $volumeMeta['actual_total'] }} → Projected rest of year: {{ $volumeMeta['forecast_total'] }} ({{ $volumeMeta['matched_periods'] }} months forecasted)</span>
                     </div>
-                    <div class="flex gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
-                        @foreach(['week' => 'Week', 'month' => 'Month', '6months' => '6 Months', 'year' => 'Year'] as $key => $label)
-                            <a href="{{ route('staff.insights', ['period' => $key]) }}"
-                               class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all {{ $trendPeriod === $key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">
-                                {{ $label }}
-                            </a>
-                        @endforeach
+                @else
+                    <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-4 text-center">
+                        <div><p class="text-lg font-bold text-gray-900">{{ $periodTotal }}</p><p class="text-xs text-gray-400">Total this period</p></div>
+                        <div><p class="text-lg font-bold text-gray-900">{{ $periodAverage }}</p><p class="text-xs text-gray-400">Avg per {{ $bucketNoun }}</p></div>
+                        <div><p class="text-lg font-bold text-gray-900">{{ $busiestBucket['label'] ?? '—' }}</p><p class="text-xs text-gray-400">Busiest ({{ $busiestBucket['count'] ?? 0 }})</p></div>
                     </div>
-                </div>
-                <div class="h-48 flex items-end justify-between gap-3 px-2">
-                    @foreach($monthly as $m)
-                        @php $pct = $maxMonthly > 0 ? ($m['count'] / $maxMonthly) * 100 : 0; @endphp
-                        <div class="flex-1 h-full flex flex-col items-center justify-end gap-2">
-                            <span class="text-xs text-gray-500 font-semibold">{{ $m['count'] }}</span>
-                            <div class="w-full rounded-t-lg transition-all duration-700 hover:bg-violet-500"
-                                 style="height: {{ max($pct, 4) }}%; background: rgba(139,92,246,0.75);">
-                            </div>
-                            <span class="text-xs text-gray-400 whitespace-nowrap">{{ $m['label'] }}</span>
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="mt-6 pt-5 border-t border-gray-100 grid grid-cols-3 gap-4 text-center">
-                    <div>
-                        <p class="text-lg font-bold text-gray-900">{{ $periodTotal }}</p>
-                        <p class="text-xs text-gray-400">Total this period</p>
-                    </div>
-                    <div>
-                        <p class="text-lg font-bold text-gray-900">{{ $periodAverage }}</p>
-                        <p class="text-xs text-gray-400">Avg per {{ $bucketNoun }}</p>
-                    </div>
-                    <div>
-                        <p class="text-lg font-bold text-gray-900">{{ $busiestBucket['label'] ?? '—' }}</p>
-                        <p class="text-xs text-gray-400">Busiest ({{ $busiestBucket['count'] ?? 0 }})</p>
-                    </div>
-                </div>
+                @endif
             </div>
 
-            <!-- Service Breakdown -->
-            <div class="bg-white border border-gray-200 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out shadow-sm">
-                <div class="flex items-center justify-between mb-2">
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h3 class="font-bold text-gray-900 mb-1">Revenue (Last 12 Months)</h3>
+                <p class="text-gray-400 text-xs mb-4">Completed appointments only · dashed = forecast</p>
+                <div class="h-56"><canvas id="revenueChart"></canvas></div>
+                <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-4 text-center">
+                    <div><p class="text-lg font-bold text-gray-900">₱{{ number_format($totalRevenue, 0) }}</p><p class="text-xs text-gray-400">Total earned</p></div>
+                    <div><p class="text-lg font-bold text-gray-900">₱{{ number_format($thisMonthRevenue, 0) }}</p><p class="text-xs text-gray-400">This month</p></div>
+                    <div><p class="text-lg font-bold text-gray-900">₱{{ number_format($predictedRevenueNextMonth, 0) }}</p><p class="text-xs text-gray-400">Predicted next month</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Distribution + Revenue Status -->
+        <div class="grid lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h3 class="font-bold text-gray-900 mb-1">Booking Distribution</h3>
+                <p class="text-gray-400 text-xs mb-4">Completed vs. cancelled/rejected, all time</p>
+                <div class="h-56 flex items-center justify-center"><canvas id="distributionChart"></canvas></div>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h3 class="font-bold text-gray-900 mb-1">Revenue Status</h3>
+                <p class="text-gray-400 text-xs mb-4">Earned (completed) vs. lost (cancelled/rejected)</p>
+                <div class="h-56"><canvas id="revenueStatusChart"></canvas></div>
+                <div class="mt-4 pt-4 border-t border-gray-100 text-xs bg-{{ $netRevenueGrowthPct >= 0 ? 'emerald' : 'red' }}-50 border border-{{ $netRevenueGrowthPct >= 0 ? 'emerald' : 'red' }}-100 rounded-lg p-3">
+                    <span class="font-semibold text-{{ $netRevenueGrowthPct >= 0 ? 'emerald' : 'red' }}-700">{{ $netRevenueGrowthPct }}% net revenue growth</span>
+                    <span class="text-gray-500">— Earned: ₱{{ number_format($revenueEarned, 0) }} · Lost: ₱{{ number_format($revenueLost, 0) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Popularity + Revenue by Service -->
+        <div class="grid lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-1">
                     <h3 class="font-bold text-gray-900">Service Popularity</h3>
                     @if($serviceStats->count() > 6)
-                        <button type="button" onclick="toggleServiceModal()" class="text-xs text-violet-600 hover:text-violet-700 font-semibold transition-all">
-                            View All ({{ $serviceStats->count() }}) →
-                        </button>
+                        <button type="button" onclick="toggleModalById('service-modal')" class="text-xs text-{{ $accent }}-600 hover:text-{{ $accent }}-700 font-semibold">View All ({{ $serviceStats->count() }}) →</button>
                     @endif
                 </div>
-                <p class="text-gray-400 text-xs mb-6">Based on completed + all appointments</p>
-                <div class="space-y-5">
-                    @forelse($topServices as $s)
-                        @php $pct = round(($s->total / $maxService) * 100); @endphp
-                        <div>
-                            <div class="flex justify-between text-sm mb-1.5">
-                                <span class="text-gray-600">{{ $s->name }}</span>
-                                <span class="font-medium text-violet-600">{{ $s->total }} appts</span>
-                            </div>
-                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-violet-500 rounded-full transition-all duration-1000"
-                                     style="width: {{ $pct }}%"></div>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="text-gray-400 text-sm italic">No appointment data yet.</p>
-                    @endforelse
-                </div>
+                <p class="text-gray-400 text-xs mb-4">Total appointments per service</p>
+                <div class="h-56"><canvas id="serviceChart"></canvas></div>
             </div>
 
-            <!-- All Services Modal -->
-            <div id="service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm transition-opacity duration-300 ease-out"
-                 onclick="if(event.target===this) toggleServiceModal()">
-                <div class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[80vh] overflow-y-auto">
-                    <div class="flex items-center justify-between mb-1">
-                        <h3 class="text-lg font-bold text-gray-900">All Services — Popularity</h3>
-                        <button type="button" onclick="toggleServiceModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                    <p class="text-gray-400 text-xs mb-6">Total appointments per service, most to least popular</p>
-                    <div class="space-y-5">
-                        @foreach($serviceStats as $s)
-                            @php $pct = round(($s->total / $maxService) * 100); @endphp
-                            <div>
-                                <div class="flex justify-between text-sm mb-1.5">
-                                    <span class="text-gray-600">{{ $s->name }}</span>
-                                    <span class="font-medium text-violet-600">{{ $s->total }} appts</span>
-                                </div>
-                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                    <div class="h-full bg-violet-500 rounded-full transition-all duration-1000" style="width: {{ $pct }}%"></div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-bold text-gray-900">Revenue by Service</h3>
+                    @if($revenueServiceStats->count() > 6)
+                        <button type="button" onclick="toggleModalById('revenue-service-modal')" class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold">View All ({{ $revenueServiceStats->count() }}) →</button>
+                    @endif
                 </div>
+                <p class="text-gray-400 text-xs mb-4">All-time revenue, completed only</p>
+                <div class="h-56"><canvas id="revenueServiceChart"></canvas></div>
             </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
-
-            <!-- Status Breakdown -->
-            <div class="bg-white border border-gray-200 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out shadow-sm">
-                <h3 class="font-bold text-gray-900 mb-6">Appointment Status Breakdown</h3>
-                <div class="space-y-4">
-                    @php
-                        $statusConfig = [
-                            'pending'   => ['color' => 'bg-amber-500',  'label' => 'Pending'],
-                            'approved'  => ['color' => 'bg-emerald-500','label' => 'Approved'],
-                            'completed' => ['color' => 'bg-blue-500',   'label' => 'Completed'],
-                            'rejected'  => ['color' => 'bg-red-500',    'label' => 'Rejected'],
-                            'cancelled' => ['color' => 'bg-gray-400',  'label' => 'Cancelled'],
-                        ];
-                    @endphp
-                    @foreach($statusConfig as $key => $cfg)
-                        @php $count = $statusBreakdown[$key] ?? 0; $pct = $totalAppointments > 0 ? round(($count/$totalAppointments)*100) : 0; @endphp
+        <!-- All Services modal -->
+        <div id="service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm" onclick="if(event.target===this) toggleModalById('service-modal')">
+            <div class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[80vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-lg font-bold text-gray-900">All Services — Bookings</h3>
+                    <button type="button" onclick="toggleModalById('service-modal')" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <p class="text-gray-400 text-xs mb-6">Most to least popular</p>
+                <div class="space-y-5">
+                    @foreach($serviceStats as $s)
+                        @php $pct = round(($s->total / $maxService) * 100); @endphp
                         <div>
-                            <div class="flex justify-between text-sm mb-1.5">
-                                <span class="text-gray-600">{{ $cfg['label'] }}</span>
-                                <span class="text-gray-500">{{ $count }} ({{ $pct }}%)</span>
-                            </div>
-                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full {{ $cfg['color'] }} rounded-full" style="width: {{ $pct }}%"></div>
-                            </div>
+                            <div class="flex justify-between text-sm mb-1.5"><span class="text-gray-500">{{ $s->name }}</span><span class="font-medium text-gray-500">{{ $s->total }} appts</span></div>
+                            <div class="h-2 bg-gray-50 rounded-full overflow-hidden"><div class="h-full bg-{{ $accent }}-500 rounded-full" style="width: {{ $pct }}%"></div></div>
                         </div>
                     @endforeach
                 </div>
             </div>
+        </div>
 
-            <!-- Top Pets -->
-            <div class="bg-white border border-gray-200 rounded-2xl p-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out shadow-sm">
-                <h3 class="font-bold text-gray-900 mb-6">Most Active Pets</h3>
-                <div class="space-y-3">
-                    @forelse($topPets as $i => $pet)
-                        <div class="flex items-center justify-between bg-gray-50/50 border border-gray-200 rounded-xl p-3">
-                            <div class="flex items-center gap-3">
-                                <span class="text-gray-400 font-bold text-sm w-5">#{{ $i + 1 }}</span>
-                                @if($pet->photo)
-                                    <img src="{{ asset('storage/' . $pet->photo) }}" alt="{{ $pet->name }}"
-                                         class="w-8 h-8 rounded-full object-cover border border-violet-200">
-                                @else
-                                    <span class="text-lg">{{ $pet->type === 'cat' ? '🐱' : '🐶' }}</span>
-                                @endif
-                                <div>
-                                    <p class="text-sm font-semibold text-gray-900">{{ $pet->name }}</p>
-                                    <p class="text-xs text-gray-400">{{ $pet->breed }}</p>
-                                </div>
-                            </div>
-                            <span class="text-violet-600 font-semibold text-sm">{{ $pet->appointments_count }} appts</span>
-                        </div>
-                    @empty
-                        <p class="text-gray-400 text-sm italic">No pet data yet.</p>
-                    @endforelse
+        <!-- All Revenue by Service modal -->
+        <div id="revenue-service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm" onclick="if(event.target===this) toggleModalById('revenue-service-modal')">
+            <div class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[80vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-lg font-bold text-gray-900">All Services — Revenue</h3>
+                    <button type="button" onclick="toggleModalById('revenue-service-modal')" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><i class="bi bi-x-lg"></i></button>
                 </div>
+                <p class="text-gray-400 text-xs mb-6">Highest to lowest, all time</p>
+                <div class="space-y-5">
+                    @foreach($revenueServiceStats as $s)
+                        @php $pct = $s->total > 0 ? round(($s->total / $maxRevenueService) * 100) : 0; @endphp
+                        <div>
+                            <div class="flex justify-between text-sm mb-1.5"><span class="text-gray-500">{{ $s->name }}</span><span class="font-medium text-gray-500">₱{{ number_format($s->total, 0) }}</span></div>
+                            <div class="h-2 bg-gray-50 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" style="width: {{ $pct }}%"></div></div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictive Insights -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-8 mb-6 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="bi bi-graph-up-arrow text-{{ $accent }}-600"></i> Predictive Insights</h3>
+            <p class="text-gray-400 text-xs mb-6">Hybrid ensemble — blends linear regression, moving average, exponential smoothing, and seasonal patterns, weighted by each method's own backtested accuracy.</p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-{{ $accent }}-50 border border-{{ $accent }}-100 rounded-xl p-5">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-{{ $accent }}-500 mb-1">Predicted Busiest Day</p>
+                    @if($busiestDayLabel)
+                        <p class="text-lg font-bold text-gray-900">{{ $busiestDayLabel }}</p>
+                        <p class="text-xs text-gray-500 mt-1">~{{ $busiestDayAvg }} appts/week avg. Next: {{ $nextBusiestDate->format('M j, Y') }}</p>
+                    @else
+                        <p class="text-sm text-gray-400 italic mt-1">Not enough booking history yet.</p>
+                    @endif
+                </div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-5">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-1">Trending Service</p>
+                    @if($trendingService)
+                        <p class="text-lg font-bold text-gray-900">{{ $trendingService->name }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Bookings up {{ round($trendingGrowth) }}% vs. prior 30 days</p>
+                    @else
+                        <p class="text-sm text-gray-400 italic mt-1">Not enough booking history yet.</p>
+                    @endif
+                </div>
+                <div class="bg-amber-50 border border-amber-100 rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-amber-500">Appts — Next Month</p>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $apptConfidence === 'High' ? 'bg-emerald-100 text-emerald-700' : ($apptConfidence === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500') }}">{{ $apptConfidence }}</span>
+                    </div>
+                    <p class="text-lg font-bold text-gray-900">{{ $predictedAppointmentsNextMonth }}</p>
+                </div>
+                <div class="bg-rose-50 border border-rose-100 rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-rose-500">Revenue — Next Month</p>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $revenueConfidence === 'High' ? 'bg-emerald-100 text-emerald-700' : ($revenueConfidence === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500') }}">{{ $revenueConfidence }}</span>
+                    </div>
+                    <p class="text-lg font-bold text-gray-900">₱{{ number_format($predictedRevenueNextMonth, 0) }}</p>
+                </div>
+            </div>
+            <p class="text-gray-300 text-[11px] mt-4 italic">Statistical estimates based on your own past bookings — not a guarantee of future demand.</p>
+        </div>
+
+        <!-- Service Demand Forecast -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-8 mb-6 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="bi bi-bar-chart-line text-{{ $accent }}-600"></i> Service Demand Forecast — Next Month</h3>
+            <p class="text-gray-400 text-xs mb-6">Which services are predicted to be booked most, highest to lowest.</p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50/60 border-b border-gray-100">
+                        <tr class="text-xs uppercase text-gray-400 tracking-wider">
+                            <th class="px-4 py-3 text-left">Service</th>
+                            <th class="px-4 py-3 text-left">Category</th>
+                            <th class="px-4 py-3 text-right">Last Month</th>
+                            <th class="px-4 py-3 text-right">Predicted Next Month</th>
+                            <th class="px-4 py-3 text-center">Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($serviceDemandForecast->take(10) as $s)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ $s->name }}</td>
+                                <td class="px-4 py-3 text-gray-400 text-xs">{{ $s->category }}</td>
+                                <td class="px-4 py-3 text-right text-gray-600">{{ $s->last_month }}</td>
+                                <td class="px-4 py-3 text-right font-semibold text-gray-900">{{ $s->predicted }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    @if($s->trend === 'up')<span class="text-emerald-600"><i class="bi bi-arrow-up-right"></i></span>
+                                    @elseif($s->trend === 'down')<span class="text-red-500"><i class="bi bi-arrow-down-right"></i></span>
+                                    @else<span class="text-gray-400"><i class="bi bi-dash"></i></span>@endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-gray-300 text-[11px] mt-4 italic">Based on each service's own last 6 months of bookings — a short window, so treat this as directional.</p>
+        </div>
+
+        <!-- Most Active Pets -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-6">Most Active Pets</h3>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                @forelse($topPets as $i => $pet)
+                    <div class="bg-gray-50/50 border border-gray-200 rounded-xl p-4 text-center">
+                        <span class="text-gray-400 font-bold text-xs">#{{ $i + 1 }}</span>
+                        @if($pet->photo)
+                            <img src="{{ asset('storage/' . $pet->photo) }}" alt="{{ $pet->name }}" class="w-10 h-10 rounded-full object-cover border border-{{ $accent }}-200 mx-auto my-2">
+                        @else
+                            <span class="text-xl block my-2">{{ $pet->type === 'cat' ? '🐱' : '🐶' }}</span>
+                        @endif
+                        <p class="text-sm font-semibold text-gray-900">{{ $pet->name }}</p>
+                        <p class="text-xs text-gray-500">{{ $pet->breed }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ $pet->appointments_count }} appts</p>
+                    </div>
+                @empty
+                    <p class="text-gray-400 text-sm italic col-span-full">No pet data yet.</p>
+                @endforelse
             </div>
         </div>
     </main>
 
-    <footer class="py-10 text-center border-t border-gray-200 text-gray-400 text-sm mt-12">
-        &copy; {{ date('Y') }} FURCARE | Staff System.
-    </footer>
+    <script>
+        const chartFont = { family: 'Inter', size: 11 };
+        Chart.defaults.font = chartFont;
+        Chart.defaults.color = '#9ca3af';
+
+        new Chart(document.getElementById('volumeChart'), {
+            type: 'line',
+            data: {
+                labels: @json($volLabels),
+                datasets: [
+                    { label: 'Actual', data: @json($volActual), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.12)', fill: true, tension: 0.3, spanGaps: false },
+                    { label: 'Forecast', data: @json($volForecast), borderColor: '#a5b4fc', backgroundColor: 'rgba(165,180,252,0.15)', borderDash: [6,4], fill: true, tension: 0.3, spanGaps: false }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: @json($revLabels),
+                datasets: [
+                    { label: 'Actual', data: @json($revActual), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', fill: true, tension: 0.3, spanGaps: false },
+                    { label: 'Forecast', data: @json($revForecast), borderColor: '#6ee7b7', backgroundColor: 'rgba(110,231,183,0.15)', borderDash: [6,4], fill: true, tension: 0.3, spanGaps: false }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + v.toLocaleString() } } } }
+        });
+
+        new Chart(document.getElementById('distributionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Cancelled / Rejected'],
+                datasets: [{ data: [{{ $bookingCompleted }}, {{ $bookingCancelled }}], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+        });
+
+        new Chart(document.getElementById('revenueStatusChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Earned Revenue', 'Revenue Lost'],
+                datasets: [{ data: [{{ $revenueEarned }}, {{ $revenueLost }}], backgroundColor: ['#10b981', '#ef4444'], borderRadius: 6, maxBarThickness: 70 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + v.toLocaleString() } } } }
+        });
+
+        new Chart(document.getElementById('serviceChart'), {
+            type: 'bar',
+            data: {
+                labels: @json($topServices->pluck('name')),
+                datasets: [{ data: @json($topServices->pluck('total')), backgroundColor: '#{{ $accent === "indigo" ? "6366f1" : "8b5cf6" }}', borderRadius: 6 }]
+            },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('revenueServiceChart'), {
+            type: 'bar',
+            data: {
+                labels: @json($topRevenueServices->pluck('name')),
+                datasets: [{ data: @json($topRevenueServices->pluck('total')), backgroundColor: '#10b981', borderRadius: 6 }]
+            },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { callback: v => '₱' + v.toLocaleString() } } } }
+        });
+    </script>
 </body>
 </html>
