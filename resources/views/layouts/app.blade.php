@@ -13,6 +13,7 @@
 
         <!-- Scripts -->
         <script src="https://cdn.tailwindcss.com"></script>
+    <style>html { font-size: 112%; }</style>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">

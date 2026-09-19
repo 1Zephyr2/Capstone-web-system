@@ -16,6 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>html { font-size: 112%; }</style>
     <script>
         tailwind.config = {
             theme: {
@@ -40,6 +41,10 @@
             document.getElementById('btn-' + tabId).classList.remove('text-gray-500','border-transparent');
         }
 
+        function toggleServiceCategory(id) {
+            document.getElementById('svc-panel-' + id).classList.toggle('hidden');
+            document.getElementById('svc-chevron-' + id).classList.toggle('rotate-180');
+        }
         function toggleModal(id, contentId) {
             const modal = document.getElementById(id), content = document.getElementById(contentId);
             if (modal.classList.contains('hidden')) {
@@ -47,8 +52,7 @@
                 setTimeout(() => { modal.classList.add('opacity-100'); content.classList.remove('scale-95','opacity-0'); content.classList.add('scale-100','opacity-100'); }, 10);
             } else {
                 modal.classList.remove('opacity-100'); content.classList.remove('scale-100','opacity-100'); content.classList.add('scale-95','opacity-0');
-                setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
-            }
+                setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);            }
         }
 
         function confirmDelete(formId, msg) {
@@ -421,44 +425,65 @@
                         </button>
                     </div>
 
-                    @foreach(\App\Models\Service::CATEGORIES as $category)
-                        <div class="mb-8">
-                            <h3 class="font-bold text-gray-900 mb-4">{{ $category }}</h3>
-                            <div class="space-y-2">
-                                @forelse($bookingServices->get($category, collect()) as $svc)
-                                    <div class="bg-gray-50/40 border {{ $svc->is_active ? 'border-gray-200' : 'border-gray-300/30 opacity-60' }} rounded-xl p-4 flex items-center justify-between">
-                                        <div>
-                                            <p class="font-semibold text-gray-900 text-sm">
-                                                {{ $svc->name }}
-                                                @if(!$svc->is_active)<span class="ml-2 text-xs text-gray-400">(disabled)</span>@endif
-                                            </p>
-                                            <p class="text-xs text-gray-500 mt-0.5">{{ $svc->price_range }}</p>
-                                        </div>
-                                        <div class="flex items-center gap-2 shrink-0">
-                                            <button type="button"
-                                                    onclick='openEditService({{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name) }}, {{ Illuminate\Support\Js::from($svc->category) }}, {{ Illuminate\Support\Js::from($svc->prices ?? []) }})'
-                                                    class="px-3 py-1 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
-                                                <i class="bi bi-pencil"></i> Edit
-                                            </button>
-                                            <form method="POST" action="{{ route('admin.services.toggle', $svc) }}">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="px-3 py-1 rounded-lg text-xs {{ $svc->is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' }} transition-all">
-                                                    {{ $svc->is_active ? 'Disable' : 'Enable' }}
+                    @php
+                        $categoryMeta = [
+                            'Grooming Packages' => ['icon' => 'bi-scissors',      'bar' => 'bg-emerald-500'],
+                            'Add-ons'           => ['icon' => 'bi-droplet',       'bar' => 'bg-teal-500'],
+                            'Ala Carte'         => ['icon' => 'bi-check2-circle', 'bar' => 'bg-violet-500'],
+                        ];
+                    @endphp
+                    <div class="space-y-3 mb-8">
+                        @foreach(\App\Models\Service::CATEGORIES as $i => $category)
+                            @php
+                                $items = $bookingServices->get($category, collect());
+                                $meta = $categoryMeta[$category] ?? ['icon' => 'bi-tag', 'bar' => 'bg-gray-500'];
+                            @endphp
+                            <div class="border border-gray-200 rounded-2xl overflow-hidden">
+                                <button type="button" onclick="toggleServiceCategory('{{ $i }}')"
+                                        class="w-full flex items-center justify-between gap-4 px-5 py-4 {{ $meta['bar'] }} text-white text-left transition-all hover:opacity-95">
+                                    <span class="flex items-center gap-3">
+                                        <i class="bi {{ $meta['icon'] }}"></i>
+                                        <span class="font-bold">{{ $category }}</span>
+                                        <span class="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">{{ $items->count() }}</span>
+                                    </span>
+                                    <i id="svc-chevron-{{ $i }}" class="bi bi-chevron-down transition-transform duration-200 {{ $i === 0 ? 'rotate-180' : '' }}"></i>
+                                </button>
+                                <div id="svc-panel-{{ $i }}" class="{{ $i === 0 ? '' : 'hidden' }} p-4 bg-white space-y-2">
+                                    @forelse($items as $svc)
+                                        <div class="bg-gray-50/40 border {{ $svc->is_active ? 'border-gray-200' : 'border-gray-300/30 opacity-60' }} rounded-xl p-4 flex items-center justify-between">
+                                            <div>
+                                                <p class="font-semibold text-gray-900 text-sm">
+                                                    {{ $svc->name }}
+                                                    @if(!$svc->is_active)<span class="ml-2 text-xs text-gray-400">(disabled)</span>@endif
+                                                </p>
+                                                <p class="text-xs text-gray-500 mt-0.5">{{ $svc->price_range }}</p>
+                                            </div>
+                                            <div class="flex items-center gap-2 shrink-0">
+                                                <button type="button"
+                                                        onclick='openEditService({{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name) }}, {{ Illuminate\Support\Js::from($svc->category) }}, {{ Illuminate\Support\Js::from($svc->prices ?? []) }})'
+                                                        class="px-3 py-1 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
+                                                    <i class="bi bi-pencil"></i> Edit
                                                 </button>
-                                            </form>
-                                            <form id="delete-service-{{ $svc->id }}" method="POST" action="{{ route('admin.services.destroy', $svc) }}">@csrf @method('DELETE')</form>
-                                            <button onclick="confirmDelete('delete-service-{{ $svc->id }}','Archive \'{{ addslashes($svc->name) }}\'? You can restore it later from the Archived list.')"
-                                                    class="px-3 py-1 rounded-lg text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
-                                                <i class="bi bi-archive"></i> Archive
-                                            </button>
+                                                <form method="POST" action="{{ route('admin.services.toggle', $svc) }}">
+                                                    @csrf @method('PATCH')
+                                                    <button type="submit" class="px-3 py-1 rounded-lg text-xs {{ $svc->is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' }} transition-all">
+                                                        {{ $svc->is_active ? 'Disable' : 'Enable' }}
+                                                    </button>
+                                                </form>
+                                                <form id="delete-service-{{ $svc->id }}" method="POST" action="{{ route('admin.services.destroy', $svc) }}">@csrf @method('DELETE')</form>
+                                                <button onclick="confirmDelete('delete-service-{{ $svc->id }}','Archive \'{{ addslashes($svc->name) }}\'? You can restore it later from the Archived list.')"
+                                                        class="px-3 py-1 rounded-lg text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+                                                    <i class="bi bi-archive"></i> Archive
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                @empty
-                                    <p class="text-gray-400 text-sm italic py-2">No services in this category yet.</p>
-                                @endforelse
+                                    @empty
+                                        <p class="text-gray-400 text-sm italic py-2">No services in this category yet.</p>
+                                    @endforelse
+                                </div>
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
 
                     <!-- Archived Services -->
                     <div class="mt-10 pt-6 border-t border-gray-200">

@@ -21,6 +21,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>html { font-size: 112%; }</style>
     <script>
         tailwind.config = {
             theme: {
@@ -35,6 +36,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
         function toggleNav() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
+        function toggleCategory(id) {
+            document.getElementById('panel-' + id).classList.toggle('hidden');
+            document.getElementById('chevron-' + id).classList.toggle('rotate-180');
+        }
     </script>
 </head>
 <body class="bg-white text-gray-800 antialiased min-h-screen">
@@ -78,61 +83,49 @@
                 <p class="text-gray-500 max-w-xl mx-auto">Professional pet care services tailored to every breed and size.</p>
             </div>
 
-            <!-- Grooming Packages -->
-            <section class="mb-16">
-                <h2 class="text-xl font-bold text-gray-900 mb-6">Grooming Packages</h2>
-                <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
-                    @forelse($realServices->get('Grooming Packages', collect()) as $svc)
-                    <div class="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md hover:-translate-y-1 transition-all">
-                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
-                            <i class="bi bi-scissors text-xl"></i>
+            <!-- Service Categories (collapsible) -->
+            <section class="mb-16 space-y-4">
+                @php
+                    $categoryMeta = [
+                        'Grooming Packages' => ['icon' => 'bi-scissors',       'bar' => 'bg-emerald-500', 'chip' => 'bg-emerald-100 text-emerald-600', 'desc' => 'Full grooming packages — priced by your pet\'s size.'],
+                        'Add-ons'           => ['icon' => 'bi-droplet',        'bar' => 'bg-teal-500',    'chip' => 'bg-teal-100 text-teal-600',    'desc' => 'Extra treatments you can add on top of any package.'],
+                        'Ala Carte'         => ['icon' => 'bi-check2-circle',  'bar' => 'bg-violet-500',  'chip' => 'bg-violet-100 text-violet-600', 'desc' => 'Individual services you can book on their own.'],
+                    ];
+                @endphp
+                @foreach(\App\Models\Service::CATEGORIES as $i => $cat)
+                    @php $items = $realServices->get($cat, collect()); @endphp
+                    @if($items->isNotEmpty())
+                        @php $meta = $categoryMeta[$cat] ?? ['icon' => 'bi-tag', 'bar' => 'bg-gray-500', 'chip' => 'bg-gray-100 text-gray-600', 'desc' => '']; @endphp
+                        <div class="border border-gray-200 rounded-2xl overflow-hidden">
+                            <button type="button" onclick="toggleCategory('{{ $i }}')"
+                                    class="w-full flex items-center justify-between gap-4 px-6 py-5 {{ $meta['bar'] }} text-white text-left transition-all hover:opacity-95">
+                                <span class="flex items-center gap-3">
+                                    <i class="bi {{ $meta['icon'] }} text-lg"></i>
+                                    <span class="font-extrabold uppercase tracking-wide">{{ $cat }}</span>
+                                    <span class="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full">{{ $items->count() }} {{ \Illuminate\Support\Str::plural('service', $items->count()) }}</span>
+                                </span>
+                                <i id="chevron-{{ $i }}" class="bi bi-chevron-down transition-transform duration-200 {{ $i === 0 ? 'rotate-180' : '' }}"></i>
+                            </button>
+                            <div id="panel-{{ $i }}" class="{{ $i === 0 ? '' : 'hidden' }} p-6 bg-white">
+                                @if($meta['desc'])
+                                    <p class="text-gray-400 text-sm mb-5">{{ $meta['desc'] }}</p>
+                                @endif
+                                <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
+                                    @foreach($items as $svc)
+                                        <div class="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md hover:-translate-y-1 transition-all">
+                                            <div class="w-12 h-12 {{ $meta['chip'] }} rounded-xl flex items-center justify-center mb-4">
+                                                <i class="bi {{ $meta['icon'] }} text-xl"></i>
+                                            </div>
+                                            <h3 class="font-bold text-gray-900 mb-1 text-sm">{{ $svc->name }}</h3>
+                                            <p class="text-sm font-semibold" style="color: {{ ['#059669','#0d9488','#7c3aed'][$i] ?? '#059669' }}">{{ $svc->price_range }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
-                        <h3 class="font-bold text-gray-900 mb-1">{{ $svc->name }}</h3>
-                        <p class="text-emerald-600 text-sm font-semibold">{{ $svc->price_range }}</p>
-                    </div>
-                    @empty
-                        <p class="text-gray-400 text-sm italic sm:col-span-2 md:col-span-4">Packages coming soon.</p>
-                    @endforelse
-                </div>
+                    @endif
+                @endforeach
             </section>
-
-            <!-- Add-ons / Treatments -->
-            @if($realServices->get('Add-ons', collect())->isNotEmpty())
-            <section class="mb-16">
-                <h2 class="text-xl font-bold text-gray-900 mb-2">Add-ons &amp; Treatments</h2>
-                <p class="text-gray-400 text-sm mb-6">Extra treatments you can add to any package.</p>
-                <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
-                    @foreach($realServices->get('Add-ons') as $svc)
-                    <div class="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md hover:-translate-y-1 transition-all">
-                        <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center mb-4">
-                            <i class="bi bi-droplet text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-gray-900 mb-1 text-sm">{{ $svc->name }}</h3>
-                        <p class="text-teal-600 text-sm font-semibold">{{ $svc->price_range }}</p>
-                    </div>
-                    @endforeach
-                </div>
-            </section>
-            @endif
-
-            <!-- Ala Carte -->
-            @if($realServices->get('Ala Carte', collect())->isNotEmpty())
-            <section class="mb-16">
-                <h2 class="text-xl font-bold text-gray-900 mb-2">Ala Carte</h2>
-                <p class="text-gray-400 text-sm mb-6">Individual services you can book on their own.</p>
-                <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
-                    @foreach($realServices->get('Ala Carte') as $svc)
-                    <div class="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md hover:-translate-y-1 transition-all">
-                        <div class="w-12 h-12 bg-violet-100 text-violet-600 rounded-xl flex items-center justify-center mb-4">
-                            <i class="bi bi-check2-circle text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-gray-900 mb-1 text-sm">{{ $svc->name }}</h3>
-                        <p class="text-violet-600 text-sm font-semibold">{{ $svc->price_range }}</p>
-                    </div>
-                    @endforeach
-                </div>
-            </section>
-            @endif
 
             <!-- Size Categories -->
             <section class="mb-16">

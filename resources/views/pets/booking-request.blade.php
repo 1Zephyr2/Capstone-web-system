@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>html { font-size: 112%; }</style>
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] } } } }
     </script>
@@ -102,13 +103,44 @@
         function onPetSelectionChange() {
             document.querySelectorAll('.pet-service-row').forEach(row => {
                 const cb = row.querySelector('.pet-checkbox');
-                row.querySelector('.pet-service-select').classList.toggle('hidden', !cb.checked);
+                const picker = row.querySelector('.pet-service-picker');
+                picker.classList.toggle('hidden', !cb.checked);
                 row.querySelector('.pet-service-select').required = cb.checked;
             });
             const count = selectedPetIds().length;
             document.getElementById('time-mode-toggle').classList.toggle('hidden', count < 2);
             renderSchedulingSection();
         }
+
+        function toggleServicePicker(petId) {
+            document.querySelectorAll('[id^="svc-dropdown-"]').forEach(el => {
+                if (el.id !== 'svc-dropdown-' + petId) el.classList.add('hidden');
+            });
+            document.getElementById('svc-dropdown-' + petId).classList.toggle('hidden');
+        }
+
+        function toggleServiceCategoryPicker(catId) {
+            document.getElementById('cat-panel-' + catId).classList.toggle('hidden');
+            document.getElementById('cat-chevron-' + catId).classList.toggle('rotate-180');
+        }
+
+        function selectService(petId, svcId, label) {
+            const select = document.querySelector('select[name="services[' + petId + ']"]');
+            select.value = svcId;
+            select.dispatchEvent(new Event('change'));
+            const labelEl = document.getElementById('svc-label-' + petId);
+            labelEl.textContent = label;
+            labelEl.classList.remove('text-gray-400');
+            labelEl.classList.add('text-gray-900', 'font-medium');
+            document.getElementById('svc-dropdown-' + petId).classList.add('hidden');
+        }
+
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('[id^="svc-dropdown-"]').forEach(el => {
+                const wrapper = el.closest('.pet-service-picker');
+                if (wrapper && !wrapper.contains(e.target)) el.classList.add('hidden');
+            });
+        });
 
         function timeOptionsHtml(excludeCounts) {
             excludeCounts = excludeCounts || {};
@@ -266,21 +298,49 @@
                                     @if(!$pet->size)
                                         <p class="text-amber-500 text-xs mt-1">
                                             <i class="bi bi-exclamation-circle mr-1"></i>No size set —
-                                            <a href="{{ route('pets.details', ['id' => $pet->id, 'edit' => 1]) }}" class="underline">add one</a> to see accurate prices.
+                                            <a href="{{ route('pets.edit', $pet->id) }}" class="underline">add one</a> to see accurate prices.
                                         </p>
                                     @endif
-                                    <select name="services[{{ $pet->id }}]" class="pet-service-select hidden mt-2 w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500">
-                                        @foreach($services as $category => $items)
-                                            <optgroup label="{{ $category }}">
-                                                @foreach($items as $svc)
-                                                    @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
-                                                    <option value="{{ $svc->id }}">
-                                                        {{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}
-                                                    </option>
-                                                @endforeach
-                                            </optgroup>
-                                        @endforeach
-                                    </select>
+                                    <div class="pet-service-picker hidden mt-2 relative" data-pet="{{ $pet->id }}">
+                                        <select name="services[{{ $pet->id }}]" class="pet-service-select sr-only absolute">
+                                            <option value="">Select a service</option>
+                                            @foreach($services as $category => $items)
+                                                <optgroup label="{{ $category }}">
+                                                    @foreach($items as $svc)
+                                                        @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
+                                                        <option value="{{ $svc->id }}">{{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" onclick="toggleServicePicker({{ $pet->id }})"
+                                                class="w-full flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-left hover:border-emerald-400 transition-all">
+                                            <span id="svc-label-{{ $pet->id }}" class="text-gray-400 truncate">Select a service</span>
+                                            <i class="bi bi-chevron-down text-gray-400 text-xs shrink-0"></i>
+                                        </button>
+                                        <div id="svc-dropdown-{{ $pet->id }}" class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-y-auto p-2">
+                                            @foreach($services as $category => $items)
+                                                @php $catId = $pet->id . '-' . \Illuminate\Support\Str::slug($category); @endphp
+                                                <div class="mb-1">
+                                                    <button type="button" onclick="toggleServiceCategoryPicker('{{ $catId }}')"
+                                                            class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide text-gray-500 hover:bg-gray-50">
+                                                        {{ $category }}
+                                                        <i id="cat-chevron-{{ $catId }}" class="bi bi-chevron-down text-[10px] transition-transform"></i>
+                                                    </button>
+                                                    <div id="cat-panel-{{ $catId }}" class="hidden pl-2">
+                                                        @foreach($items as $svc)
+                                                            @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
+                                                            <button type="button"
+                                                                    onclick='selectService({{ $pet->id }}, {{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name . ($price !== null ? " — ₱" . number_format($price, 2) : "")) }})'
+                                                                    class="w-full text-left px-2 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-all">
+                                                                {{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
