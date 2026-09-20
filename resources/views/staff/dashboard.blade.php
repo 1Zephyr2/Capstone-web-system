@@ -45,9 +45,10 @@
                 <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-                <a href="{{ route('staff.dashboard') }}"    class="hover:text-violet-600 transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route('staff.dashboard') }}"    class="text-gray-900 font-semibold transition-all hover:scale-105">Dashboard</a>
                 <a href="{{ route('staff.directory') }}"    class="hover:text-violet-600 transition-all hover:scale-105">Pets</a>
                 <a href="{{ route('staff.appointments') }}" class="hover:text-violet-600 transition-all hover:scale-105">Appointments</a>
+                <a href="{{ route('staff.services') }}" class="hover:text-gray-900 transition-all hover:scale-105">Services</a>
                 <a href="{{ route('staff.insights') }}"     class="hover:text-violet-600 transition-all hover:scale-105">Insights</a>
             </div>
             @include('components.notification-bell', ['notifRoutePrefix' => 'staff.'])

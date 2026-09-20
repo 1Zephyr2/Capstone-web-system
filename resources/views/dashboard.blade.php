@@ -22,7 +22,66 @@
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
+        const BREED_LISTS = {
+            dog: ["Aspin (Askal)", "Beagle", "Chihuahua", "Chow Chow", "Cocker Spaniel", "Dachshund", "Dalmatian", "French Bulldog", "German Shepherd", "Golden Retriever", "Great Dane", "Labrador Retriever", "Maltese", "Mixed Breed", "Pekingese", "Pomeranian", "Poodle", "Pug", "Rottweiler", "Shiba Inu", "Shih Tzu", "Siberian Husky", "Yorkshire Terrier"],
+            cat: ["American Shorthair", "Bengal", "British Shorthair", "Domestic Longhair", "Domestic Shorthair (Puspin)", "Himalayan", "Maine Coon", "Munchkin", "Persian", "Ragdoll", "Russian Blue", "Scottish Fold", "Siamese", "Sphynx"],
+            other: []
+        };
+
+        function populateBreedOptions(prefix, type, currentBreed) {
+            const select = document.getElementById(prefix + '-breed-select');
+            const otherInput = document.getElementById(prefix + '-breed-other');
+            const hidden = document.getElementById(prefix + '-breed-hidden');
+            const list = BREED_LISTS[type] || [];
+            select.innerHTML = '';
+            list.forEach(breed => {
+                const opt = document.createElement('option');
+                opt.value = breed; opt.textContent = breed;
+                select.appendChild(opt);
+            });
+            const otherOpt = document.createElement('option');
+            otherOpt.value = '__other__'; otherOpt.textContent = 'Other (please specify)';
+            select.appendChild(otherOpt);
+
+            if (currentBreed && list.includes(currentBreed)) {
+                select.value = currentBreed;
+                otherInput.classList.add('hidden');
+                if (hidden) hidden.value = currentBreed;
+            } else if (currentBreed) {
+                select.value = '__other__';
+                otherInput.classList.remove('hidden');
+                otherInput.value = currentBreed;
+                if (hidden) hidden.value = currentBreed;
+            } else {
+                otherInput.classList.add('hidden');
+                otherInput.value = '';
+                if (hidden) hidden.value = '';
+            }
+        }
+
+        function onBreedSelectChange(prefix) {
+            const select = document.getElementById(prefix + '-breed-select');
+            const otherInput = document.getElementById(prefix + '-breed-other');
+            const hidden = document.getElementById(prefix + '-breed-hidden');
+            if (select.value === '__other__') {
+                otherInput.classList.remove('hidden');
+                otherInput.focus();
+                if (hidden) hidden.value = otherInput.value;
+            } else {
+                otherInput.classList.add('hidden');
+                if (hidden) hidden.value = select.value;
+            }
+        }
+
+        function onBreedOtherInput(prefix) {
+            const hidden = document.getElementById(prefix + '-breed-hidden');
+            const otherInput = document.getElementById(prefix + '-breed-other');
+            if (hidden) hidden.value = otherInput.value;
+        }
+    </script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
+            populateBreedOptions('add', 'dog', @json(old('breed')));
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -277,7 +336,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Type</label>
-                        <select name="type" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all">
+                        <select name="type" id="add-pet-type" required onchange="populateBreedOptions('add', this.value, '')" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all">
                             <option value="dog">Dog</option>
                             <option value="cat">Cat</option>
                             <option value="other">Other</option>
@@ -291,8 +350,9 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Breed <span class="text-red-500">*</span></label>
-                    <input type="text" name="breed" required maxlength="100" value="{{ old('breed') }}"
-                           class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all" placeholder="e.g. Golden Retriever">
+                    <select id="add-breed-select" onchange="onBreedSelectChange('add')" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all"></select>
+                    <input type="text" id="add-breed-other" oninput="onBreedOtherInput('add')" placeholder="Enter breed" class="hidden mt-2 w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all">
+                    <input type="hidden" name="breed" id="add-breed-hidden" value="{{ old('breed') }}">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Size <span class="text-red-500">*</span></label>
@@ -309,8 +369,8 @@
                     <textarea name="special_notes" rows="2" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all resize-none">{{ old('special_notes') }}</textarea>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Vaccination Record <span class="normal-case font-normal text-gray-300">(optional)</span></label>
-                    <textarea name="vaccination_record" rows="2" placeholder="e.g. Rabies - June 2026, 5-in-1 - March 2026"
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Vaccination Record <span class="text-red-500">*</span></label>
+                    <textarea name="vaccination_record" rows="2" required placeholder="e.g. Rabies - June 2026, 5-in-1 - March 2026"
                               class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all resize-none">{{ old('vaccination_record') }}</textarea>
                 </div>
                 <div>

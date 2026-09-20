@@ -90,9 +90,6 @@ Route::middleware(['auth'])->group(function () {
         return view('pets.owner-details', ['id' => $id]);
     })->name('pets.details');
 
-    // Legacy standalone edit page was a static mockup that was never wired up
-    // (hardcoded data, form action="#"). Editing now happens via the modal on
-    // the pet's own page, so this route just forwards there.
     Route::get('/pets/{id}/edit', function ($id) {
         return redirect()->route('pets.details', ['id' => $id, 'edit' => 1]);
     })->name('pets.edit');
@@ -160,6 +157,10 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
     Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
     Route::get('/directory', fn() => view('staff.directory'))->name('directory');
     Route::get('/insights', [\App\Http\Controllers\AdminInsightsController::class, 'index'])->name('insights');
+    Route::get('/services', function () {
+        $bookingServices = \App\Models\Service::active()->orderBy('id', 'desc')->get()->groupBy('category');
+        return view('staff.services', compact('bookingServices'));
+    })->name('services');
 
     Route::get('/appointments', [StaffAppointmentController::class, 'index'])->name('appointments');
     Route::patch('/appointments/{appointment}/approve', [StaffAppointmentController::class, 'approve'])->name('appointments.approve');

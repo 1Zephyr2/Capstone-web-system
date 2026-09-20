@@ -107,6 +107,7 @@
                 <a href="{{ route('staff.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
                 <a href="{{ route('staff.directory') }}"    class="text-gray-900 font-semibold transition-all hover:scale-105">Pets</a>
                 <a href="{{ route('staff.appointments') }}" class="hover:text-gray-900 transition-all hover:scale-105">Appointments</a>
+                <a href="{{ route('staff.services') }}" class="hover:text-gray-900 transition-all hover:scale-105">Services</a>
                 <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
             </div>
             @include('components.notification-bell', ['notifRoutePrefix' => 'staff.'])

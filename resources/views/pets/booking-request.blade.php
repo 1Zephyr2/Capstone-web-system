@@ -105,7 +105,6 @@
                 const cb = row.querySelector('.pet-checkbox');
                 const picker = row.querySelector('.pet-service-picker');
                 picker.classList.toggle('hidden', !cb.checked);
-                row.querySelector('.pet-service-select').required = cb.checked;
             });
             const count = selectedPetIds().length;
             document.getElementById('time-mode-toggle').classList.toggle('hidden', count < 2);
@@ -124,21 +123,50 @@
             document.getElementById('cat-chevron-' + catId).classList.toggle('rotate-180');
         }
 
-        function selectService(petId, svcId, label) {
+        function selectService(petId, svcId, name, priceStr) {
             const select = document.querySelector('select[name="services[' + petId + ']"]');
             select.value = svcId;
             select.dispatchEvent(new Event('change'));
+            const label = priceStr ? (name + ' — ₱' + priceStr) : name;
             const labelEl = document.getElementById('svc-label-' + petId);
             labelEl.textContent = label;
             labelEl.classList.remove('text-gray-400');
             labelEl.classList.add('text-gray-900', 'font-medium');
-            document.getElementById('svc-dropdown-' + petId).classList.add('hidden');
+            const dropdown = document.getElementById('svc-dropdown-' + petId);
+            dropdown.classList.add('hidden');
+            dropdown.closest('.pet-service-picker').querySelector('button').classList.remove('border-red-400');
         }
 
         document.addEventListener('click', function (e) {
             document.querySelectorAll('[id^="svc-dropdown-"]').forEach(el => {
                 const wrapper = el.closest('.pet-service-picker');
                 if (wrapper && !wrapper.contains(e.target)) el.classList.add('hidden');
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('booking-form').addEventListener('submit', function (e) {
+                const errorBox = document.getElementById('client-side-error');
+                errorBox.classList.add('hidden');
+                errorBox.innerHTML = '';
+
+                const missingPets = [];
+                document.querySelectorAll('.pet-service-row').forEach(row => {
+                    const cb = row.querySelector('.pet-checkbox');
+                    if (!cb.checked) return;
+                const select = row.querySelector('.pet-service-select');
+                if (!select.value) {
+                    missingPets.push(cb.dataset.name || 'a selected pet');
+                    row.querySelector('.pet-service-picker button').classList.add('border-red-400');
+                }
+            });
+
+            if (missingPets.length > 0) {
+                e.preventDefault();
+                errorBox.innerHTML = '• Please choose a service for: ' + missingPets.join(', ');
+                errorBox.classList.remove('hidden');
+                errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
             });
         });
 
@@ -240,6 +268,12 @@
             <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 text-sm font-semibold transition-all shrink-0">← Back</a>
         </header>
 
+        @if($errors->any())
+            <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm space-y-1">
+                @foreach($errors->all() as $error)<p>• {{ $error }}</p>@endforeach
+            </div>
+        @endif
+
         @if($pets->isEmpty())
             <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
                 <i class="bi bi-heart text-5xl text-gray-300 mb-4 block"></i>
@@ -285,7 +319,8 @@
 
                     <!-- Pet + service selection -->
                     <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Which Pet(s)?</p>
+                        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Which Pet(s)?</p>
+                        <p class="text-xs text-gray-400 mb-3">You can book for one pet, or select several to schedule them together.</p>
                         <div class="space-y-3">
                             @foreach($pets as $pet)
                                 <div class="pet-service-row border border-gray-200 rounded-xl p-3">
@@ -302,7 +337,7 @@
                                         </p>
                                     @endif
                                     <div class="pet-service-picker hidden mt-2 relative" data-pet="{{ $pet->id }}">
-                                        <select name="services[{{ $pet->id }}]" class="pet-service-select sr-only absolute">
+                                        <select name="services[{{ $pet->id }}]" class="pet-service-select hidden">
                                             <option value="">Select a service</option>
                                             @foreach($services as $category => $items)
                                                 <optgroup label="{{ $category }}">
@@ -331,7 +366,7 @@
                                                         @foreach($items as $svc)
                                                             @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
                                                             <button type="button"
-                                                                    onclick='selectService({{ $pet->id }}, {{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name . ($price !== null ? " — ₱" . number_format($price, 2) : "")) }})'
+                                                                    onclick="selectService({{ $pet->id }}, {{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name) }}, {{ Illuminate\Support\Js::from($price !== null ? number_format($price, 2) : null) }})"
                                                                     class="w-full text-left px-2 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-all">
                                                                 {{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}
                                                             </button>
@@ -392,11 +427,7 @@
                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 resize-none"></textarea>
                         </div>
 
-                        @if($errors->any())
-                            <div class="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm space-y-1">
-                                @foreach($errors->all() as $error)<p>• {{ $error }}</p>@endforeach
-                            </div>
-                        @endif
+                        <div id="client-side-error" class="hidden mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm"></div>
 
                         <button type="submit" class="mt-5 w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all">
                             Submit Request

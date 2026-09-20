@@ -32,8 +32,67 @@
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
+        // ── Breed lists, shared by the Add/Edit pet forms ──────────────
+        const BREED_LISTS = {
+            dog: ["Aspin (Askal)", "Beagle", "Chihuahua", "Chow Chow", "Cocker Spaniel", "Dachshund", "Dalmatian", "French Bulldog", "German Shepherd", "Golden Retriever", "Great Dane", "Labrador Retriever", "Maltese", "Mixed Breed", "Pekingese", "Pomeranian", "Poodle", "Pug", "Rottweiler", "Shiba Inu", "Shih Tzu", "Siberian Husky", "Yorkshire Terrier"],
+            cat: ["American Shorthair", "Bengal", "British Shorthair", "Domestic Longhair", "Domestic Shorthair (Puspin)", "Himalayan", "Maine Coon", "Munchkin", "Persian", "Ragdoll", "Russian Blue", "Scottish Fold", "Siamese", "Sphynx"],
+            other: []
+        };
+
+        function populateBreedOptions(prefix, type, currentBreed) {
+            const select = document.getElementById(prefix + '-breed-select');
+            const otherInput = document.getElementById(prefix + '-breed-other');
+            const hidden = document.getElementById(prefix + '-breed-hidden');
+            const list = BREED_LISTS[type] || [];
+            select.innerHTML = '';
+            list.forEach(breed => {
+                const opt = document.createElement('option');
+                opt.value = breed; opt.textContent = breed;
+                select.appendChild(opt);
+            });
+            const otherOpt = document.createElement('option');
+            otherOpt.value = '__other__'; otherOpt.textContent = 'Other (please specify)';
+            select.appendChild(otherOpt);
+
+            if (currentBreed && list.includes(currentBreed)) {
+                select.value = currentBreed;
+                otherInput.classList.add('hidden');
+                if (hidden) hidden.value = currentBreed;
+            } else if (currentBreed) {
+                select.value = '__other__';
+                otherInput.classList.remove('hidden');
+                otherInput.value = currentBreed;
+                if (hidden) hidden.value = currentBreed;
+            } else {
+                otherInput.classList.add('hidden');
+                otherInput.value = '';
+            }
+        }
+
+        function onBreedSelectChange(prefix) {
+            const select = document.getElementById(prefix + '-breed-select');
+            const otherInput = document.getElementById(prefix + '-breed-other');
+            const hidden = document.getElementById(prefix + '-breed-hidden');
+            if (select.value === '__other__') {
+                otherInput.classList.remove('hidden');
+                otherInput.focus();
+                if (hidden) hidden.value = otherInput.value;
+            } else {
+                otherInput.classList.add('hidden');
+                if (hidden) hidden.value = select.value;
+            }
+        }
+
+        function onBreedOtherInput(prefix) {
+            const hidden = document.getElementById(prefix + '-breed-hidden');
+            const otherInput = document.getElementById(prefix + '-breed-other');
+            if (hidden) hidden.value = otherInput.value;
+        }
+    </script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             switchTab('appointments');
+            populateBreedOptions('edit', @json($pet->type), @json($pet->breed));
 
             @if(request('edit'))
                 showModal('edit-pet-modal', 'edit-pet-modal-content');
@@ -280,30 +339,6 @@
                 </div>
 
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                    <h4 class="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-                        <i class="bi bi-clipboard2-heart text-emerald-600"></i> Medical Background
-                    </h4>
-                    <div class="space-y-3 text-sm">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Size</p>
-                            <p class="text-gray-700">{{ $pet->size ? (\App\Models\Pet::SIZE_LABELS[$pet->size] ?? $pet->size) : 'Not set' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Vaccination Record</p>
-                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->vaccination_record ?: 'None on file.' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Existing Medical Conditions</p>
-                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->medical_conditions ?: 'None on file.' }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Grooming Triggers / Trauma</p>
-                            <p class="text-gray-700 whitespace-pre-line">{{ $pet->grooming_triggers ?: 'None on file.' }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                     <h4 class="font-bold text-gray-900 text-sm mb-3">Quick Actions</h4>
                     <div class="space-y-2">
                         <a href="{{ route('request.appointment') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm transition-all">
@@ -335,7 +370,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Pet Type</label>
-                        <select name="type" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all appearance-none text-sm">
+                        <select name="type" id="edit-pet-type" onchange="populateBreedOptions('edit', this.value, '')" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all appearance-none text-sm">
                             <option value="dog"   {{ $pet->type==='dog'  ?'selected':'' }}>🐶 Dog</option>
                             <option value="cat"   {{ $pet->type==='cat'  ?'selected':'' }}>🐱 Cat</option>
                             <option value="other" {{ $pet->type==='other'?'selected':'' }}>🐾 Other</option>
@@ -345,7 +380,9 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Breed</label>
-                        <input type="text" name="breed" value="{{ $pet->breed }}" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all text-sm">
+                        <select id="edit-breed-select" onchange="onBreedSelectChange('edit')" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all appearance-none text-sm"></select>
+                        <input type="text" id="edit-breed-other" oninput="onBreedOtherInput('edit')" placeholder="Enter breed" class="hidden mt-2 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all text-sm">
+                        <input type="hidden" name="breed" id="edit-breed-hidden" value="{{ $pet->breed }}">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Age</label>
@@ -384,8 +421,8 @@
                     <textarea name="special_notes" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all resize-none text-sm">{{ $pet->special_notes }}</textarea>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Vaccination Record <span class="normal-case font-normal text-gray-300">(optional)</span></label>
-                    <textarea name="vaccination_record" rows="2" placeholder="e.g. Rabies - June 2026, 5-in-1 - March 2026" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all resize-none text-sm">{{ $pet->vaccination_record }}</textarea>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Vaccination Record</label>
+                    <textarea name="vaccination_record" rows="2" required placeholder="e.g. Rabies - June 2026, 5-in-1 - March 2026" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all resize-none text-sm">{{ $pet->vaccination_record }}</textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Existing Medical Conditions <span class="normal-case font-normal text-gray-300">(optional)</span></label>

@@ -40,7 +40,7 @@ class AppointmentController extends Controller
             'pets'             => ['required', 'array', 'min:1'],
             'pets.*'           => ['required', 'exists:pets,id'],
             'services'         => ['required', 'array'],
-            'services.*'       => ['required', 'exists:services,id'],
+            'services.*'       => ['nullable', 'exists:services,id'],
             'times'            => ['required_if:time_mode,separate', 'array'],
             'times.*'          => ['nullable', 'in:' . implode(',', array_keys(Appointment::CLINIC_HOURS))],
             'notes'            => ['nullable', 'string', 'max:500'],

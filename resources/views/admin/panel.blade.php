@@ -3,7 +3,7 @@
     $owners          = App\Models\User::where('role', 'owner')->with('pets')->orderBy('name')->get();
     $groomingStyles  = App\Models\GroomingOption::where('type','style')->orderBy('name')->get();
     $groomingAddons  = App\Models\GroomingOption::where('type','addon')->orderBy('name')->get();
-    $bookingServices = App\Models\Service::notArchived()->orderBy('category')->orderBy('name')->get()->groupBy('category');
+    $bookingServices = App\Models\Service::notArchived()->orderBy('id', 'desc')->get()->groupBy('category');
     $archivedServices = App\Models\Service::archived()->orderBy('name')->get();
 @endphp
 <!DOCTYPE html>

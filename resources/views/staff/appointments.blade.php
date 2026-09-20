@@ -34,7 +34,7 @@
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
         });
 
-        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute, resultPhotoUrl, notifyRoute) {
+        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute, resultPhotoUrl) {
             document.getElementById('modal-pet').innerText      = pet;
             document.getElementById('modal-owner').innerText    = owner;
             document.getElementById('modal-service').innerText  = service;
@@ -58,7 +58,6 @@
             document.getElementById('btn-approve').classList.toggle('hidden', status !== 'pending');
             document.getElementById('btn-reject-wrap').classList.toggle('hidden', status !== 'pending');
             document.getElementById('btn-complete').classList.toggle('hidden', status !== 'approved');
-            document.getElementById('btn-notify-wrap').classList.toggle('hidden', status !== 'approved');
             document.getElementById('btn-cancel').classList.toggle('hidden', status !== 'approved');
 
             document.getElementById('form-approve').action  = approveRoute;
@@ -66,7 +65,6 @@
             document.getElementById('form-cancel').action   = cancelRoute;
             document.getElementById('form-reject').action   = rejectRoute;
             document.getElementById('form-edit-notes').action = editNotesRoute;
-            document.getElementById('form-notify').action    = notifyRoute;
 
             // Reset notes edit mode
             showNotesView();
@@ -173,23 +171,28 @@
 
     <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ route($prefix . '.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
+            <a href="{{ route($prefix.'.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
                 <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
-                <span class="{{ $isAdmin ? 'text-rose-700 bg-rose-100 border-rose-200' : 'text-violet-700 bg-violet-100 border-violet-200' }} font-normal text-xs ml-2 px-2 py-0.5 rounded-md border">
-                    {{ $isAdmin ? 'ADMIN PORTAL' : 'STAFF PORTAL' }}
-                </span>
+                @if($isAdmin)
+                    <span class="text-rose-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-100 border border-rose-200">ADMIN PORTAL</span>
+                @else
+                    <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
+                @endif
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-                <a href="{{ route($prefix . '.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
-                <a href="{{ route($prefix . '.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
-                <a href="{{ route($prefix . '.appointments') }}" class="text-gray-900 font-semibold transition-all hover:scale-105">Appointments</a>
-                <a href="{{ route($prefix . '.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
+                <a href="{{ route($prefix.'.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route($prefix.'.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
+                <a href="{{ route($prefix.'.appointments') }}" class="text-gray-900 font-semibold transition-all hover:scale-105">Appointments</a>
+                @if(!$isAdmin)
+                    <a href="{{ route('staff.services') }}" class="hover:text-gray-900 transition-all hover:scale-105">Services</a>
+                @endif
+                <a href="{{ route($prefix.'.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
                 @if($isAdmin)
-                    <a href="{{ route('admin.panel') }}" class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 hover:bg-rose-100 hover:scale-105">Admin Panel</a>
+                    <a href="{{ route('admin.panel') }}" class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100 hover:scale-105">Admin Panel</a>
                 @endif
             </div>
-            @include('components.notification-bell', ['notifRoutePrefix' => ($isAdmin ?? false) ? 'admin.' : 'staff.'])
-            <form action="{{ route($isAdmin ? 'admin.logout' : 'staff.logout') }}" method="POST" class="m-0 hidden md:block">
+            @include('components.notification-bell', ['notifRoutePrefix' => $prefix.'.'])
+            <form action="{{ route($prefix.'.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
@@ -202,6 +205,9 @@
         <a href="{{ route($prefix . '.dashboard') }}"    class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
         <a href="{{ route($prefix . '.directory') }}"    class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pets</a>
         <a href="{{ route($prefix . '.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-semibold"><i class="bi bi-calendar-event"></i> Appointments</a>
+        @if(!$isAdmin)
+            <a href="{{ route('staff.services') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-list-check"></i> Services</a>
+        @endif
         <a href="{{ route($prefix . '.insights') }}"     class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>
         @if($isAdmin)
             <a href="{{ route('admin.panel') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rose-50 text-rose-700 text-sm font-semibold"><i class="bi bi-gear"></i> Admin Panel</a>
@@ -222,12 +228,6 @@
         @if(session('error'))
             <div class="mb-6 px-6 py-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3">
                 <i class="bi bi-exclamation-circle-fill"></i> {{ session('error') }}
-            </div>
-        @endif
-        @if($errors->any())
-            <div class="mb-6 px-6 py-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-3">
-                <i class="bi bi-exclamation-circle-fill mt-0.5"></i>
-                <div>@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>
             </div>
         @endif
 
@@ -393,7 +393,6 @@
                     $completeRouteM  = route($prefix.'.appointments.complete', $appt);
                     $cancelRouteM    = route($prefix.'.appointments.cancel',   $appt);
                     $editNotesRouteM = route($prefix.'.appointments.notes',    $appt);
-                    $notifyRouteM    = route($prefix.'.appointments.notify-almost-done', $appt);
                 @endphp
                 <div onclick="openDetailModal(
                         {{ $appt->id }},
@@ -408,8 +407,7 @@
                         '{{ $completeRouteM }}',
                         '{{ $cancelRouteM }}',
                         '{{ $editNotesRouteM }}',
-                        {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }},
-                        '{{ $notifyRouteM }}'
+                        {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }}
                      )"
                      class="p-4 active:bg-gray-50">
                     <div class="flex items-center justify-between mb-1">
@@ -422,18 +420,14 @@
             @empty
                 <div class="p-4 flex items-center justify-between">
                     <span class="font-bold text-violet-600 text-sm">{{ $slot['label'] }}</span>
-                    @if($slot['datetime']->isPast())
-                        <span class="text-gray-300 text-sm italic">Past</span>
-                    @else
-                        <button type="button"
-                                onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
-                                class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
-                            + Book
-                        </button>
-                    @endif
+                    <button type="button"
+                            onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                            class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
+                        + Book
+                    </button>
                 </div>
             @endforelse
-            @if($slot['appointments']->isNotEmpty() && !$slot['full'] && !$slot['datetime']->isPast())
+            @if($slot['appointments']->isNotEmpty() && !$slot['full'])
                 <div class="p-4 flex items-center justify-between bg-gray-50/50">
                     <span class="text-gray-400 text-xs">{{ $slot['appointments']->count() }}/{{ \App\Models\Appointment::MAX_PER_SLOT }} slots used</span>
                     <button type="button"
@@ -468,7 +462,6 @@
                         $completeRoute  = route($prefix.'.appointments.complete', $appt);
                         $cancelRoute    = route($prefix.'.appointments.cancel',   $appt);
                         $editNotesRoute = route($prefix.'.appointments.notes',    $appt);
-                        $notifyRoute    = route($prefix.'.appointments.notify-almost-done', $appt);
                     @endphp
                     <tr onclick="openDetailModal(
                             {{ $appt->id }},
@@ -483,8 +476,7 @@
                             '{{ $completeRoute }}',
                             '{{ $cancelRoute }}',
                             '{{ $editNotesRoute }}',
-                            {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }},
-                            '{{ $notifyRoute }}'
+                            {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }}
                          )"
                         class="cursor-pointer hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
@@ -503,19 +495,15 @@
                         <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
                         <td colspan="4" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
                         <td class="px-6 py-5">
-                            @if($slot['datetime']->isPast())
-                                <span class="text-gray-300 text-sm italic">Past</span>
-                            @else
-                                <button type="button"
-                                        onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
-                                        class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
-                                    + Book
-                                </button>
-                            @endif
+                            <button type="button"
+                                    onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
+                                    class="text-emerald-600 font-semibold hover:text-emerald-700 transition-all text-sm">
+                                + Book
+                            </button>
                         </td>
                     </tr>
                 @endforelse
-                @if($slot['appointments']->isNotEmpty() && !$slot['full'] && !$slot['datetime']->isPast())
+                @if($slot['appointments']->isNotEmpty() && !$slot['full'])
                     <tr class="bg-gray-50/50 hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-3 text-xs text-gray-400" colspan="4">{{ $slot['appointments']->count() }}/{{ \App\Models\Appointment::MAX_PER_SLOT }} slots used for {{ $slot['label'] }}</td>
                         <td class="px-6 py-3">
@@ -614,14 +602,6 @@
                         <i class="bi bi-x-circle mr-2"></i>Reject Appointment
                     </button>
                 </div>
-                <div id="btn-notify-wrap">
-                    <form id="form-notify" method="POST" onsubmit="return confirm('Send an \'almost done\' notice to the owner?')">
-                        @csrf @method('PATCH')
-                        <button type="submit" class="w-full px-4 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-semibold transition-all">
-                            <i class="bi bi-bell mr-2"></i>Notify Owner — Almost Done
-                        </button>
-                    </form>
-                </div>
                 <form id="form-complete" method="POST" enctype="multipart/form-data">
                     @csrf @method('PATCH')
                     <button id="btn-complete" type="button" onclick="toggleCompletePanel()" class="w-full px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all hover:scale-[1.02]">
@@ -713,6 +693,7 @@
 
             <!-- Existing owner search -->
             <div id="existing-fields" class="space-y-3 mb-4">
+                <p class="text-xs text-gray-400 -mt-1">This books one pet per appointment. For multiple pets, repeat this after saving.</p>
                 <div class="relative">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Search Owner or Pet</label>
                     <input type="text" id="pet-search-input" oninput="searchPets(this.value)" autocomplete="off"
@@ -774,16 +755,25 @@
                 </button>
                 <p id="service-picker-error" class="hidden text-red-500 text-xs mt-1">Please select a service.</p>
 
-                <div id="service-options-panel" class="hidden mt-2 border border-gray-300 rounded-lg max-h-56 overflow-y-auto divide-y divide-gray-100">
+                <div id="service-options-panel" class="hidden mt-2 border border-gray-300 rounded-lg max-h-72 overflow-y-auto p-2 space-y-2">
                     @foreach($serviceTypes->groupBy('category') as $category => $items)
-                        <div class="px-3 py-1.5 bg-gray-50 text-[11px] font-bold uppercase tracking-wider text-gray-400 sticky top-0">{{ $category }}</div>
-                        @foreach($items as $svc)
-                            <div onclick="selectService({{ $svc->id }}, '{{ addslashes($svc->name) }}')"
-                                 class="px-3 py-2.5 text-sm text-gray-700 hover:bg-violet-50 cursor-pointer transition-all flex items-center justify-between gap-2">
-                                <span>{{ $svc->name }}</span>
-                                <span class="text-gray-400 text-xs shrink-0">{{ $svc->price_range }}</span>
+                        @php $catId = 'walkin-' . \Illuminate\Support\Str::slug($category); @endphp
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <button type="button" onclick="toggleWalkinCategory('{{ $catId }}')"
+                                    class="w-full flex items-center justify-between px-3 py-2 bg-gray-50 text-xs font-bold uppercase tracking-wider text-gray-500 hover:bg-gray-100 transition-all">
+                                {{ $category }}
+                                <i id="chev-{{ $catId }}" class="bi bi-chevron-down text-[10px] transition-transform"></i>
+                            </button>
+                            <div id="panel-{{ $catId }}" class="hidden divide-y divide-gray-100">
+                                @foreach($items as $svc)
+                                    <div onclick="selectService({{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name) }})"
+                                         class="px-3 py-2.5 text-sm text-gray-700 hover:bg-violet-50 cursor-pointer transition-all flex items-center justify-between gap-2">
+                                        <span>{{ $svc->name }}</span>
+                                        <span class="text-gray-400 text-xs shrink-0">{{ $svc->price_range }}</span>
+                                    </div>
+                                @endforeach
                             </div>
-                        @endforeach
+                        </div>
                     @endforeach
                 </div>
             </div>
@@ -816,6 +806,11 @@
 
     function toggleServiceOptions() {
         document.getElementById('service-options-panel').classList.toggle('hidden');
+    }
+
+    function toggleWalkinCategory(catId) {
+        document.getElementById('panel-' + catId).classList.toggle('hidden');
+        document.getElementById('chev-' + catId).classList.toggle('rotate-180');
     }
 
     function selectService(id, name) {

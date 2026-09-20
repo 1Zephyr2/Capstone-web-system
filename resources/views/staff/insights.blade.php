@@ -63,12 +63,15 @@
                 @endif
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-                <a href="{{ route($prefix.'.dashboard') }}"    class="hover:text-gray-900 transition-all">Dashboard</a>
-                <a href="{{ route($prefix.'.directory') }}"    class="hover:text-gray-900 transition-all">Pets</a>
-                <a href="{{ route($prefix.'.appointments') }}" class="hover:text-gray-900 transition-all">Appointments</a>
-                <a href="{{ route($prefix.'.insights') }}"     class="text-gray-900 font-semibold transition-all">Insights</a>
+                <a href="{{ route($prefix.'.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route($prefix.'.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
+                <a href="{{ route($prefix.'.appointments') }}" class="hover:text-gray-900 transition-all hover:scale-105">Appointments</a>
+                @if(!$isAdmin)
+                    <a href="{{ route('staff.services') }}" class="hover:text-gray-900 transition-all hover:scale-105">Services</a>
+                @endif
+                <a href="{{ route($prefix.'.insights') }}"     class="text-gray-900 font-semibold transition-all hover:scale-105">Insights</a>
                 @if($isAdmin)
-                    <a href="{{ route('admin.panel') }}" class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100">Admin Panel</a>
+                    <a href="{{ route('admin.panel') }}" class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100 hover:scale-105">Admin Panel</a>
                 @endif
             </div>
             @include('components.notification-bell', ['notifRoutePrefix' => $prefix.'.'])
@@ -85,6 +88,9 @@
         <a href="{{ route($prefix.'.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
         <a href="{{ route($prefix.'.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-heart"></i> Pets</a>
         <a href="{{ route($prefix.'.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-calendar-event"></i> Appointments</a>
+        @if(!$isAdmin)
+            <a href="{{ route('staff.services') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-list-check"></i> Services</a>
+        @endif
         <a href="{{ route($prefix.'.insights') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>
         @if($isAdmin)
             <a href="{{ route('admin.panel') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-gear"></i> Admin Panel</a>
@@ -142,7 +148,7 @@
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <h3 class="font-bold text-gray-900 mb-1">{{ $trendTitle }}</h3>
                 <p class="text-gray-400 text-xs mb-1">Solid = actual · dashed = hybrid ensemble forecast</p>
-                <p class="text-gray-400 text-xs mb-4 leading-relaxed">How many appointments were booked in each {{ $bucketNoun }}. The dashed segment is where the ensemble takes over, it blends four different forecasting methods (trend line, moving average, exponential smoothing, and same-{{ $bucketNoun }}-last-cycle seasonality), weighting each by how accurately it actually predicted your own past data.</p>
+                <p class="text-gray-400 text-xs mb-4 leading-relaxed">How many appointments were booked in each {{ $bucketNoun }}. The dashed segment is where the ensemble takes over — it blends four different forecasting methods (trend line, moving average, exponential smoothing, and same-{{ $bucketNoun }}-last-cycle seasonality), weighting each by how accurately it actually predicted your own past data.</p>
                 <div class="h-56"><canvas id="volumeChart"></canvas></div>
                 @if($volumeMeta)
                     <div class="mt-4 pt-4 border-t border-gray-100 text-xs bg-{{ $volumeMeta['pct_diff'] >= 0 ? 'emerald' : 'red' }}-50 border border-{{ $volumeMeta['pct_diff'] >= 0 ? 'emerald' : 'red' }}-100 rounded-lg p-3">
@@ -163,7 +169,7 @@
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <h3 class="font-bold text-gray-900 mb-1">Revenue (Last 12 Months)</h3>
                 <p class="text-gray-400 text-xs mb-1">Completed appointments only · dashed = forecast</p>
-                <p class="text-gray-400 text-xs mb-4 leading-relaxed">Same idea as the chart on the left, but tracking peso earnings from completed appointments instead of booking counts, useful for spotting whether a busy month actually translated into more revenue, or just more low-priced bookings.</p>
+                <p class="text-gray-400 text-xs mb-4 leading-relaxed">Same idea as the chart on the left, but tracking peso earnings from completed appointments instead of booking counts — useful for spotting whether a busy month actually translated into more revenue, or just more low-priced bookings.</p>
                 <div class="h-56"><canvas id="revenueChart"></canvas></div>
                 <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-4 text-center">
                     <div><p class="text-lg font-bold text-gray-900">₱{{ number_format($totalRevenue, 0) }}</p><p class="text-xs text-gray-400">Total earned</p></div>
@@ -176,13 +182,13 @@
         <div class="grid lg:grid-cols-2 gap-6 mb-6">
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <h3 class="font-bold text-gray-900 mb-1">Booking Distribution</h3>
-                <p class="text-gray-400 text-xs mb-4 leading-relaxed">Of every appointment ever booked, what share ended in a completed visit versus a cancellation or rejection. A large red slice is worth investigating, it usually points to overbooked slots, no-shows, or a service/price mismatch rather than random chance.</p>
+                <p class="text-gray-400 text-xs mb-4 leading-relaxed">Of every appointment ever booked, what share ended in a completed visit versus a cancellation or rejection. A large red slice is worth investigating — it usually points to overbooked slots, no-shows, or a service/price mismatch rather than random chance.</p>
                 <div class="h-56 flex items-center justify-center"><canvas id="distributionChart"></canvas></div>
             </div>
 
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <h3 class="font-bold text-gray-900 mb-1">Revenue Status</h3>
-                <p class="text-gray-400 text-xs mb-4 leading-relaxed">"Earned" is money actually collected from completed appointments. "Lost" is what those cancelled/rejected slots would have earned had they gone through, money the calendar held space for but never converted. Net revenue growth below compares the two.</p>
+                <p class="text-gray-400 text-xs mb-4 leading-relaxed">"Earned" is money actually collected from completed appointments. "Lost" is what those cancelled/rejected slots would have earned had they gone through — money the calendar held space for but never converted. Net revenue growth below compares the two.</p>
                 <div class="h-56"><canvas id="revenueStatusChart"></canvas></div>
                 <div class="mt-4 pt-4 border-t border-gray-100 text-xs bg-{{ $netRevenueGrowthPct >= 0 ? 'emerald' : 'red' }}-50 border border-{{ $netRevenueGrowthPct >= 0 ? 'emerald' : 'red' }}-100 rounded-lg p-3">
                     <span class="font-semibold text-{{ $netRevenueGrowthPct >= 0 ? 'emerald' : 'red' }}-700">{{ $netRevenueGrowthPct }}% net revenue growth</span>
@@ -199,7 +205,7 @@
                         <button type="button" onclick="toggleModalById('service-modal')" class="text-xs text-{{ $accent }}-600 hover:text-{{ $accent }}-700 font-semibold">View All ({{ $serviceStats->count() }}) →</button>
                     @endif
                 </div>
-                <p class="text-gray-400 text-xs mb-4 leading-relaxed">Every appointment ever made, regardless of status, counted against the service that was booked. Longer bars = more frequently requested, a good signal for which services to staff up for or feature more prominently.</p>
+                <p class="text-gray-400 text-xs mb-4 leading-relaxed">Every appointment ever made, regardless of status, counted against the service that was booked. Longer bars = more frequently requested — a good signal for which services to staff up for or feature more prominently.</p>
                 <div class="h-56"><canvas id="serviceChart"></canvas></div>
             </div>
 
@@ -210,7 +216,7 @@
                         <button type="button" onclick="toggleModalById('revenue-service-modal')" class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold">View All ({{ $revenueServiceStats->count() }}) →</button>
                     @endif
                 </div>
-                <p class="text-gray-400 text-xs mb-4 leading-relaxed">Same list, but ranked by actual peso earnings from completed appointments instead of booking count. Worth comparing against the chart on the left, a service can be popular but low-earning, or the reverse.</p>
+                <p class="text-gray-400 text-xs mb-4 leading-relaxed">Same list, but ranked by actual peso earnings from completed appointments instead of booking count. Worth comparing against the chart on the left — a service can be popular but low-earning, or the reverse.</p>
                 <div class="h-56"><canvas id="revenueServiceChart"></canvas></div>
             </div>
         </div>
@@ -218,7 +224,7 @@
         <div id="service-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-50/90 backdrop-blur-sm" onclick="if(event.target===this) toggleModalById('service-modal')">
             <div class="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl max-h-[80vh] overflow-y-auto">
                 <div class="flex items-center justify-between mb-1">
-                    <h3 class="text-lg font-bold text-gray-900">All Services Bookings</h3>
+                    <h3 class="text-lg font-bold text-gray-900">All Services — Bookings</h3>
                     <button type="button" onclick="toggleModalById('service-modal')" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><i class="bi bi-x-lg"></i></button>
                 </div>
                 <p class="text-gray-400 text-xs mb-6">Most to least popular</p>
@@ -255,7 +261,7 @@
 
         <div class="bg-white border border-gray-200 rounded-2xl p-8 mb-6 shadow-sm">
             <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="bi bi-graph-up-arrow text-{{ $accent }}-600"></i> Predictive Insights</h3>
-            <p class="text-gray-400 text-xs mb-6 leading-relaxed">Hybrid ensemble - blends linear regression (long-term direction), moving average (recent stability), exponential smoothing (reacts faster to recent changes), and a seasonal-naive method (repeats what happened in the same period last cycle), weighted by how accurately each one has predicted your own past data so far. These four cards are the ensemble's headline outputs.</p>
+            <p class="text-gray-400 text-xs mb-6 leading-relaxed">Hybrid ensemble — blends linear regression (long-term direction), moving average (recent stability), exponential smoothing (reacts faster to recent changes), and a seasonal-naive method (repeats what happened in the same period last cycle), weighted by how accurately each one has predicted your own past data so far. These four cards are the ensemble's headline outputs.</p>
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-{{ $accent }}-50 border border-{{ $accent }}-100 rounded-xl p-5">
                     <p class="text-xs font-semibold uppercase tracking-wider text-{{ $accent }}-500 mb-1">Predicted Busiest Day</p>
@@ -294,12 +300,12 @@
                     <p class="text-[11px] text-gray-400 mt-2">Same idea, forecasting peso revenue instead of booking count.</p>
                 </div>
             </div>
-            <p class="text-gray-300 text-[11px] mt-4 italic">Statistical estimates based on your own past bookings, not a guarantee of future demand.</p>
+            <p class="text-gray-300 text-[11px] mt-4 italic">Statistical estimates based on your own past bookings — not a guarantee of future demand.</p>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-2xl p-8 mb-6 shadow-sm">
             <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="bi bi-bar-chart-line text-{{ $accent }}-600"></i> Service Demand Forecast — Next Month</h3>
-            <p class="text-gray-400 text-xs mb-6 leading-relaxed">Each service forecast individually using its own last 6 months of bookings, so you can see which specific services are expected to pick up or slow down, not just the clinic total. "Trend" compares the predicted number to last month's actual: ↗ rising, ↘ falling, roughly flat.</p>
+            <p class="text-gray-400 text-xs mb-6 leading-relaxed">Each service forecast individually using its own last 6 months of bookings, so you can see which specific services are expected to pick up or slow down — not just the clinic total. "Trend" compares the predicted number to last month's actual: ↗ rising, ↘ falling, — roughly flat.</p>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="bg-gray-50/60 border-b border-gray-100">
@@ -328,12 +334,12 @@
                     </tbody>
                 </table>
             </div>
-            <p class="text-gray-300 text-[11px] mt-4 italic">Based on each service's own last 6 months of bookings, a short window, so treat this as directional.</p>
+            <p class="text-gray-300 text-[11px] mt-4 italic">Based on each service's own last 6 months of bookings — a short window, so treat this as directional.</p>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
             <h3 class="font-bold text-gray-900 mb-1">Most Active Pets</h3>
-            <p class="text-gray-400 text-xs mb-6 leading-relaxed">Your top 5 pets by total appointment count, all time, useful for spotting loyal regulars worth a perk, or noticing a pet whose visits have quietly stopped.</p>
+            <p class="text-gray-400 text-xs mb-6 leading-relaxed">Your top 5 pets by total appointment count, all time — useful for spotting loyal regulars worth a perk, or noticing a pet whose visits have quietly stopped.</p>
             <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
                 @forelse($topPets as $i => $pet)
                     <div class="bg-gray-50/50 border border-gray-200 rounded-xl p-4 text-center">

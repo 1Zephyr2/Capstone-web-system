@@ -101,24 +101,26 @@
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen">
 
     <!-- Navbar -->
-    <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
+     <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ $isAdmin ? route('admin.dashboard') : route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
+            <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
                 <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
-                <span class="{{ $badgeText }} font-normal text-xs ml-2 px-2 py-0.5 rounded-md {{ $badgeBg }} border {{ $badgeBorder }}">
-                    {{ $portalLabel }}
-                </span>
+                <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
             </a>
-            <div class="hidden md:flex items-center gap-6 text-sm font-medium {{ $isAdmin ? 'text-indigo-700' : 'text-slate-700' }}">
-                <a href="{{ $isAdmin ? route('admin.dashboard') : route('staff.dashboard') }}" class="hover:text-gray-900 transition-all">Dashboard</a>
-                <a href="{{ $isAdmin ? route('admin.directory') : route('staff.directory') }}" class="hover:text-gray-900 transition-all">Pets</a>
-                <a href="{{ $isAdmin ? route('admin.appointments') : route('staff.appointments') }}" class="text-gray-900">Appointments</a>
-                <a href="{{ $isAdmin ? route('admin.insights') : route('staff.insights') }}" class="hover:text-gray-900 transition-all">Insights</a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
+                <a href="{{ route('staff.dashboard') }}"    class="hover:text-gray-900 transition-all">Dashboard</a>
+                <a href="{{ route('staff.directory') }}"    class="hover:text-gray-900 transition-all">Pets</a>
+                <a href="{{ route('staff.appointments') }}" class="hover:text-gray-900 transition-all">Appointments</a>
+                <a href="{{ route('staff.services') }}"     class="text-gray-900 font-semibold transition-all">Services</a>
+                <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all">Insights</a>
             </div>
-            <form action="{{ $isAdmin ? route('admin.logout') : route('staff.logout') }}" method="POST" class="m-0">
+            <form action="{{ route('staff.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
+            <button onclick="toggleNav()" class="md:hidden w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500">
+                <i class="bi bi-list text-xl"></i>
+            </button>
         </div>
     </nav>
 

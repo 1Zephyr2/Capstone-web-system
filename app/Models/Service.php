@@ -80,7 +80,7 @@ class Service extends Model
      */
     public static function groupedActive()
     {
-        $services = self::active()->orderBy('name')->get();
+        $services = self::active()->orderBy('id', 'desc')->get();
         return collect(self::CATEGORIES)->mapWithKeys(fn($cat) => [
             $cat => $services->where('category', $cat)->values(),
         ])->filter(fn($group) => $group->isNotEmpty());

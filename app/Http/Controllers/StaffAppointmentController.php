@@ -79,7 +79,7 @@ class StaffAppointmentController extends Controller
         ];
     });
 
-    $serviceTypes = \App\Models\Service::active()->orderBy('category')->orderBy('name')->get();
+    $serviceTypes = \App\Models\Service::active()->orderBy('id', 'desc')->get();
     $statusOptions = [
         Appointment::STATUS_PENDING,
         Appointment::STATUS_APPROVED,
@@ -273,9 +273,6 @@ public function store(Request $request)
             $day = \Carbon\Carbon::parse($value)->dayOfWeek;
             if (in_array($day, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) {
                 $fail('We are closed on weekends. Please choose a weekday.');
-            }
-            if (\Carbon\Carbon::parse($value)->isPast()) {
-                $fail('That time slot has already passed. Please choose a current or upcoming time.');
             }
         }],
         'service_id'       => ['required', 'exists:services,id'],
