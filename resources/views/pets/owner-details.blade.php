@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>html { font-size: 112%; }</style>
+    <style>html { font-size: 125%; }</style>
     <script>
         tailwind.config = {
             theme: {
@@ -45,6 +45,12 @@
             const hidden = document.getElementById(prefix + '-breed-hidden');
             const list = BREED_LISTS[type] || [];
             select.innerHTML = '';
+
+            const blankOpt = document.createElement('option');
+            blankOpt.value = ''; blankOpt.textContent = 'Select a breed';
+            blankOpt.disabled = true;
+            select.appendChild(blankOpt);
+
             list.forEach(breed => {
                 const opt = document.createElement('option');
                 opt.value = breed; opt.textContent = breed;
@@ -64,8 +70,10 @@
                 otherInput.value = currentBreed;
                 if (hidden) hidden.value = currentBreed;
             } else {
+                select.value = '';
                 otherInput.classList.add('hidden');
                 otherInput.value = '';
+                if (hidden) hidden.value = '';
             }
         }
 

@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>html { font-size: 112%; }</style>
+    <style>html { font-size: 125%; }</style>
     <script>
         tailwind.config = {
             theme: {
@@ -460,7 +460,7 @@
                                             </div>
                                             <div class="flex items-center gap-2 shrink-0">
                                                 <button type="button"
-                                                        onclick='openEditService({{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name) }}, {{ Illuminate\Support\Js::from($svc->category) }}, {{ Illuminate\Support\Js::from($svc->prices ?? []) }})'
+                                                        onclick="openEditService({{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name) }}, {{ Illuminate\Support\Js::from($svc->category) }}, {{ Illuminate\Support\Js::from($svc->prices ?? []) }})"
                                                         class="px-3 py-1 rounded-lg text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
                                                     <i class="bi bi-pencil"></i> Edit
                                                 </button>
