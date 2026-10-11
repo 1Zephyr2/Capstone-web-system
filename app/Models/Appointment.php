@@ -137,4 +137,22 @@ class Appointment extends Model
         return $query->where('status', self::STATUS_APPROVED)
                      ->where('appointment_date', '>=', now());
     }
+
+    /**
+     * Close out appointments whose booked day has already passed.
+     * - Still pending  -> cancelled ("Expired")
+     * - Still approved (customer never came / never completed) -> cancelled ("No-show")
+     */
+    public static function expireStale(): void
+    {
+        $startOfToday = now()->startOfDay();
+
+        static::where('status', self::STATUS_PENDING)
+            ->where('appointment_date', '<', $startOfToday)
+            ->update(['status' => self::STATUS_CANCELLED, 'rejection_reason' => 'Expired: booked date passed without approval']);
+
+        static::where('status', self::STATUS_APPROVED)
+            ->where('appointment_date', '<', $startOfToday)
+            ->update(['status' => self::STATUS_CANCELLED, 'rejection_reason' => 'No-show: booked date passed']);
+    }
 }

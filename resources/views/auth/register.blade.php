@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Register</title>
+    <title>Bark Park | Register</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
     <nav class="w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="/" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Park
             </a>
             <a href="{{ route('login') }}" class="text-sm font-medium text-gray-500 hover:text-emerald-600 transition-colors">Login</a>
         </div>
@@ -36,7 +36,7 @@
     <main class="flex-grow flex items-center justify-center py-12 px-6">
         <div class="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
             <h2 class="text-2xl font-bold text-gray-900 mb-1 text-center">Create an account</h2>
-            <p class="text-gray-400 text-sm text-center mb-6">Join FURCARE to book grooming for your pets.</p>
+            <p class="text-gray-400 text-sm text-center mb-6">Join Bark Park to book grooming for your pets.</p>
 
             @if($errors->any())
                 <div class="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm space-y-1">
@@ -80,7 +80,7 @@
     </main>
 
     <footer class="py-8 text-center border-t border-gray-100">
-        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} FURCARE | Appointment System</p>
+        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} Bark Park | Appointment System</p>
     </footer>
 
 </body>

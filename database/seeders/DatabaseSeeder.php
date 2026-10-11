@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ["email" => "admin@furcare.com"],
             [
-                "name" => "Furcare Admin",
+                "name" => "Bark Park Admin",
                 "password" => Hash::make("password"),
                 "role" => "admin",
             ]
@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ["email" => "staff@furcare.com"],
             [
-                "name" => "Furcare Staff",
+                "name" => "Bark Park Staff",
                 "password" => Hash::make("password"),
                 "role" => "staff",
             ]

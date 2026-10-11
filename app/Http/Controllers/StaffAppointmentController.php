@@ -96,9 +96,62 @@ class StaffAppointmentController extends Controller
                                   ->count(),
     ];
 
+    // ── Month / Year calendar views ───────────────────────────────────────
+    $monthGrid = null;
+    $yearGrid  = null;
+
+    if (in_array($viewMode, ['month', 'year'], true)) {
+        $rangeStart = $viewMode === 'month' ? $date->copy()->startOfMonth() : $date->copy()->startOfYear();
+        $rangeEnd   = $viewMode === 'month' ? $date->copy()->endOfMonth()   : $date->copy()->endOfYear();
+
+        // With a status picked (e.g. Pending) show only that status; otherwise hide rejected/cancelled.
+        $byDate = Appointment::with(['user', 'pet'])
+            ->whereBetween('appointment_date', [$rangeStart, $rangeEnd])
+            ->when(
+                $request->filled('status'),
+                fn($q) => $q->where('status', $request->status),
+                fn($q) => $q->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
+            )
+            ->when($request->filled('service'), fn($q) => $q->where('service_id', $request->service))
+            ->orderBy('appointment_date')
+            ->get()
+            ->groupBy(fn($a) => $a->appointment_date->toDateString());
+
+        $buildWeeks = function (\Carbon\Carbon $monthStart) use ($byDate) {
+            $gridStart = $monthStart->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+            $gridEnd   = $monthStart->copy()->endOfMonth()->endOfWeek(\Carbon\Carbon::SUNDAY);
+            $weeks = [];
+            for ($d = $gridStart->copy(); $d->lte($gridEnd); $d->addDay()) {
+                $key = $d->toDateString();
+                $weeks[(int) floor($d->diffInDays($gridStart) / 7)][] = [
+                    'date'     => $d->copy(),
+                    'in_month' => $d->month === $monthStart->month,
+                    'is_today' => $d->isToday(),
+                    'appts'    => $byDate->get($key, collect()),
+                ];
+            }
+            return $weeks;
+        };
+
+        if ($viewMode === 'month') {
+            $monthGrid = [
+                'weeks' => $buildWeeks($rangeStart),
+                'total' => $byDate->flatten(1)->count(),
+                'days'  => $byDate->count(),
+            ];
+        } else {
+            $yearGrid = collect(range(1, 12))->map(function ($m) use ($rangeStart, $buildWeeks) {
+                $ms = $rangeStart->copy()->month($m)->startOfMonth();
+                $weeks = $buildWeeks($ms);
+                $total = collect($weeks)->flatten(1)->where('in_month', true)->sum(fn($c) => $c['appts']->count());
+                return ['month' => $ms, 'weeks' => $weeks, 'total' => $total];
+            });
+        }
+    }
+
     return view('staff.appointments', compact(
         'timeSlots', 'date', 'serviceTypes', 'statusOptions', 'stats',
-        'viewMode', 'weekDays', 'weekStart', 'weekEnd'
+        'viewMode', 'weekDays', 'weekStart', 'weekEnd', 'monthGrid', 'yearGrid'
     ));
 }
 
@@ -117,7 +170,7 @@ class StaffAppointmentController extends Controller
             'appointment_approved',
             'Appointment Confirmed',
             "Your appointment for {$appointment->pet->name} ({$appointment->service_label}) on {$appointment->appointment_date->format('M d, Y g:i A')} has been approved.",
-            route('appointments.index')
+            route('appointments.index', ['date' => $appointment->appointment_date->toDateString()])
         );
 
         return back()->with('success', "Appointment for {$appointment->pet->name} approved.");
@@ -145,7 +198,7 @@ class StaffAppointmentController extends Controller
             'appointment_rejected',
             'Appointment Rejected',
             "Your appointment for {$appointment->pet->name} on {$appointment->appointment_date->format('M d, Y g:i A')} was rejected." . ($request->rejection_reason ? ' Reason: ' . $request->rejection_reason : ''),
-            route('appointments.index')
+            route('appointments.index', ['date' => $appointment->appointment_date->toDateString()])
         );
 
         return back()->with('success', "Appointment for {$appointment->pet->name} rejected.");
@@ -165,7 +218,7 @@ class StaffAppointmentController extends Controller
             'almost_done',
             'Almost Done!',
             "{$appointment->pet->name}'s {$appointment->service_label} is almost done — please get ready for pickup soon.",
-            route('appointments.index')
+            route('appointments.index', ['date' => $appointment->appointment_date->toDateString()])
         );
 
         return back()->with('success', "Owner notified that {$appointment->pet->name} is almost ready.");
@@ -205,7 +258,7 @@ class StaffAppointmentController extends Controller
             'appointment_completed',
             'Service Completed',
             "{$appointment->pet->name}'s {$appointment->service_label} is complete and ready for pickup.",
-            route('appointments.index')
+            route('appointments.index', ['date' => $appointment->appointment_date->toDateString()])
         );
 
         return back()->with('success', "Appointment for {$appointment->pet->name} marked as completed.");

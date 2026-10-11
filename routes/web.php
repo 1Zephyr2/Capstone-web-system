@@ -5,8 +5,6 @@ use App\Http\Controllers\PetController;
 use App\Http\Controllers\StaffDashboardController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\StaffAppointmentController;
-use App\Http\Controllers\Auth\AdminAuthController;
-use App\Http\Controllers\Auth\StaffAuthController;
 use Illuminate\Support\Facades\Route;
 
 // ── Public Routes ──────────────────────────────────────────────────────────────
@@ -96,12 +94,10 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ── Staff Login ────────────────────────────────────────────────────────────────
-Route::get('/staff/login', [StaffAuthController::class, 'showLoginForm'])->name('staff.login');
-Route::post('/staff/login', [StaffAuthController::class, 'login']);
+Route::get('/staff/login', fn() => redirect()->route('login'))->name('staff.login');
 
 // ── Admin Login ────────────────────────────────────────────────────────────────
-Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
-Route::post('/admin/login', [AdminAuthController::class, 'login']);
+Route::get('/admin/login', fn() => redirect()->route('login'))->name('admin.login');
 
 // ── Admin Routes ───────────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

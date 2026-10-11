@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Dashboard</title>
+    <title>Bark Park | Dashboard</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>html { font-size: 125%; }</style>
     <script>
         tailwind.config = {
             theme: {
@@ -34,14 +33,6 @@
             const hidden = document.getElementById(prefix + '-breed-hidden');
             const list = BREED_LISTS[type] || [];
             select.innerHTML = '';
-
-            // Blank placeholder first, so nothing is pre-selected until the
-            // user actually picks a breed (or we're restoring one, below).
-            const blankOpt = document.createElement('option');
-            blankOpt.value = ''; blankOpt.textContent = 'Select a breed';
-            blankOpt.disabled = true;
-            select.appendChild(blankOpt);
-
             list.forEach(breed => {
                 const opt = document.createElement('option');
                 opt.value = breed; opt.textContent = breed;
@@ -61,7 +52,6 @@
                 otherInput.value = currentBreed;
                 if (hidden) hidden.value = currentBreed;
             } else {
-                select.value = '';
                 otherInput.classList.add('hidden');
                 otherInput.value = '';
                 if (hidden) hidden.value = '';
@@ -122,7 +112,7 @@
     <nav class="relative w-full z-50 bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="{{ route('dashboard') }}" class="text-lg sm:text-xl font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7 sm:w-8 sm:h-8" alt="Logo"> FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7 sm:w-8 sm:h-8" alt="Logo"> Bark Park
             </a>
             <div class="hidden md:flex items-center gap-3">
                 <a href="{{ route('appointments.index') }}" class="px-4 py-2 rounded-full text-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all">
@@ -327,7 +317,7 @@
     </main>
 
     <footer class="relative z-10 py-8 text-center border-t border-gray-200 text-gray-400 text-sm">
-        &copy; {{ date('Y') }} FURCARE | Pet Care Appointment System
+        &copy; {{ date('Y') }} Bark Park | Pet Care Appointment System
     </footer>
 
     <!-- Add Pet Modal -->

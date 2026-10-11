@@ -25,7 +25,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Admin Dashboard</title>
+    <title>Bark Park | Admin Dashboard</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@
     <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="{{ route('admin.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Park
                 <span class="text-rose-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-100 border border-rose-200">ADMIN PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
@@ -112,22 +112,27 @@
         <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
             @php
                 $statCards = [
-                    ['icon' => 'hourglass-split', 'label' => 'Pending',       'value' => $stats['pending_appointments'],  'color' => 'text-amber-600',  'bg' => 'bg-amber-50',  'border' => 'border-amber-200'],
-                    ['icon' => 'sun',             'label' => "Today's Appts", 'value' => $stats['todays_appointments'],   'color' => 'text-yellow-600', 'bg' => 'bg-yellow-50', 'border' => 'border-yellow-200'],
-                    ['icon' => 'calendar-check',  'label' => 'Total Appts',   'value' => $stats['total_appointments'],    'color' => 'text-indigo-600', 'bg' => 'bg-indigo-50', 'border' => 'border-indigo-200'],
-                    ['icon' => 'paw',             'label' => 'Total Pets',    'value' => $stats['total_pets'],            'color' => 'text-violet-600', 'bg' => 'bg-violet-50', 'border' => 'border-violet-200'],
-                    ['icon' => 'people',          'label' => 'Owners',        'value' => $stats['total_owners'],          'color' => 'text-teal-600',   'bg' => 'bg-teal-50',   'border' => 'border-teal-200'],
-                    ['icon' => 'person-badge',    'label' => 'Staff',         'value' => $stats['total_staff'],           'color' => 'text-rose-600',   'bg' => 'bg-rose-50',   'border' => 'border-rose-200'],
+                    ['icon' => 'hourglass-split', 'label' => 'Pending', 'url' => route('admin.appointments', ['status' => 'pending']),       'value' => $stats['pending_appointments'],  'color' => 'text-amber-600',  'bg' => 'bg-amber-50',  'border' => 'border-amber-200'],
+                    ['icon' => 'sun',             'label' => "Today's Appts", 'url' => route('admin.appointments', ['view' => 'day', 'date' => today()->toDateString()]), 'value' => $stats['todays_appointments'],   'color' => 'text-yellow-600', 'bg' => 'bg-yellow-50', 'border' => 'border-yellow-200'],
+                    ['icon' => 'calendar-check',  'label' => 'Total Appts', 'url' => route('admin.appointments', ['view' => 'week']),   'value' => $stats['total_appointments'],    'color' => 'text-indigo-600', 'bg' => 'bg-indigo-50', 'border' => 'border-indigo-200'],
+                    ['icon' => 'paw',             'label' => 'Total Pets', 'url' => route('admin.directory'),    'value' => $stats['total_pets'],            'color' => 'text-violet-600', 'bg' => 'bg-violet-50', 'border' => 'border-violet-200'],
+                    ['icon' => 'people',          'label' => 'Owners', 'url' => route('admin.panel', ['tab' => 'owners']),        'value' => $stats['total_owners'],          'color' => 'text-teal-600',   'bg' => 'bg-teal-50',   'border' => 'border-teal-200'],
+                    ['icon' => 'person-badge',    'label' => 'Staff', 'url' => route('admin.panel', ['tab' => 'staff']),         'value' => $stats['total_staff'],           'color' => 'text-rose-600',   'bg' => 'bg-rose-50',   'border' => 'border-rose-200'],
                 ];
             @endphp
             @foreach($statCards as $card)
-                <div class="{{ $card['bg'] }} border {{ $card['border'] }} rounded-2xl p-5 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-                    <i class="bi bi-{{ $card['icon'] }} {{ $card['color'] }} text-xl mb-2 block"></i>
+                <a href="{{ $card['url'] }}" title="Open {{ $card['label'] }}" class="group block {{ $card['bg'] }} border {{ $card['border'] }} rounded-2xl p-5 shadow-sm cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <i class="bi bi-{{ $card['icon'] }} {{ $card['color'] }} text-xl mb-2 block"></i>
+                        <i class="bi bi-arrow-up-right text-gray-300 group-hover:text-gray-600 text-sm transition-colors"></i>
+                    </div>
                     <p class="text-gray-500 text-xs mb-1">{{ $card['label'] }}</p>
                     <p class="text-2xl font-bold text-gray-900">{{ $card['value'] }}</p>
-                </div>
+                </a>
             @endforeach
         </div>
+
+@include('components.dashboard-forecast', ['accent' => 'indigo'])
 
         <div class="grid md:grid-cols-3 gap-8">
 

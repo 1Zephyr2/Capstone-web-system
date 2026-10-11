@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Premium Pet Care Management</title>
+    <title>Bark Park | Premium Pet Care Management</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -56,7 +56,7 @@
     <nav class="fixed w-full bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="#" class="text-xl font-display font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Park
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
                 <a href="#how"      class="hover:text-emerald-600 transition-all">How it works</a>
@@ -98,7 +98,7 @@
                     one calm dashboard.
                 </h1>
                 <p class="text-gray-500 text-lg max-w-lg mb-10 leading-relaxed">
-                    FURCARE replaces the sticky notes and group chats with one clean system for booking grooming visits, tracking medical history, and keeping your whole clinic in sync.
+                    Bark Park replaces the sticky notes and group chats with one clean system for booking grooming visits, tracking medical history, and keeping your whole clinic in sync.
                 </p>
                 <div class="flex items-center gap-4 flex-wrap mb-10">
                     <a href="{{ route('register') }}" class="px-8 py-4 font-bold text-sm text-white rounded-xl bg-emerald-600 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 hover:-translate-y-0.5">
@@ -342,7 +342,7 @@
         <div class="absolute -bottom-24 -right-24 w-80 h-80 bg-emerald-500/40 rounded-full blur-3xl"></div>
         <div class="container relative mx-auto px-6 text-center reveal opacity-0 translate-y-6 transition-all duration-700 ease-out">
             <h2 class="text-3xl md:text-4xl font-display font-bold text-white mb-4">Ready to get started?</h2>
-            <p class="text-emerald-100 mb-8 max-w-xl mx-auto">Join pet owners and clinics already using FURCARE to simplify their care workflow.</p>
+            <p class="text-emerald-100 mb-8 max-w-xl mx-auto">Join pet owners and clinics already using Bark Park to simplify their care workflow.</p>
             <a href="{{ route('register') }}" class="inline-flex px-8 py-4 rounded-xl bg-white text-emerald-700 font-bold hover:bg-emerald-50 transition-all shadow-lg hover:-translate-y-0.5">
                 Create Free Account
             </a>
@@ -355,7 +355,7 @@
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-10 mb-12">
                 <div>
                     <a href="#" class="text-lg font-display font-bold flex items-center gap-2 text-white mb-3">
-                        <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> FURCARE
+                        <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Park
                     </a>
                     <p class="text-sm leading-relaxed">Modern appointment and care management for pet grooming clinics.</p>
                 </div>
@@ -372,7 +372,6 @@
                     <ul class="space-y-2 text-sm">
                         <li><a href="{{ route('login') }}" class="hover:text-white transition-all">Login</a></li>
                         <li><a href="{{ route('register') }}" class="hover:text-white transition-all">Create account</a></li>
-                        <li><a href="{{ route('staff.login') }}" class="hover:text-white transition-all">Staff portal</a></li>
                     </ul>
                 </div>
                 <div>
@@ -386,7 +385,7 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <p class="text-xs">&copy; {{ date('Y') }} FURCARE | Pet Care Appointment System</p>
+                <p class="text-xs">&copy; {{ date('Y') }} Bark Park | Pet Care Appointment System</p>
                 <div class="flex items-center gap-4 text-lg">
                     <a href="https://www.facebook.com/profile.php?id=61564144455710&rdid=X2RMaCnl9m4vtFp7&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1H3MLMSw7o" target="_blank" rel="noopener" class="hover:text-white transition-all"><i class="bi bi-facebook"></i></a>
                     <i class="bi bi-instagram hover:text-white transition-all cursor-pointer"></i>

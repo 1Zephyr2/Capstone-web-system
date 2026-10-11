@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>FURCARE | {{ config('app.name', 'Laravel') }}</title>
+        <title>Bark Park | {{ config('app.name', 'Laravel') }}</title>
         <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
 
         <!-- Scripts -->
@@ -32,7 +32,7 @@
         <nav class="w-full bg-white border-b border-gray-200 shadow-sm">
             <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-center">
                 <a href="/" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
-                    <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> FURCARE
+                    <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Park
                 </a>
             </div>
         </nav>
@@ -44,7 +44,7 @@
         </main>
 
         <footer class="py-8 text-center border-t border-gray-100">
-            <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} FURCARE. All rights reserved.</p>
+            <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} Bark Park. All rights reserved.</p>
         </footer>
     </body>
 </html>

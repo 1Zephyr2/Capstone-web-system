@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Staff Dashboard</title>
+    <title>Bark Park | Staff Dashboard</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -41,7 +41,7 @@
     <nav class="relative w-full z-50 bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Park
                 <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
@@ -104,6 +104,8 @@
                 </div>
             @endforeach
         </div>
+
+@include('components.dashboard-forecast', ['accent' => 'violet'])
 
         <!-- Main Content -->
         <div class="grid md:grid-cols-3 gap-6">
@@ -209,7 +211,7 @@
     </main>
 
     <footer class="relative z-10 py-8 text-center border-t border-gray-200 text-gray-400 text-sm">
-        &copy; {{ date('Y') }} FURCARE | Staff System.
+        &copy; {{ date('Y') }} Bark Park | Staff System.
     </footer>
 </body>
 </html>

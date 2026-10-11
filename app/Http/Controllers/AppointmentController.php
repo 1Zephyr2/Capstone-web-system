@@ -109,7 +109,7 @@ class AppointmentController extends Controller
                 'new_request',
                 'New Appointment Request',
                 Auth::user()->name . " requested an appointment for {$petList}.",
-                route($recipient->role . '.appointments')
+                route($recipient->role . '.appointments', ['view' => 'day', 'date' => Carbon::parse($validated['appointment_date'])->toDateString()])
             );
         }
 
@@ -135,6 +135,7 @@ class AppointmentController extends Controller
         $appointments = Appointment::with(['pet', 'service'])
             ->where('user_id', Auth::id())
             ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
+            ->when($request->filled('date'), fn($q) => $q->whereDate('appointment_date', $request->date))
             ->orderByRaw($statusOrder)
             ->orderByDesc('appointment_date')
             ->paginate(10)

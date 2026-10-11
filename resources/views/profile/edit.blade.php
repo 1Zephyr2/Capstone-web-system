@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | My Profile</title>
+    <title>Bark Park | My Profile</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
     <nav class="w-full bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="{{ route('dashboard') }}" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Park
             </a>
             <div class="flex items-center gap-3">
                 <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-full text-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all">← Dashboard</a>

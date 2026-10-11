@@ -75,8 +75,7 @@ class AppointmentSeeder extends Seeder
 
         $hours = array_keys(Appointment::CLINIC_HOURS);
         $statusPool = [
-            Appointment::STATUS_PENDING,
-            Appointment::STATUS_APPROVED,
+            Appointment::STATUS_COMPLETED,
             Appointment::STATUS_COMPLETED,
             Appointment::STATUS_COMPLETED,
             Appointment::STATUS_COMPLETED, // weighted heavier so most of the past reads as resolved history

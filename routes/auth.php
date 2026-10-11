@@ -82,12 +82,12 @@ Route::middleware("auth")->group(function () {
     ])->name("logout");
 
     Route::post("staff/logout", [
-        App\Http\Controllers\Auth\StaffAuthController::class,
-        "logout",
+        AuthenticatedSessionController::class,
+        "destroy",
     ])->name("staff.logout");
 
     Route::post("admin/logout", [
-        App\Http\Controllers\Auth\AdminAuthController::class,
-        "logout",
+        AuthenticatedSessionController::class,
+        "destroy",
     ])->name("admin.logout");
 });

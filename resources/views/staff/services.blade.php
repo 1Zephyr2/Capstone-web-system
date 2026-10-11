@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Services</title>
+    <title>Bark Park | Services</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>html { font-size: 125%; }</style>
+    <style>html { font-size: 112%; }</style>
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] } } } }
     </script>
@@ -26,7 +26,7 @@
     <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Park
                 <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
@@ -36,7 +36,6 @@
                 <a href="{{ route('staff.services') }}"     class="text-gray-900 font-semibold transition-all">Services</a>
                 <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all">Insights</a>
             </div>
-            @include('components.notification-bell', ['notifRoutePrefix' => 'staff.'])
             <form action="{{ route('staff.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>

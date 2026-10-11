@@ -16,7 +16,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Our Services</title>
+    <title>Bark Park | Our Services</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
     <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="/" class="text-xl font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Park
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
                 <a href="/#about"    class="hover:text-emerald-600 transition-all">About</a>
@@ -245,7 +245,7 @@
     </main>
 
     <footer class="py-8 text-center border-t border-gray-200">
-        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} FURCARE | Pet Care Appointment System</p>
+        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} Bark Park | Pet Care Appointment System</p>
     </footer>
 </body>
 </html>

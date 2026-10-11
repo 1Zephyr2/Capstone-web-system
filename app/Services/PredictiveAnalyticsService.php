@@ -3,13 +3,13 @@
 namespace App\Services;
 
 /**
- * Hybrid ensemble forecasting for FurCare's business metrics (booking volume,
+ * Hybrid ensemble forecasting for Bark Park's business metrics (booking volume,
  * revenue, per-service demand, etc).
  *
  * "Hybrid ensemble" here means: several independent, well-established
  * forecasting methods are each run over the same historical series, then
  * combined into a single prediction — weighted by how accurate each method
- * actually was when backtested against FurCare's own recent history. A
+ * actually was when backtested against Bark Park's own recent history. A
  * method that predicted recent months well gets more say in the final
  * number; a method that did poorly gets less (or none). This is the same
  * "blending" idea behind ensemble learning in ML (e.g. stacking), just

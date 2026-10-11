@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FURCARE | Appointments</title>
+    <title>Bark Park | Appointments</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>html { font-size: 125%; }</style>
     <script>
         tailwind.config = {
             theme: {
@@ -171,28 +170,19 @@
 
     <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{{ route($prefix.'.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> FURCARE
-                @if($isAdmin)
-                    <span class="text-rose-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-rose-100 border border-rose-200">ADMIN PORTAL</span>
-                @else
-                    <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
-                @endif
+            <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Park
+                <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-                <a href="{{ route($prefix.'.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
-                <a href="{{ route($prefix.'.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
-                <a href="{{ route($prefix.'.appointments') }}" class="text-gray-900 font-semibold transition-all hover:scale-105">Appointments</a>
-                @if(!$isAdmin)
-                    <a href="{{ route('staff.services') }}" class="hover:text-gray-900 transition-all hover:scale-105">Services</a>
-                @endif
-                <a href="{{ route($prefix.'.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
-                @if($isAdmin)
-                    <a href="{{ route('admin.panel') }}" class="text-rose-700 font-semibold transition-all bg-rose-50 px-3 py-1 rounded-lg border border-rose-200 ml-4 hover:bg-rose-100 hover:scale-105">Admin Panel</a>
-                @endif
+                <a href="{{ route('staff.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
+                <a href="{{ route('staff.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
+                <a href="{{ route('staff.appointments') }}" class="text-gray-900 font-semibold transition-all hover:scale-105">Appointments</a>
+                <a href="{{ route('staff.services') }}" class="hover:text-gray-900 transition-all hover:scale-105">Services</a>
+                <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
             </div>
-            @include('components.notification-bell', ['notifRoutePrefix' => $prefix.'.'])
-            <form action="{{ route($prefix.'.logout') }}" method="POST" class="m-0 hidden md:block">
+            @include('components.notification-bell', ['notifRoutePrefix' => 'staff.'])
+            <form action="{{ route('staff.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
             </form>
@@ -233,7 +223,7 @@
 
         <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
     <h1 class="text-2xl font-bold text-gray-900">Appointment Management</h1>
-    <p class="text-gray-500 text-sm">Review, approve, and manage appointments by day.</p>
+    <p class="text-gray-500 text-sm">Review, approve, and manage appointments by day, week, month or year.</p>
 </header>
 
 <!-- Summary Cards -->
@@ -269,6 +259,10 @@
            class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $viewMode === 'day' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Day</a>
         <a href="{{ route($prefix . '.appointments', array_merge(request()->except('view'), ['view' => 'week'])) }}"
            class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $viewMode === 'week' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Week</a>
+        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('view'), ['view' => 'month'])) }}"
+           class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $viewMode === 'month' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Month</a>
+        <a href="{{ route($prefix . '.appointments', array_merge(request()->except('view'), ['view' => 'year'])) }}"
+           class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $viewMode === 'year' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Year</a>
     </div>
 </div>
 
@@ -288,6 +282,21 @@
         </div>
         <input type="date" name="date" value="{{ $date->toDateString() }}" onchange="this.form.submit()"
                class="bg-white border border-gray-300 rounded-xl px-4 py-2 text-gray-900 text-sm outline-none focus:border-violet-500 transition-all shadow-sm">
+    @elseif($viewMode === 'month' || $viewMode === 'year')
+        @php
+            $step = $viewMode === 'month' ? 'Month' : 'Year';
+            $prevStep = $viewMode === 'month' ? $date->copy()->startOfMonth()->subMonth() : $date->copy()->startOfYear()->subYear();
+            $nextStep = $viewMode === 'month' ? $date->copy()->startOfMonth()->addMonth() : $date->copy()->startOfYear()->addYear();
+        @endphp
+        <div class="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200">
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $prevStep->toDateString(), 'view' => $viewMode])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">&lt; Prev {{ $step }}</a>
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $todayDate, 'view' => $viewMode])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all">This {{ $step }}</a>
+            <a href="{{ route($prefix . '.appointments', array_merge(request()->except('date'), ['date' => $nextStep->toDateString(), 'view' => $viewMode])) }}"
+               class="px-3 py-2 rounded-lg text-sm bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium transition-all">Next {{ $step }} &gt;</a>
+        </div>
+        <p class="text-gray-500 text-sm font-medium">{{ $viewMode === 'month' ? $date->format('F Y') : $date->format('Y') }}</p>
     @else
         @php
             $prevWeekDate = $weekStart->copy()->subWeek()->toDateString();
@@ -324,7 +333,74 @@
     @endif
 </form>
 
-@if($viewMode === 'week')
+@if($viewMode === 'month')
+    <!-- Month Calendar -->
+    <p class="text-gray-500 text-sm mb-3">
+        {{ $monthGrid['total'] }} {{ request('status') ? request('status') : '' }} appointment{{ $monthGrid['total'] === 1 ? '' : 's' }}
+        across {{ $monthGrid['days'] }} day{{ $monthGrid['days'] === 1 ? '' : 's' }} this month. Click a day to open it.
+    </p>
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto">
+        <div class="min-w-[760px]">
+            <div class="grid grid-cols-7 bg-gray-50 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                @foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $dn)<div class="px-3 py-3">{{ $dn }}</div>@endforeach
+            </div>
+            @foreach($monthGrid['weeks'] as $week)
+                <div class="grid grid-cols-7 border-b border-gray-100 last:border-b-0">
+                    @foreach($week as $cell)
+                        @php $n = $cell['appts']->count(); @endphp
+                        <a href="{{ route($prefix . '.appointments', array_merge(request()->except(['date','view']), ['date' => $cell['date']->toDateString(), 'view' => 'day'])) }}"
+                           class="min-h-[110px] p-2 border-r border-gray-100 last:border-r-0 hover:bg-violet-50 transition-colors block {{ $cell['in_month'] ? '' : 'bg-gray-50/70 opacity-60' }}">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-semibold {{ $cell['is_today'] ? 'bg-gray-900 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-gray-700' }}">{{ $cell['date']->format('j') }}</span>
+                                @if($n > 0)<span class="text-[10px] font-bold text-violet-700 bg-violet-100 rounded-full px-2 py-0.5">{{ $n }}</span>@endif
+                            </div>
+                            @foreach($cell['appts']->take(3) as $a)
+                                <div class="text-[11px] leading-tight truncate rounded px-1.5 py-0.5 mb-0.5 {{ $a->status_badge_class }}">
+                                    {{ $a->appointment_date->format('g:i A') }} · {{ $a->pet->name ?? 'Pet' }}
+                                </div>
+                            @endforeach
+                            @if($n > 3)<div class="text-[10px] text-gray-400 px-1">+{{ $n - 3 }} more</div>@endif
+                        </a>
+                    @endforeach
+                </div>
+            @endforeach
+        </div>
+    </div>
+@elseif($viewMode === 'year')
+    <!-- Year Overview -->
+    <p class="text-gray-500 text-sm mb-3">Darker days have more {{ request('status') ?: '' }} appointments. Click a month title to open that month, or a day to open it.</p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        @foreach($yearGrid as $m)
+            <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <a href="{{ route($prefix . '.appointments', array_merge(request()->except(['date','view']), ['date' => $m['month']->toDateString(), 'view' => 'month'])) }}"
+                       class="font-bold text-gray-900 hover:text-violet-700">{{ $m['month']->format('F') }}</a>
+                    <span class="text-xs font-semibold {{ $m['total'] ? 'text-violet-700 bg-violet-100' : 'text-gray-400 bg-gray-100' }} rounded-full px-2 py-0.5">{{ $m['total'] }}</span>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] text-gray-400 mb-1">
+                    @foreach(['M','T','W','T','F','S','S'] as $dn)<span>{{ $dn }}</span>@endforeach
+                </div>
+                <div class="grid grid-cols-7 gap-1">
+                    @foreach($m['weeks'] as $week)
+                        @foreach($week as $cell)
+                            @if(!$cell['in_month'])
+                                <span></span>
+                            @else
+                                @php
+                                    $n = $cell['appts']->count();
+                                    $heat = $n === 0 ? 'bg-gray-50 text-gray-400' : ($n <= 2 ? 'bg-violet-200 text-violet-900' : ($n <= 5 ? 'bg-violet-400 text-white' : 'bg-violet-700 text-white'));
+                                @endphp
+                                <a href="{{ route($prefix . '.appointments', array_merge(request()->except(['date','view']), ['date' => $cell['date']->toDateString(), 'view' => 'day'])) }}"
+                                   title="{{ $cell['date']->format('M j') }}: {{ $n }} appointment{{ $n === 1 ? '' : 's' }}"
+                                   class="text-[11px] rounded aspect-square flex items-center justify-center hover:ring-2 hover:ring-violet-400 {{ $heat }} {{ $cell['is_today'] ? 'ring-2 ring-gray-900' : '' }}">{{ $cell['date']->format('j') }}</a>
+                            @endif
+                        @endforeach
+                    @endforeach
+                </div>
+            </div>
+        @endforeach
+    </div>
+@elseif($viewMode === 'week')
     <!-- Week Grid -->
     <div class="bg-white border-gray-200 border rounded-2xl overflow-hidden shadow-sm reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[800px]">
