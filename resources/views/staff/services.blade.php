@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>html { font-size: 112%; }</style>
+    <style>html { font-size: 125%; }</style>
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] } } } }
     </script>
@@ -36,6 +36,7 @@
                 <a href="{{ route('staff.services') }}"     class="text-gray-900 font-semibold transition-all">Services</a>
                 <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all">Insights</a>
             </div>
+            @include('components.notification-bell', ['notifRoutePrefix' => 'staff.'])
             <form action="{{ route('staff.logout') }}" method="POST" class="m-0 hidden md:block">
                 @csrf
                 <button type="submit" class="px-5 py-2 rounded-full text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 transition-all">Logout</button>
