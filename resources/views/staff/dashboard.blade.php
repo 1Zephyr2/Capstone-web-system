@@ -178,6 +178,32 @@
                     </div>
                 </div>
 
+                <!-- My availability -->
+                @php $me = auth()->user(); $meAvail = $me->isAvailable(); @endphp
+                <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-gray-900 text-sm">My Availability</h3>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $meAvail ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600' }}">
+                            <i class="bi bi-circle-fill text-[8px] mr-1"></i>{{ $meAvail ? 'Available' : 'Unavailable' }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-3">The admin can see this status. Update it when you are in or out.</p>
+                    @if(!$meAvail && $me->availability_note)
+                        <p class="text-xs text-gray-500 mb-3 italic">“{{ $me->availability_note }}”</p>
+                    @endif
+                    <form method="POST" action="{{ route('staff.availability') }}" class="space-y-2">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="availability" value="{{ $meAvail ? 'unavailable' : 'available' }}">
+                        @if($meAvail)
+                            <input type="text" name="note" maxlength="120" placeholder="Reason (optional), e.g. Day off, back Monday"
+                                   class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs outline-none focus:border-violet-500">
+                        @endif
+                        <button type="submit" class="w-full px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $meAvail ? 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200' : 'bg-emerald-600 hover:bg-emerald-700 text-white' }}">
+                            {{ $meAvail ? 'Mark me unavailable' : 'Mark me available' }}
+                        </button>
+                    </form>
+                </div>
+
                 <!-- Quick Actions -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out shadow-sm">
                     <h3 class="font-bold text-gray-900 mb-4 text-sm">Quick Actions</h3>

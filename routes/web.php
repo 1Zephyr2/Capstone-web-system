@@ -114,6 +114,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/appointments/{appointment}/notify-almost-done', [StaffAppointmentController::class, 'notifyAlmostDone'])->name('appointments.notify-almost-done');
     Route::patch('/appointments/{appointment}/cancel', [StaffAppointmentController::class, 'cancel'])->name('appointments.cancel');
     Route::post('/staff', [\App\Http\Controllers\AdminStaffController::class, 'store'])->name('staff.store');
+    Route::patch('/staff/{user}/availability', [\App\Http\Controllers\StaffAvailabilityController::class, 'updateStaff'])->name('staff.availability');
 Route::delete('/staff/{user}', [\App\Http\Controllers\AdminStaffController::class, 'destroy'])->name('staff.destroy');
 
 // Medical records
@@ -151,6 +152,7 @@ Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationContr
 Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->group(function () {
     Route::get('/', fn() => redirect()->route('staff.dashboard'));
     Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+    Route::patch('/availability', [\App\Http\Controllers\StaffAvailabilityController::class, 'updateSelf'])->name('availability');
     Route::get('/directory', fn() => view('staff.directory'))->name('directory');
     Route::get('/insights', [\App\Http\Controllers\AdminInsightsController::class, 'index'])->name('insights');
     Route::get('/services', function () {

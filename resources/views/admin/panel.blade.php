@@ -211,7 +211,13 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="px-2 py-0.5 rounded-full text-xs bg-violet-100 text-violet-700 border border-violet-200">Staff</span>
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold {{ $staff->isAvailable() ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-600 border border-red-200' }}">{{ $staff->isAvailable() ? 'Available' : 'Unavailable' }}</span>
+                                    @if(!$staff->isAvailable() && $staff->availability_note)<span class="text-xs text-gray-400 italic hidden md:inline">“{{ $staff->availability_note }}”</span>@endif
+                                    <form method="POST" action="{{ route('admin.staff.availability', $staff) }}" class="m-0">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="availability" value="{{ $staff->isAvailable() ? 'unavailable' : 'available' }}">
+                                        <button type="submit" class="px-3 py-1 rounded-lg text-xs font-semibold border transition-all {{ $staff->isAvailable() ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' }}">{{ $staff->isAvailable() ? 'Set unavailable' : 'Set available' }}</button>
+                                    </form>
                                     <form id="delete-staff-{{ $staff->id }}" method="POST" action="{{ route('admin.staff.destroy', $staff) }}">@csrf @method('DELETE')</form>
                                     <button onclick="confirmDelete('delete-staff-{{ $staff->id }}','Remove {{ addslashes($staff->name) }}?')"
                                             class="p-2 rounded-lg text-rose-600 hover:bg-rose-100 transition-all"><i class="bi bi-trash text-sm"></i></button>

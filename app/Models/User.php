@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(["name", "email", "phone", "password", "role"])]
+#[Fillable(["name", "email", "phone", "password", "role", "availability", "availability_note", "availability_updated_at"])]
 #[Hidden(["password", "remember_token"])]
 class User extends Authenticatable
 {
@@ -27,11 +27,17 @@ class User extends Authenticatable
         return $this->hasMany(Appointment::class);
     }
 
+    public function isAvailable(): bool
+    {
+        return ($this->availability ?? 'available') === 'available';
+    }
+
     protected function casts(): array
     {
         return [
             "email_verified_at" => "datetime",
             "password"          => "hashed",
+            "availability_updated_at" => "datetime",
         ];
     }
 }

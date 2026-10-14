@@ -134,6 +134,33 @@
 
 @include('components.dashboard-forecast', ['accent' => 'indigo'])
 
+        @php $staffList = App\Models\User::where('role', 'staff')->orderBy('name')->get(); @endphp
+        <section class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                <h3 class="font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-person-check text-indigo-600"></i> Staff Availability
+                    <span class="text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full px-2 py-0.5">{{ $staffList->filter->isAvailable()->count() }} available</span>
+                    <span class="text-xs font-semibold text-red-600 bg-red-100 rounded-full px-2 py-0.5">{{ $staffList->reject->isAvailable()->count() }} unavailable</span>
+                </h3>
+                <a href="{{ route('admin.panel', ['tab' => 'staff']) }}" class="text-xs text-gray-500 hover:text-indigo-700 transition-all">Manage staff →</a>
+            </div>
+            <p class="text-gray-400 text-xs mb-4">Staff update their own status from their dashboard; you can also change it in Admin Panel → Staff Management.</p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                @forelse($staffList as $st)
+                    <div class="border {{ $st->isAvailable() ? 'border-emerald-200 bg-emerald-50/40' : 'border-red-200 bg-red-50/40' }} rounded-xl p-4">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="font-semibold text-gray-900 truncate">{{ $st->name }}</p>
+                            <span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold {{ $st->isAvailable() ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600' }}">{{ $st->isAvailable() ? 'Available' : 'Unavailable' }}</span>
+                        </div>
+                        @if(!$st->isAvailable() && $st->availability_note)<p class="text-xs text-gray-500 mt-1 italic">“{{ $st->availability_note }}”</p>@endif
+                        @if($st->availability_updated_at)<p class="text-[11px] text-gray-400 mt-1">Updated {{ $st->availability_updated_at->diffForHumans() }}</p>@endif
+                    </div>
+                @empty
+                    <p class="text-gray-400 text-sm italic col-span-full">No staff accounts yet.</p>
+                @endforelse
+            </div>
+        </section>
+
+
         <div class="grid md:grid-cols-3 gap-8">
 
             <!-- Pending Appointments -->
