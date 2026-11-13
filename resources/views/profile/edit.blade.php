@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bark Park | My Profile</title>
+    <title>Bark Pack | My Profile</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
     <nav class="w-full bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="{{ route('dashboard') }}" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Park
+                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Pack
             </a>
             <div class="flex items-center gap-3">
                 <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-full text-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all">← Dashboard</a>
@@ -88,7 +88,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Mobile Number</label>
-                        <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}" required placeholder="e.g. 0917 123 4567"
+                        <input type="tel" name="phone" value="{{ old('phone', preg_replace('/\D/', '', (string) $user->phone)) }}" required inputmode="numeric" maxlength="11" minlength="11" pattern="[0-9]{11}" title="Enter exactly 11 digits, e.g. 09282623513" oninput="this.value=this.value.replace(/\D/g,'').slice(0,11)" placeholder="e.g. 09282623513"
                                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 transition-all text-sm">
                         @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>

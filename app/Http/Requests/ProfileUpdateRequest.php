@@ -14,6 +14,13 @@ class ProfileUpdateRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('phone')) {
+            $this->merge(['phone' => preg_replace('/\D/', '', (string) $this->phone)]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -27,7 +34,7 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'digits:11'],
         ];
     }
 }

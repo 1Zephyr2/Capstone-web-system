@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bark Park | Request Appointment</title>
+    <title>Bark Pack | Request Appointment</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -37,6 +37,15 @@
                 .catch(() => { fullyBookedDates = new Set(); renderCalendar(currentYear, currentMonth); });
         }
 
+        let pastTimes = [];
+        function todayHasNoSlotsLeft() {
+            const keys = Object.keys(clinicHours).sort();
+            if (!keys.length) return false;
+            const [h, m] = keys[keys.length - 1].split(':').map(Number);
+            const now = new Date();
+            return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+        }
+
         function renderCalendar(year, month) {
             const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
             document.getElementById('cal-month-label').innerText = months[month] + ' ' + year;
@@ -53,7 +62,9 @@
             for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
             for (let d = 1; d <= daysInMonth; d++) {
                 const cellDate = new Date(year, month, d); cellDate.setHours(0,0,0,0);
-                const isPast = cellDate <= today;
+                const isToday = cellDate.getTime() === today.getTime();
+                // Today stays selectable until the last slot of the day has passed
+                const isPast = cellDate < today || (isToday && todayHasNoSlotsLeft());
                 const isWeekend = cellDate.getDay() === 0 || cellDate.getDay() === 6;
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const isSelected = selectedDate === dateStr;
@@ -85,8 +96,13 @@
                 .then(res => res.json())
                 .then(data => {
                     slotCounts = data.counts || {};
+                    pastTimes = data.past || [];
                     maxPerSlot = data.max_per_slot || 3;
-                    if (data.fully_booked) {
+                    const bannerTitle = document.getElementById('banner-title');
+                    const bannerSub = document.getElementById('banner-sub');
+                    bannerTitle.innerText = data.no_slots_left ? 'No more time slots today' : 'This date is fully booked';
+                    bannerSub.innerText = data.no_slots_left ? 'Today\'s appointment times have all passed. Please choose another date.' : 'Please choose another date on the calendar.';
+                    if (data.fully_booked || data.no_slots_left) {
                         document.getElementById('fully-booked-banner').classList.remove('hidden');
                         document.getElementById('scheduling-section').classList.add('hidden');
                     } else {
@@ -175,9 +191,10 @@
             let html = '<option value="">Select a time</option>';
             Object.entries(clinicHours).forEach(([value, label]) => {
                 const used = (slotCounts[value] || 0) + (excludeCounts[value] || 0);
+                const passed = pastTimes.includes(value);
                 const full = used >= maxPerSlot;
                 const remaining = Math.max(maxPerSlot - used, 0);
-                html += `<option value="${value}" ${full ? 'disabled' : ''}>${label}${full ? ' — Full' : ` (${remaining} left)`}</option>`;
+                html += `<option value="${value}" ${(full || passed) ? 'disabled' : ''}>${label}${passed ? ' — Passed' : (full ? ' — Full' : ` (${remaining} left)`)}</option>`;
             });
             return html;
         }
@@ -228,7 +245,7 @@
     <nav class="w-full bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="{{ route('dashboard') }}" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Park
+                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Pack
             </a>
             <div class="hidden sm:flex items-center gap-3">
                 <a href="{{ route('appointments.index') }}" class="px-4 py-2 rounded-full text-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all">
@@ -390,8 +407,8 @@
                     <!-- Fully booked banner -->
                     <div id="fully-booked-banner" class="hidden bg-white border border-red-200 rounded-2xl p-10 text-center shadow-sm">
                         <i class="bi bi-calendar-x text-4xl text-red-300 mb-3 block"></i>
-                        <p class="text-gray-900 font-bold">This date is fully booked</p>
-                        <p class="text-gray-400 text-sm mt-1">Please choose another date on the calendar.</p>
+                        <p id="banner-title" class="text-gray-900 font-bold">This date is fully booked</p>
+                        <p id="banner-sub" class="text-gray-400 text-sm mt-1">Please choose another date on the calendar.</p>
                     </div>
 
                     <!-- Scheduling -->

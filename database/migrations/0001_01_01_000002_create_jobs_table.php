@@ -43,7 +43,7 @@ return new class extends Migration
             $table->longText('exception');
             $table->timestamp('failed_at')->useCurrent();
 
-            $table->index(['connection', 'queue', 'failed_at']);
+            // (composite index removed: too long for older MySQL key limit on shared hosting; the table is unused here)
         });
     }
 

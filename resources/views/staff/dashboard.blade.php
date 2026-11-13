@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bark Park | Staff Dashboard</title>
+    <title>Bark Pack | Staff Dashboard</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -41,7 +41,7 @@
     <nav class="relative w-full z-50 bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="{{ route('staff.dashboard') }}" class="text-xl font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Park
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Pack
                 <span class="text-violet-700 font-normal text-xs ml-2 px-2 py-0.5 rounded-md bg-violet-100 border border-violet-200">STAFF PORTAL</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
@@ -89,19 +89,19 @@
         <div class="grid md:grid-cols-5 gap-4 mb-10 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             @php
                 $statCards = [
-                    ['icon' => 'sun',             'label' => "Today's Appts",  'value' => $stats['todays_appointments'],  'color' => 'text-yellow-600', 'bg' => 'bg-white',   'border' => 'border-gray-200'],
-                    ['icon' => 'paw',             'label' => 'Total Pets',     'value' => $stats['total_pets'],           'color' => 'text-violet-600', 'bg' => 'bg-white',   'border' => 'border-gray-200'],
-                    ['icon' => 'hourglass-split', 'label' => 'Pending',        'value' => $stats['pending_appointments'], 'color' => 'text-amber-600',  'bg' => 'bg-amber-50',    'border' => 'border-amber-200'],
-                    ['icon' => 'people',          'label' => 'Pet Owners',     'value' => $stats['total_owners'],         'color' => 'text-teal-600',   'bg' => 'bg-white',   'border' => 'border-gray-200'],
-                    ['icon' => 'person-slash',    'label' => 'Inactive (3mo)', 'value' => $stats['inactive_owners'],      'color' => 'text-red-600',    'bg' => 'bg-red-50',      'border' => 'border-red-200'],
+                    ['icon' => 'sun',             'label' => "Today's Appts",  'url' => route('staff.appointments', ['view' => 'day', 'date' => today()->toDateString()]), 'value' => $stats['todays_appointments'],  'color' => 'text-yellow-600', 'bg' => 'bg-white',   'border' => 'border-gray-200'],
+                    ['icon' => 'paw',             'label' => 'Total Pets',     'url' => route('staff.directory'), 'value' => $stats['total_pets'],           'color' => 'text-violet-600', 'bg' => 'bg-white',   'border' => 'border-gray-200'],
+                    ['icon' => 'hourglass-split', 'label' => 'Pending',        'url' => route('staff.appointments', ['status' => 'pending']), 'value' => $stats['pending_appointments'], 'color' => 'text-amber-600',  'bg' => 'bg-amber-50',    'border' => 'border-amber-200'],
+                    ['icon' => 'people',          'label' => 'Pet Owners',     'url' => route('staff.directory', ['filter' => 'all']), 'value' => $stats['total_owners'],         'color' => 'text-teal-600',   'bg' => 'bg-white',   'border' => 'border-gray-200'],
+                    ['icon' => 'person-slash',    'label' => 'Inactive (3mo)', 'url' => route('staff.directory', ['filter' => 'inactive']), 'value' => $stats['inactive_owners'],      'color' => 'text-red-600',    'bg' => 'bg-red-50',      'border' => 'border-red-200'],
                 ];
             @endphp
             @foreach($statCards as $card)
-                <div class="{{ $card['bg'] }} border {{ $card['border'] }} rounded-2xl p-5 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+                <a href="{{ $card['url'] }}" title="Open {{ $card['label'] }}" class="block {{ $card['bg'] }} border {{ $card['border'] }} rounded-2xl p-5 shadow-sm cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-300 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
                     <i class="bi bi-{{ $card['icon'] }} {{ $card['color'] }} text-xl mb-2 block"></i>
                     <h5 class="text-gray-500 text-xs mb-1">{{ $card['label'] }}</h5>
                     <p class="text-2xl font-bold text-gray-900">{{ $card['value'] }}</p>
-                </div>
+                </a>
             @endforeach
         </div>
 
@@ -237,7 +237,7 @@
     </main>
 
     <footer class="relative z-10 py-8 text-center border-t border-gray-200 text-gray-400 text-sm">
-        &copy; {{ date('Y') }} Bark Park | Staff System.
+        &copy; {{ date('Y') }} Bark Pack | Staff System.
     </footer>
 </body>
 </html>

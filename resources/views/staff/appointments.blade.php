@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bark Park | Appointments</title>
+    <title>Bark Pack | Appointments</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -172,7 +172,7 @@
     <nav class="relative z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-6 py-4 flex items-center justify-between">
             <a href="{{ route($prefix . '.dashboard') }}" class="text-xl font-bold tracking-tight flex items-center gap-2 text-gray-900">
-                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Park
+                <img src="{{ asset('paw-icon.png') }}" class="w-8 h-8" alt="Logo"> Bark Pack
                 <span class="{{ $isAdmin ? 'text-rose-700 bg-rose-100 border-rose-200' : 'text-violet-700 bg-violet-100 border-violet-200' }} font-normal text-xs ml-2 px-2 py-0.5 rounded-md border">{{ $isAdmin ? 'ADMIN PORTAL' : 'STAFF PORTAL' }}</span>
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
@@ -244,8 +244,8 @@
         <p class="text-gray-500 text-xs mb-1">Approved</p>
         <p class="text-2xl font-bold text-gray-900">{{ $stats['approved'] }}</p>
     </div>
-    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5">
-        <i class="bi bi-sun text-blue-600 text-xl mb-2 block"></i>
+    <div class="bg-fuchsia-50 border border-fuchsia-200 rounded-2xl p-5">
+        <i class="bi bi-sun text-fuchsia-600 text-xl mb-2 block"></i>
         <p class="text-gray-500 text-xs mb-1">Today's Schedule</p>
         <p class="text-2xl font-bold text-gray-900">{{ $stats['today'] }}</p>
     </div>
@@ -355,7 +355,7 @@
                     @foreach($week as $cell)
                         @php $n = $cell['appts']->count(); @endphp
                         <a href="{{ route($prefix . '.appointments', array_merge(request()->except(['date','view']), ['date' => $cell['date']->toDateString(), 'view' => 'day'])) }}"
-                           class="min-h-[110px] p-2 border-r border-gray-100 last:border-r-0 hover:bg-violet-50 transition-colors block {{ $cell['in_month'] ? '' : 'bg-gray-50/70 opacity-60' }}">
+                           class="min-h-[110px] p-2 border-r border-gray-100 last:border-r-0 hover:bg-violet-50 transition-colors block {{ !$cell['in_month'] ? 'bg-gray-50/70 opacity-60' : ($cell['is_weekend'] ? 'bg-gray-100/80' : '') }}">
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-sm font-semibold {{ $cell['is_today'] ? 'bg-gray-900 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-gray-700' }}">{{ $cell['date']->format('j') }}</span>
                                 @if($n > 0)<span class="text-[10px] font-bold text-violet-700 bg-violet-100 rounded-full px-2 py-0.5">{{ $n }}</span>@endif
@@ -366,6 +366,7 @@
                                 </div>
                             @endforeach
                             @if($n > 3)<div class="text-[10px] text-gray-400 px-1">+{{ $n - 3 }} more</div>@endif
+                            @if($cell['is_weekend'] && $cell['in_month'] && $n === 0)<div class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mt-2">Closed</div>@endif
                         </a>
                     @endforeach
                 </div>

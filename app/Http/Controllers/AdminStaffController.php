@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
 class AdminStaffController extends Controller
@@ -15,11 +16,23 @@ class AdminStaffController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'unique:users,email'],
+            'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
+
+        // On failure go straight back to the Staff tab with the form reopened,
+        // so the admin can see what to fix instead of a silent redirect.
+        if ($validator->fails()) {
+            return redirect()->route('admin.panel')
+                             ->withErrors($validator)
+                             ->withInput($request->except('password', 'password_confirmation'))
+                             ->with('panel_tab', 'staff')
+                             ->with('open_add_staff', true);
+        }
+
+        $validated = $validator->validated();
 
         User::create([
             'name'     => $validated['name'],

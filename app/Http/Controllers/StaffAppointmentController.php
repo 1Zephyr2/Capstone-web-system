@@ -121,13 +121,15 @@ class StaffAppointmentController extends Controller
             $gridStart = $monthStart->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
             $gridEnd   = $monthStart->copy()->endOfMonth()->endOfWeek(\Carbon\Carbon::SUNDAY);
             $weeks = [];
-            for ($d = $gridStart->copy(); $d->lte($gridEnd); $d->addDay()) {
+            $i = 0; // running cell index: 7 cells per row, Monday first
+            for ($d = $gridStart->copy(); $d->lte($gridEnd); $d->addDay(), $i++) {
                 $key = $d->toDateString();
-                $weeks[(int) floor($d->diffInDays($gridStart) / 7)][] = [
-                    'date'     => $d->copy(),
-                    'in_month' => $d->month === $monthStart->month,
-                    'is_today' => $d->isToday(),
-                    'appts'    => $byDate->get($key, collect()),
+                $weeks[intdiv($i, 7)][] = [
+                    'date'       => $d->copy(),
+                    'in_month'   => $d->month === $monthStart->month,
+                    'is_today'   => $d->isToday(),
+                    'is_weekend' => $d->isWeekend(),
+                    'appts'      => $byDate->get($key, collect()),
                 ];
             }
             return $weeks;

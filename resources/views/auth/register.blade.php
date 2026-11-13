@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bark Park | Register</title>
+    <title>Bark Pack | Register</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
     <nav class="w-full bg-white border-b border-gray-200 shadow-sm">
         <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <a href="/" class="text-lg font-bold flex items-center gap-2 text-emerald-700">
-                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Park
+                <img src="{{ asset('paw-icon.png') }}" class="w-7 h-7" alt="Logo"> Bark Pack
             </a>
             <a href="{{ route('login') }}" class="text-sm font-medium text-gray-500 hover:text-emerald-600 transition-colors">Login</a>
         </div>
@@ -36,7 +36,7 @@
     <main class="flex-grow flex items-center justify-center py-12 px-6">
         <div class="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
             <h2 class="text-2xl font-bold text-gray-900 mb-1 text-center">Create an account</h2>
-            <p class="text-gray-400 text-sm text-center mb-6">Join Bark Park to book grooming for your pets.</p>
+            <p class="text-gray-400 text-sm text-center mb-6">Join Bark Pack to book grooming for your pets.</p>
 
             @if($errors->any())
                 <div class="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm space-y-1">
@@ -58,8 +58,9 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">Mobile Number</label>
-                    <input type="tel" name="phone" value="{{ old('phone') }}" required placeholder="e.g. 0917 123 4567"
+                    <input type="tel" name="phone" value="{{ old('phone') }}" required inputmode="numeric" maxlength="11" minlength="11" pattern="[0-9]{11}" title="Enter exactly 11 digits, e.g. 09282623513" oninput="this.value=this.value.replace(/\D/g,'').slice(0,11)" placeholder="e.g. 09282623513"
                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition-all">
+                    <p class="text-gray-400 text-xs mt-1">11 digits, numbers only (e.g. 09282623513).</p>
                     @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
@@ -80,7 +81,7 @@
     </main>
 
     <footer class="py-8 text-center border-t border-gray-100">
-        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} Bark Park | Appointment System</p>
+        <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} Bark Pack | Appointment System</p>
     </footer>
 
 </body>

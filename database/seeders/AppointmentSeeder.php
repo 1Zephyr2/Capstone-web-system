@@ -31,12 +31,12 @@ class AppointmentSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         $owners = [
-            ['name' => 'Shamaimah Reyes',   'phone' => '0917 111 2222', 'pets' => [['Max', 'dog', 'Golden Retriever', 3], ['Coco', 'cat', 'Siamese', 2]]],
-            ['name' => 'Medge Villanueva',  'phone' => '0917 222 3333', 'pets' => [['Luna', 'cat', 'Persian Cat', 4]]],
-            ['name' => 'Carlos Dizon',      'phone' => '0917 333 4444', 'pets' => [['Bruno', 'dog', 'Shih Tzu', 5], ['Milo', 'dog', 'Chihuahua', 1]]],
-            ['name' => 'Angela Cruz',       'phone' => '0917 444 5555', 'pets' => [['Bella', 'dog', 'Beagle', 2]]],
-            ['name' => 'Ramon Santiago',    'phone' => '0917 555 6666', 'pets' => [['Ziggy', 'dog', 'Pomeranian', 3], ['Whiskers', 'cat', 'Maine Coon', 6]]],
-            ['name' => 'Kendra Magno',      'phone' => '0917 666 7777', 'pets' => [['Ara', 'cat', 'Persian', 1]]],
+            ['name' => 'Shamaimah Reyes',   'phone' => '09171112222', 'pets' => [['Max', 'dog', 'Golden Retriever', 3], ['Coco', 'cat', 'Siamese', 2]]],
+            ['name' => 'Medge Villanueva',  'phone' => '09172223333', 'pets' => [['Luna', 'cat', 'Persian Cat', 4]]],
+            ['name' => 'Carlos Dizon',      'phone' => '09173334444', 'pets' => [['Bruno', 'dog', 'Shih Tzu', 5], ['Milo', 'dog', 'Chihuahua', 1]]],
+            ['name' => 'Angela Cruz',       'phone' => '09174445555', 'pets' => [['Bella', 'dog', 'Beagle', 2]]],
+            ['name' => 'Ramon Santiago',    'phone' => '09175556666', 'pets' => [['Ziggy', 'dog', 'Pomeranian', 3], ['Whiskers', 'cat', 'Maine Coon', 6]]],
+            ['name' => 'Kendra Magno',      'phone' => '09176667777', 'pets' => [['Ara', 'cat', 'Persian', 1]]],
         ];
 
         $pets = collect();

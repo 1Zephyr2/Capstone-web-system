@@ -29,7 +29,7 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'appointment_date' => ['required', 'date', 'after:today', function ($attribute, $value, $fail) {
+            'appointment_date' => ['required', 'date', 'after_or_equal:today', function ($attribute, $value, $fail) {
                 $day = \Carbon\Carbon::parse($value)->dayOfWeek;
                 if (in_array($day, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) {
                     $fail('We are closed on weekends. Please choose a weekday.');
@@ -71,6 +71,15 @@ class AppointmentController extends Controller
                 'datetime'   => $validated['appointment_date'] . ' ' . $time . ':00',
                 'service_id' => $serviceId,
             ];
+        }
+
+        // Today is bookable, but not a time that has already passed.
+        foreach ($bookings as $b) {
+            if (Carbon::parse($b['datetime'])->lte(now())) {
+                return back()
+                    ->withErrors(['appointment_time' => 'That time has already passed today. Please choose a later time or another date.'])
+                    ->withInput();
+            }
         }
 
         // Check slot capacity, accounting for how many pets in THIS submission want the same slot
@@ -185,7 +194,7 @@ class AppointmentController extends Controller
         abort_if(!$appointment->isPending() && !$appointment->isApproved(), 403);
 
         $validated = $request->validate([
-            'appointment_date' => ['required', 'date', 'after:today', function ($attribute, $value, $fail) {
+            'appointment_date' => ['required', 'date', 'after_or_equal:today', function ($attribute, $value, $fail) {
                 $day = \Carbon\Carbon::parse($value)->dayOfWeek;
                 if (in_array($day, [\Carbon\Carbon::SATURDAY, \Carbon\Carbon::SUNDAY])) {
                     $fail('We are closed on weekends. Please choose a weekday.');
@@ -198,6 +207,12 @@ class AppointmentController extends Controller
 
         $wasApproved = $appointment->isApproved();
         $appointmentDatetime = $validated['appointment_date'] . ' ' . $validated['appointment_time'] . ':00';
+
+        if (Carbon::parse($appointmentDatetime)->lte(now())) {
+            return back()
+                ->withErrors(['appointment_time' => 'That time has already passed today. Please choose a later time or another date.'])
+                ->withInput();
+        }
 
         if (!Appointment::slotHasCapacity($appointmentDatetime, $appointment->id)) {
             return back()
@@ -252,7 +267,15 @@ class AppointmentController extends Controller
         $totalSlots = count(Appointment::CLINIC_HOURS);
         $isPastDate = Carbon::parse($request->date)->startOfDay()->lt(today());
 
+        // Times on this date that are already behind us (all of them for a past date)
+        $past = collect(array_keys(Appointment::CLINIC_HOURS))
+            ->filter(fn($t) => Carbon::parse($request->date . ' ' . $t . ':00')->lte(now()))
+            ->values();
+        $isToday = Carbon::parse($request->date)->isToday();
+
         return response()->json([
+            'past'          => $past,
+            'no_slots_left' => $isToday && $past->count() >= $totalSlots,
             'full'         => $full,
             'counts'       => $counts,
             'max_per_slot' => Appointment::MAX_PER_SLOT,
