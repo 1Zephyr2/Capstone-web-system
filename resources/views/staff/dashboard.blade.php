@@ -133,7 +133,7 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 shrink-0">
-                                <form method="POST" action="{{ route('staff.appointments.approve', $appt) }}">
+                                <form method="POST" action="{{ route('staff.appointments.approve', $appt) }}" class="dashboard-approval-form" data-pet="{{ $appt->pet->name }}" data-owner="{{ $appt->user->name }}" data-service="{{ $appt->service_label }}" data-datetime="{{ $appt->appointment_date->format('M d, Y g:i A') }}">
                                     @csrf @method('PATCH')
                                     <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all hover:scale-105">
                                         <i class="bi bi-check"></i> Approve
@@ -235,6 +235,7 @@
             </div>
         </div>
     </main>
+    @include('components.dashboard-approval-confirmation')
 
     <footer class="relative z-10 py-8 text-center border-t border-gray-200 text-gray-400 text-sm">
         &copy; {{ date('Y') }} Bark Pack | Staff System.
