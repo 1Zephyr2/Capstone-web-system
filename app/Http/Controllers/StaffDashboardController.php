@@ -37,6 +37,7 @@ class StaffDashboardController extends Controller
 
         $pendingAppointments = Appointment::with(['user', 'pet'])
             ->pending()
+            ->orderBy('appointment_date')
             ->orderBy('created_at')
             ->take(5)
             ->get();
