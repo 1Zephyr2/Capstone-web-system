@@ -548,6 +548,7 @@
                     </div>
                     <p class="text-sm font-medium text-gray-900">{{ $appt->user->name }}</p>
                     <p class="text-xs text-gray-500">{{ $appt->service_label }} &bull; {{ $appt->pet->name }}</p>
+                    <p class="text-xs text-gray-500 mt-1"><span class="font-medium">Assigned Staff:</span> {{ $appt->assignedStaff?->name ?? 'Not assigned' }}</p>
                 </div>
             @empty
                 <div class="p-4 flex items-center justify-between">
@@ -581,6 +582,7 @@
                 <th class="px-6 py-4">Owner</th>
                 <th class="px-6 py-4">Package / Service</th>
                 <th class="px-6 py-4">Notes</th>
+                <th class="px-6 py-4">Assigned Staff</th>
                 <th class="px-6 py-4">Status</th>
                 <th class="px-6 py-4">Actions</th>
             </tr>
@@ -622,6 +624,7 @@
                         <td class="px-6 py-5 font-medium">{{ $appt->user->name }}</td>
                         <td class="px-6 py-5">{{ $appt->service_label }} <span class="text-gray-400 text-xs">({{ $appt->pet->name }})</span></td>
                         <td class="px-6 py-5 text-gray-500 text-sm truncate max-w-xs">{{ $appt->notes ?? '—' }}</td>
+                        <td class="px-6 py-5 text-sm">{{ $appt->assignedStaff?->name ?? 'Not assigned' }}</td>
                         <td class="px-6 py-5">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {{ $appt->status_badge_class }}">{{ ucfirst($appt->status) }}</span>
                         </td>
@@ -632,7 +635,7 @@
                 @empty
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
-                        <td colspan="4" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
+                        <td colspan="5" class="px-6 py-5 text-center text-gray-400 italic">— Available —</td>
                         <td class="px-6 py-5">
                             <button type="button"
                                     onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"
@@ -644,7 +647,7 @@
                 @endforelse
                 @if($slot['appointments']->isNotEmpty() && !$slot['full'])
                     <tr class="bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-3 text-xs text-gray-400" colspan="4">{{ $slot['appointments']->count() }}/{{ \App\Models\Appointment::MAX_PER_SLOT }} slots used for {{ $slot['label'] }}</td>
+                    <td class="px-6 py-3 text-xs text-gray-400" colspan="5">{{ $slot['appointments']->count() }}/{{ \App\Models\Appointment::MAX_PER_SLOT }} slots used for {{ $slot['label'] }}</td>
                         <td class="px-6 py-3">
                             <button type="button"
                                     onclick="openBookModal('{{ $slot['datetime']->toDateTimeString() }}', '{{ $slot['label'] }}')"

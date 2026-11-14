@@ -39,7 +39,7 @@ class AppointmentController extends Controller
             'appointment_time' => ['required_if:time_mode,same', 'nullable', 'in:' . implode(',', array_keys(Appointment::CLINIC_HOURS))],
             'pets'             => ['required', 'array', 'min:1'],
             'pets.*'           => ['required', 'exists:pets,id'],
-            'services'         => ['required', 'array'],
+            'services'         => ['nullable', 'array'],
             'services.*'       => ['nullable', 'exists:services,id'],
             'service_extras' => ['nullable', 'array'],
             'service_extras.*' => ['nullable', 'array'],
@@ -64,15 +64,29 @@ class AppointmentController extends Controller
                 return back()->withErrors(['times' => 'Please choose a time for each pet.'])->withInput();
             }
 
-            $serviceId = $validated['services'][$petId] ?? null;
-            if (!$serviceId) {
-                return back()->withErrors(['services' => 'Please choose a service for each pet.'])->withInput();
+            $extraIds = collect($validated['service_extras'][$petId] ?? [])->unique()->values();
+            $serviceId = ($validated['services'] ?? [])[$petId] ?? null;
+
+            if ($serviceId) {
+                $validPackage = Service::active()->whereKey($serviceId)->where('category', 'Grooming Packages')->exists();
+                if (!$validPackage) {
+                    return back()->withErrors(['services' => 'Please select a valid grooming package.'])->withInput();
+                }
+            } elseif ($extraIds->isNotEmpty()) {
+                // A La Carte can be booked on its own; promote the first selection
+                // to the appointment's primary service and keep the rest as extras.
+                $serviceId = $extraIds->shift();
+                $validPrimary = Service::active()->whereKey($serviceId)->where('category', 'Ala Carte')->exists();
+                if (!$validPrimary) {
+                    return back()->withErrors(['service_extras' => 'Choose a Grooming Package or at least one A La Carte service.'])->withInput();
+                }
+            } else {
+                return back()->withErrors(['services' => 'Please choose a grooming package or at least one A La Carte service for each pet.'])->withInput();
             }
 
-            $extraIds = collect($validated['service_extras'][$petId] ?? [])->unique()->values();
-            $validExtras = Service::active()->whereIn('id', $extraIds)->where('category', 'Ala Carte')->count();
+            $validExtras = Service::active()->whereIn('id', $extraIds)->whereIn('category', ['Ala Carte', 'Add-ons'])->count();
             if ($validExtras !== $extraIds->count()) {
-                return back()->withErrors(['service_extras' => 'Only active A La Carte services can be selected as add-ons.'])->withInput();
+                return back()->withErrors(['service_extras' => 'Only active A La Carte services and Add-ons can be selected.'])->withInput();
             }
 
             $bookings[] = [

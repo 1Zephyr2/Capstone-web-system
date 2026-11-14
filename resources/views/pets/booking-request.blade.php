@@ -127,36 +127,17 @@
             renderSchedulingSection();
         }
 
-        function toggleServicePicker(petId) {
-            document.querySelectorAll('[id^="svc-dropdown-"]').forEach(el => {
-                if (el.id !== 'svc-dropdown-' + petId) el.classList.add('hidden');
-            });
-            document.getElementById('svc-dropdown-' + petId).classList.toggle('hidden');
-        }
-
-        function toggleServiceCategoryPicker(catId) {
-            document.getElementById('cat-panel-' + catId).classList.toggle('hidden');
-            document.getElementById('cat-chevron-' + catId).classList.toggle('rotate-180');
-        }
-
-        function selectService(petId, svcId, name, priceStr) {
-            const select = document.querySelector('select[name="services[' + petId + ']"]');
-            select.value = svcId;
-            select.dispatchEvent(new Event('change'));
-            const label = priceStr ? (name + ' — ₱' + priceStr) : name;
-            const labelEl = document.getElementById('svc-label-' + petId);
-            labelEl.textContent = label;
-            labelEl.classList.remove('text-gray-400');
-            labelEl.classList.add('text-gray-900', 'font-medium');
-            const dropdown = document.getElementById('svc-dropdown-' + petId);
-            dropdown.classList.add('hidden');
-            dropdown.closest('.pet-service-picker').querySelector('button').classList.remove('border-red-400');
-        }
-
-        document.addEventListener('click', function (e) {
-            document.querySelectorAll('[id^="svc-dropdown-"]').forEach(el => {
-                const wrapper = el.closest('.pet-service-picker');
-                if (wrapper && !wrapper.contains(e.target)) el.classList.add('hidden');
+        document.addEventListener('change', function (event) {
+            const row = event.target.closest('.pet-service-row');
+            if (!row || !event.target.matches('.service-primary, .service-extra')) return;
+            const counts = {
+                package: row.querySelectorAll('.service-primary:checked').length,
+                'ala-carte': row.querySelectorAll('.service-extra-ala-carte:checked').length,
+                'add-ons': row.querySelectorAll('.service-extra-addon:checked').length,
+            };
+            Object.entries(counts).forEach(([category, count]) => {
+                const label = row.querySelector('[data-selection-count="' + category + '"]');
+                if (label) label.textContent = count + ' selected';
             });
         });
 
@@ -170,12 +151,15 @@
                 document.querySelectorAll('.pet-service-row').forEach(row => {
                     const cb = row.querySelector('.pet-checkbox');
                     if (!cb.checked) return;
-                const select = row.querySelector('.pet-service-select');
-                if (!select.value) {
-                    missingPets.push(cb.dataset.name || 'a selected pet');
-                    row.querySelector('.pet-service-picker button').classList.add('border-red-400');
-                }
-            });
+                    const hasGroomingPackage = !!row.querySelector('.service-primary:checked');
+                    const hasAdditionalService = !!row.querySelector('.service-extra:checked');
+                    if (!hasGroomingPackage && !hasAdditionalService) {
+                        missingPets.push(cb.dataset.name || 'a selected pet');
+                        row.querySelector('.pet-service-picker').classList.add('border-red-400');
+                    } else {
+                        row.querySelector('.pet-service-picker').classList.remove('border-red-400');
+                    }
+                });
 
             if (missingPets.length > 0) {
                 e.preventDefault();
@@ -353,55 +337,35 @@
                                             <a href="{{ route('pets.edit', $pet->id) }}" class="underline">add one</a> to see accurate prices.
                                         </p>
                                     @endif
-                                    <div class="pet-service-picker hidden mt-2 relative" data-pet="{{ $pet->id }}">
-                                        <select name="services[{{ $pet->id }}]" class="pet-service-select hidden">
-                                            <option value="">Select a service</option>
-                                            @foreach($services as $category => $items)
-                                                <optgroup label="{{ $category }}">
-                                                    @foreach($items as $svc)
-                                                        @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
-                                                        <option value="{{ $svc->id }}">{{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}</option>
-                                                    @endforeach
-                                                </optgroup>
-                                            @endforeach
-                                        </select>
-                                        <button type="button" onclick="toggleServicePicker({{ $pet->id }})"
-                                                class="w-full flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-left hover:border-emerald-400 transition-all">
-                                            <span id="svc-label-{{ $pet->id }}" class="text-gray-400 truncate">Select a service</span>
-                                            <i class="bi bi-chevron-down text-gray-400 text-xs shrink-0"></i>
-                                        </button>
-                                        <div id="svc-dropdown-{{ $pet->id }}" class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-y-auto p-2">
-                                            @foreach($services as $category => $items)
-                                                @php $catId = $pet->id . '-' . \Illuminate\Support\Str::slug($category); @endphp
-                                                <div class="mb-1">
-                                                    <button type="button" onclick="toggleServiceCategoryPicker('{{ $catId }}')"
-                                                            class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide text-gray-500 hover:bg-gray-50">
-                                                        {{ $category }}
-                                                        <i id="cat-chevron-{{ $catId }}" class="bi bi-chevron-down text-[10px] transition-transform"></i>
-                                                    </button>
-                                                    <div id="cat-panel-{{ $catId }}" class="hidden pl-2">
-                                                        @foreach($items as $svc)
-                                                            @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
-                                                            <button type="button"
-                                                                    onclick="selectService({{ $pet->id }}, {{ $svc->id }}, {{ Illuminate\Support\Js::from($svc->name) }}, {{ Illuminate\Support\Js::from($price !== null ? number_format($price, 2) : null) }})"
-                                                                    class="w-full text-left px-2 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-all">
-                                                                {{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}
-                                                            </button>
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                        @if(isset($services['Ala Carte']))
-                                        <fieldset class="mt-3 border-t border-gray-100 pt-3">
-                                            <legend class="text-xs font-semibold text-gray-600">Additional A La Carte services</legend>
-                                            <div class="grid sm:grid-cols-2 gap-1 mt-1">
-                                                @foreach($services['Ala Carte'] as $extra)
-                                                    <label class="flex gap-2 items-center text-xs text-gray-600"><input type="checkbox" name="service_extras[{{ $pet->id }}][]" value="{{ $extra->id }}" class="rounded text-emerald-600">{{ $extra->name }}</label>
-                                                @endforeach
+                                    <div class="pet-service-picker hidden mt-3 space-y-2 rounded-xl border border-gray-200 p-2" data-pet="{{ $pet->id }}">
+                                        <details class="service-category-dropdown rounded-lg border border-gray-200 bg-gray-50">
+                                            <summary class="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-gray-800 flex items-center justify-between">Grooming Packages <span class="ml-auto mr-3 text-xs font-normal text-gray-400" data-selection-count="package">0 selected</span><i class="bi bi-chevron-down text-xs text-gray-500"></i></summary>
+                                            <div class="border-t border-gray-200 bg-white px-3 py-2 space-y-2">
+                                                @forelse($services['Grooming Packages'] ?? collect() as $svc)
+                                                    @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
+                                                    <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="services[{{ $pet->id }}]" value="{{ $svc->id }}" class="service-primary text-emerald-600"> <span>{{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}</span></label>
+                                                @empty <p class="text-xs text-gray-400">No grooming packages available.</p> @endforelse
                                             </div>
-                                        </fieldset>
-                                        @endif
+                                        </details>
+                                        <details class="service-category-dropdown rounded-lg border border-gray-200 bg-gray-50">
+                                            <summary class="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-gray-800 flex items-center justify-between">Ala Carte <span class="ml-auto mr-3 text-xs font-normal text-gray-400" data-selection-count="ala-carte">0 selected</span><i class="bi bi-chevron-down text-xs text-gray-500"></i></summary>
+                                            <div class="border-t border-gray-200 bg-white px-3 py-2 space-y-2 max-h-48 overflow-y-auto">
+                                                @forelse($services['Ala Carte'] ?? collect() as $svc)
+                                                    @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
+                                                    <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="service_extras[{{ $pet->id }}][]" value="{{ $svc->id }}" class="service-extra service-extra-ala-carte rounded text-emerald-600"> <span>{{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}</span></label>
+                                                @empty <p class="text-xs text-gray-400">No A La Carte services available.</p> @endforelse
+                                            </div>
+                                        </details>
+                                        <details class="service-category-dropdown rounded-lg border border-gray-200 bg-gray-50">
+                                            <summary class="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-gray-800 flex items-center justify-between">Add-ons <span class="ml-auto mr-3 text-xs font-normal text-gray-400" data-selection-count="add-ons">0 selected</span><i class="bi bi-chevron-down text-xs text-gray-500"></i></summary>
+                                            <div class="border-t border-gray-200 bg-white px-3 py-2 space-y-2 max-h-48 overflow-y-auto">
+                                                @forelse($services['Add-ons'] ?? collect() as $svc)
+                                                    @php $price = $pet->size ? $svc->priceForSize($pet->size) : null; @endphp
+                                                    <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="service_extras[{{ $pet->id }}][]" value="{{ $svc->id }}" class="service-extra service-extra-addon rounded text-emerald-600"> <span>{{ $svc->name }}{{ $price !== null ? ' — ₱' . number_format($price, 2) : '' }}</span></label>
+                                                @empty <p class="text-xs text-gray-400">No add-ons available.</p> @endforelse
+                                            </div>
+                                        </details>
+                                        <p class="text-xs text-gray-400">Choose one grooming package, or select one or more A La Carte services. Add-ons are optional and can be selected together.</p>
                                     </div>
                                 </div>
                             @endforeach

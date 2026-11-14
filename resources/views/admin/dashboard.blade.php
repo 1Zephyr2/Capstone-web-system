@@ -9,12 +9,12 @@
         'total_appointments'    => App\Models\Appointment::count(),
     ];
 
-    $recentAppointments = App\Models\Appointment::with(['user', 'pet'])
+    $recentAppointments = App\Models\Appointment::with(['user', 'pet', 'assignedStaff'])
         ->orderByDesc('created_at')
         ->take(5)
         ->get();
 
-    $pendingAppointments = App\Models\Appointment::with(['user', 'pet'])
+    $pendingAppointments = App\Models\Appointment::with(['user', 'pet', 'assignedStaff'])
         ->where('status', 'pending')
         ->orderBy('appointment_date')
         ->take(5)
@@ -182,6 +182,7 @@
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900">{{ $appt->pet->name }} — {{ $appt->service_label }}</p>
                                     <p class="text-xs text-gray-500">{{ $appt->user->name }} &bull; {{ $appt->appointment_date->format('M d, Y g:i A') }}</p>
+                                    <p class="text-xs text-gray-500 mt-1"><span class="font-medium">Assigned Staff:</span> {{ $appt->assignedStaff?->name ?? 'Not assigned yet' }}</p>
                                 </div>
                             </div>
                             <div class="flex gap-2 shrink-0">
@@ -251,6 +252,7 @@
                                 <div>
                                     <p class="text-xs text-gray-900 font-medium">{{ $appt->pet->name }} — {{ $appt->service_label }}</p>
                                     <p class="text-xs text-gray-400">{{ $appt->appointment_date->format('M d, g:i A') }}</p>
+                                    <p class="text-xs text-gray-500 mt-1"><span class="font-medium">Assigned Staff:</span> {{ $appt->assignedStaff?->name ?? 'Not assigned yet' }}</p>
                                 </div>
                             </div>
                         @endforeach

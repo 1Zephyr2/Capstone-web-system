@@ -19,7 +19,7 @@ Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
 
     Route::get('/dashboard', function () {
         $pets = \App\Models\Pet::where('user_id', auth()->id())->get();
-        $appointments = \App\Models\Appointment::with(['pet', 'service'])
+        $appointments = \App\Models\Appointment::with(['pet', 'service', 'assignedStaff'])
             ->where('user_id', auth()->id())
             ->whereIn('status', ['pending', 'approved'])
             ->orderBy('appointment_date')

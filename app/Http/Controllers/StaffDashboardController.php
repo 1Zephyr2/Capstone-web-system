@@ -29,7 +29,7 @@ class StaffDashboardController extends Controller
             'inactive_owners'       => $inactiveOwners,
         ];
 
-        $upcomingAppointments = Appointment::with(['user', 'pet'])
+        $upcomingAppointments = Appointment::with(['user', 'pet', 'assignedStaff'])
             ->upcoming()
             ->orderBy('appointment_date')
             ->take(5)

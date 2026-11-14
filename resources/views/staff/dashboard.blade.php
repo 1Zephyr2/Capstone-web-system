@@ -170,6 +170,7 @@
                                     <p class="text-sm font-semibold text-gray-900">{{ $appt->pet->name }}</p>
                                     <p class="text-xs text-gray-500">{{ $appt->service_label }}</p>
                                     <p class="text-xs text-emerald-600">{{ $appt->appointment_date->format('M d — g:i A') }}</p>
+                                    <p class="text-xs text-gray-500 mt-1"><span class="font-medium">Assigned Staff:</span> {{ $appt->assignedStaff?->name ?? 'Not assigned yet' }}</p>
                                 </div>
                             </div>
                         @empty

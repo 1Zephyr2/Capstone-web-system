@@ -56,7 +56,7 @@ class StaffAppointmentController extends Controller
         $weekStart = $date->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
         $weekEnd   = $weekStart->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
 
-        $weekAppointments = Appointment::with(['user', 'pet'])
+        $weekAppointments = Appointment::with(['user', 'pet', 'assignedStaff'])
             ->whereBetween('appointment_date', [$weekStart, $weekEnd->copy()->endOfDay()])
             ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
             ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
@@ -85,7 +85,7 @@ class StaffAppointmentController extends Controller
         });
     }
 
-    $dayAppointments = Appointment::with(['user', 'pet'])
+    $dayAppointments = Appointment::with(['user', 'pet', 'assignedStaff'])
         ->whereDate('appointment_date', $date)
         ->whereNotIn('status', [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED])
         ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
@@ -130,7 +130,7 @@ class StaffAppointmentController extends Controller
         $rangeEnd   = $viewMode === 'month' ? $date->copy()->endOfMonth()   : $date->copy()->endOfYear();
 
         // With a status picked (e.g. Pending) show only that status; otherwise hide rejected/cancelled.
-        $byDate = Appointment::with(['user', 'pet'])
+        $byDate = Appointment::with(['user', 'pet', 'assignedStaff'])
             ->whereBetween('appointment_date', [$rangeStart, $rangeEnd])
             ->when(
                 $request->filled('status'),
