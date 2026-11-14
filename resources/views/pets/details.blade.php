@@ -126,7 +126,7 @@
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
                 <a href="{{ route($prefix.'.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
-                <a href="{{ route($prefix.'.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
+                <a href="{{ route($prefix.'.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pet Owner Directory</a>
                 <a href="{{ route($prefix.'.appointments') }}" class="hover:text-gray-900 transition-all hover:scale-105">Appointments</a>
                 <a href="{{ route($prefix.'.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
             </div>
@@ -142,7 +142,7 @@
     </nav>
     <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
             <a href="{{ route($prefix.'.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
-            <a href="{{ route($prefix.'.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pets</a>
+            <a href="{{ route($prefix.'.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pet Owner Directory</a>
             <a href="{{ route($prefix.'.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-calendar-event"></i> Appointments</a>
             <a href="{{ route($prefix.'.insights') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>
             <form action="{{ route($isAdmin ? 'admin.logout' : 'staff.logout') }}" method="POST" >
@@ -189,7 +189,7 @@
                 <div class="flex gap-1 {{ $cardBg }} border {{ $cardBorder }} rounded-xl shadow-sm p-1">
                     <button id="btn-appointments" onclick="switchTab('appointments')"
                             class="flex-1 py-2 px-4 rounded-lg text-sm font-semibold border-b-2 transition-all">
-                        <i class="bi bi-calendar-check mr-1"></i> Appointments
+                        <i class="bi bi-scissors mr-1"></i> Service Details
                     </button>
                     <button id="btn-records" onclick="switchTab('records')"
                             class="flex-1 py-2 px-4 rounded-lg text-sm font-semibold border-b-2 transition-all">
@@ -208,8 +208,9 @@
                             @foreach($activeAppts as $appt)
                                 <div class="flex items-center justify-between p-3 border-l-2 border-amber-500/50 bg-amber-50 rounded-r-lg">
                                     <div>
-                                        <p class="font-medium text-gray-900 text-sm">{{ $appt->service_label }}</p>
+                                        <p class="font-medium text-gray-900 text-sm">{{ $appt->service_label }}@foreach($appt->service_extras ?? [] as $extraId)@php($extraService = \App\Models\Service::find($extraId))@if($extraService) + {{ $extraService->name }}@endif @endforeach</p>
                                         <p class="text-xs text-gray-500">{{ $appt->appointment_date->format('M d, Y — g:i A') }}</p>
+                                        @if($appt->assignedStaff)<p class="text-xs text-emerald-700">Staff: {{ $appt->assignedStaff->name }}</p>@endif
                                     </div>
                                     <span class="px-2 py-0.5 rounded-full text-xs font-semibold {{ $appt->status_badge_class }}">{{ ucfirst($appt->status) }}</span>
                                 </div>
@@ -222,7 +223,7 @@
                     <div class="{{ $cardBg }} border {{ $cardBorder }} rounded-2xl shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b {{ $cardBorder }} flex items-center justify-between">
                             <h3 class="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                <i class="bi bi-clock-history {{ $accentText }}"></i> Appointment History
+                                <i class="bi bi-clock-history {{ $accentText }}"></i> Service Details & History
                             </h3>
                             <span class="text-xs text-gray-400">{{ $completedAppointments->count() }} completed</span>
                         </div>
@@ -441,7 +442,7 @@
     <div id="visit-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-gray-900/40 backdrop-blur-sm transition-opacity duration-300 ease-out"
          onclick="if(event.target===this) closeModal('visit-modal','visit-modal-content')">
         <div id="visit-modal-content" class="bg-white border-gray-200 border rounded-2xl p-8 w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 ease-out">
-            <h2 class="text-xl font-bold text-gray-900 mb-5">Appointment Details</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-5">Service Details</h2>
             <div class="space-y-3">
                 <div><label class="block text-xs font-semibold uppercase tracking-wider {{ $accentText }} mb-1">Service</label>
                     <p id="visit-service" class="text-gray-900 p-3 rounded-lg border bg-gray-50 border-gray-200"></p></div>

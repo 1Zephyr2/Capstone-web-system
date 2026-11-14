@@ -353,8 +353,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Age <span class="text-red-500">*</span></label>
-                        <input type="number" name="age" required min="0" max="100" value="{{ old('age') }}"
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Birthday <span class="text-red-500">*</span></label>
+                        <input type="date" name="birthday" required max="{{ now()->toDateString() }}" value="{{ old('birthday') }}"
                                class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all">
                     </div>
                 </div>

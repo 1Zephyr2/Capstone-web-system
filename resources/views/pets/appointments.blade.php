@@ -151,10 +151,11 @@
                                         <span class="px-2 py-0.5 rounded-full text-xs font-semibold {{ $badgeClass }}">{{ ucfirst($appt->status) }}</span>
                                     </div>
                                     <p class="text-gray-500 text-sm">
-                                        <i class="bi bi-scissors mr-1 text-emerald-500"></i>{{ $appt->service_label }}
+                                        <i class="bi bi-scissors mr-1 text-emerald-500"></i>{{ $appt->service_label }}@foreach(\App\Models\Service::whereIn('id', $appt->service_extras ?? [])->pluck('name') as $extraName) + {{ $extraName }}@endforeach
                                         &bull;
                                         <i class="bi bi-clock mr-1 text-emerald-500"></i>{{ $appt->appointment_date->format('M d, Y — g:i A') }}
                                     </p>
+                                    @if($appt->assignedStaff)<p class="text-emerald-700 text-xs mt-1"><i class="bi bi-person-check mr-1"></i>Assigned staff: {{ $appt->assignedStaff->name }}</p>@endif
                                     @if($appt->notes)
                                         <p class="text-gray-400 text-xs mt-1"><i class="bi bi-chat-left-text mr-1"></i>{{ $appt->notes }}</p>
                                     @endif

@@ -49,11 +49,14 @@ class Appointment extends Model
         'pickup_note',
         'booking_group_id',
         'rejection_reason',
+        'service_extras',
+        'assigned_staff_id',
     ];
 
     protected $casts = [
         'appointment_date'  => 'datetime',
         'different_pickup'  => 'boolean',
+        'service_extras' => 'array',
     ];
 
     // ── Relationships ──────────────────────────────────────────────
@@ -72,6 +75,11 @@ class Appointment extends Model
 {
     return $this->belongsTo(Service::class);
 }
+
+    public function assignedStaff(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_staff_id');
+    }
 
     // ── Helpers ────────────────────────────────────────────────────
 

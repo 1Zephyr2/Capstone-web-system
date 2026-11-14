@@ -22,7 +22,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bark Pack | Pet Directory</title>
+    <title>Bark Pack | Pet Owner Directory</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('furcare.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -52,17 +52,31 @@
             }, { threshold: 0.1 });
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
 
-            // Live search
-            document.getElementById('search').addEventListener('input', function () {
-                const q = this.value.toLowerCase();
-                document.querySelectorAll('.owner-card').forEach(card => {
-                    const name = card.dataset.name.toLowerCase();
-                    const pets = card.dataset.pets.toLowerCase();
-                    card.style.display = (name.includes(q) || pets.includes(q)) ? '' : 'none';
+            let searchQuery = '';
+            let statusFilter = 'all';
+            let petTypeFilter = '';
+            const ownerCards = Array.from(document.querySelectorAll('.owner-card'));
+            const applyFilters = () => {
+                let visibleCount = 0;
+                ownerCards.forEach(card => {
+                    const nameMatches = card.dataset.name.toLowerCase().includes(searchQuery);
+                    const statusMatches = statusFilter === 'all' || card.dataset.inactive === (statusFilter === 'inactive' ? 'true' : 'false');
+                    const ownerTypes = (card.dataset.types || '').split(',');
+                    const typeMatches = !petTypeFilter || ownerTypes.includes(petTypeFilter);
+                    card.style.display = nameMatches && statusMatches && typeMatches ? '' : 'none';
+                    if (nameMatches && statusMatches && typeMatches) visibleCount++;
                 });
-            });
+                document.getElementById('no-owner-results').classList.toggle('hidden', visibleCount > 0);
+            };
 
-            // Filter tabs
+            document.getElementById('search').addEventListener('input', function () {
+                searchQuery = this.value.trim().toLowerCase();
+                applyFilters();
+            });
+            document.getElementById('pet-type-filter').addEventListener('change', function () {
+                petTypeFilter = this.value;
+                applyFilters();
+            });
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.filter-btn').forEach(b => {
@@ -71,17 +85,8 @@
                     });
                     this.classList.add('bg-violet-600', 'text-white');
                     this.classList.remove('bg-gray-100', 'text-gray-600');
-
-                    const filter = this.dataset.filter;
-                    document.querySelectorAll('.owner-card').forEach(card => {
-                        if (filter === 'all') {
-                            card.style.display = '';
-                        } else if (filter === 'inactive') {
-                            card.style.display = card.dataset.inactive === 'true' ? '' : 'none';
-                        } else if (filter === 'active') {
-                            card.style.display = card.dataset.inactive === 'false' ? '' : 'none';
-                        }
-                    });
+                    statusFilter = this.dataset.filter;
+                    applyFilters();
                 });
             });
 
@@ -112,7 +117,7 @@
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
                 <a href="{{ route('staff.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
-                <a href="{{ route('staff.directory') }}"    class="text-gray-900 font-semibold transition-all hover:scale-105">Pets</a>
+                <a href="{{ route('staff.directory') }}"    class="text-gray-900 font-semibold transition-all hover:scale-105">Pet Owner Directory</a>
                 <a href="{{ route('staff.appointments') }}" class="hover:text-gray-900 transition-all hover:scale-105">Appointments</a>
                 <a href="{{ route('staff.services') }}" class="hover:text-gray-900 transition-all hover:scale-105">Services</a>
                 <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all hover:scale-105">Insights</a>
@@ -129,7 +134,7 @@
     </nav>
     <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
             <a href="{{ route('staff.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
-            <a href="{{ route('staff.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pets</a>
+            <a href="{{ route('staff.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pet Owner Directory</a>
             <a href="{{ route('staff.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-calendar-event"></i> Appointments</a>
             <a href="{{ route('staff.insights') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>
             <form action="{{ route('staff.logout') }}" method="POST" >
@@ -140,7 +145,7 @@
 
     <main class="container mx-auto px-6 py-12">
         <header class="mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
-            <h1 class="text-2xl font-bold text-gray-900">Pet Directory</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Pet Owner Directory</h1>
             <p class="text-gray-500 text-sm">Browse all registered owners and their pets.</p>
         </header>
 
@@ -148,10 +153,11 @@
         <div class="mb-5 max-w-lg reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
             <div class="relative">
                 <i class="bi bi-search absolute left-4 top-3 text-gray-400"></i>
-                <input id="search" type="text" placeholder="Search by owner name or pet name..."
+                <input id="search" type="text" placeholder="Search pet owners by name..."
                        class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-slate-600 focus:border-violet-500 transition-all outline-none text-sm">
             </div>
         </div>
+        <select id="pet-type-filter" class="mb-5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"><option value="">All pet types</option><option value="dog">Dog owners</option><option value="cat">Cat owners</option></select>
 
         <!-- Filter tabs -->
         <div class="flex items-center gap-2 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
@@ -183,11 +189,13 @@
 
         <!-- Owner List -->
         <div class="space-y-3">
+            <p id="no-owner-results" class="hidden rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">No pet owners match your search and filters.</p>
             @forelse($owners as $owner)
-                @php $petNames = $owner->pets->pluck('name')->join(', '); @endphp
+                @php $petNames = $owner->pets->pluck('name')->join(', '); $petTypes = $owner->pets->pluck('type')->unique()->join(','); @endphp
                 <div class="owner-card bg-white border {{ $owner->is_inactive ? 'border-red-200' : 'border-gray-200' }} rounded-xl overflow-hidden hover:border-gray-300 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.08)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out"
                      data-name="{{ strtolower($owner->name) }}"
                      data-pets="{{ strtolower($petNames) }}"
+                     data-phone="{{ strtolower($owner->phone ?? '') }}" data-types="{{ $petTypes }}"
                      data-inactive="{{ $owner->is_inactive ? 'true' : 'false' }}">
 
                     <button onclick="toggleAccordion({{ $owner->id }})"
@@ -208,6 +216,7 @@
                                     @endif
                                 </div>
                                 <p class="text-xs text-gray-400">{{ $owner->email }}</p>
+                                @if($owner->phone)<p class="text-xs text-gray-500"><i class="bi bi-telephone mr-1"></i>{{ $owner->phone }}</p>@endif
                                 @if($owner->last_visit)
                                     <p class="text-xs {{ $owner->is_inactive ? 'text-red-600' : 'text-gray-400' }} mt-0.5">
                                         Last visit: {{ $owner->last_visit->format('M d, Y') }}

@@ -109,7 +109,7 @@
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
                 <a href="{{ route('staff.dashboard') }}"    class="hover:text-gray-900 transition-all">Dashboard</a>
-                <a href="{{ route('staff.directory') }}"    class="hover:text-gray-900 transition-all">Pets</a>
+                <a href="{{ route('staff.directory') }}"    class="hover:text-gray-900 transition-all">Pet Owner Directory</a>
                 <a href="{{ route('staff.appointments') }}" class="hover:text-gray-900 transition-all">Appointments</a>
                 <a href="{{ route('staff.services') }}"     class="text-gray-900 font-semibold transition-all">Services</a>
                 <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all">Insights</a>

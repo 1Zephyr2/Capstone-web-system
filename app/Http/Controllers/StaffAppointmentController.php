@@ -20,6 +20,31 @@ class StaffAppointmentController extends Controller
         ? \Carbon\Carbon::parse($request->date)->startOfDay()
         : today();
 
+    $availabilityStart = match ($viewMode) {
+        'week' => $date->copy()->startOfWeek(\Carbon\Carbon::MONDAY),
+        'month' => $date->copy()->startOfMonth(),
+        'year' => $date->copy()->startOfYear(),
+        default => $date->copy()->startOfDay(),
+    };
+    $availabilityEnd = match ($viewMode) {
+        'week' => $availabilityStart->copy()->endOfWeek(\Carbon\Carbon::SUNDAY),
+        'month' => $availabilityStart->copy()->endOfMonth(),
+        'year' => $availabilityStart->copy()->endOfYear(),
+        default => $availabilityStart->copy()->endOfDay(),
+    };
+
+    // Keep the staff selector in sync with approved bookings and assigned pending bookings.
+    $busyStaffBySlot = Appointment::whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_APPROVED])
+        ->whereNotNull('assigned_staff_id')
+        ->whereBetween('appointment_date', [$availabilityStart, $availabilityEnd])
+        ->get(['id', 'appointment_date', 'assigned_staff_id'])
+        ->groupBy(fn ($appointment) => $appointment->appointment_date->format('Y-m-d H:i:s'))
+        ->map(fn ($appointments) => $appointments->map(fn ($appointment) => [
+            'appointment_id' => $appointment->id,
+            'staff_id' => $appointment->assigned_staff_id,
+        ])->values());
+    $staffMembers = \App\Models\User::where('role', 'staff')->orderBy('name')->get(['id', 'name', 'availability']);
+
     // Business hours shown in the grid (skips the 12:00 PM lunch slot)
     $slotTimes = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
@@ -152,7 +177,7 @@ class StaffAppointmentController extends Controller
     }
 
     return view('staff.appointments', compact(
-        'timeSlots', 'date', 'serviceTypes', 'statusOptions', 'stats',
+        'timeSlots', 'date', 'serviceTypes', 'statusOptions', 'stats', 'busyStaffBySlot', 'staffMembers',
         'viewMode', 'weekDays', 'weekStart', 'weekEnd', 'monthGrid', 'yearGrid'
     ));
 }
@@ -165,17 +190,41 @@ class StaffAppointmentController extends Controller
     {
         abort_if(!$appointment->isPending(), 422, 'Only pending appointments can be approved.');
 
-        $appointment->update(['status' => Appointment::STATUS_APPROVED]);
+        $approver = auth()->user();
+        $staff = \App\Models\User::where('role', 'staff')->where('availability', 'available')->get();
+        $preferred = $approver->role === 'staff' && $approver->availability === 'available' ? $approver : null;
+        $available = fn ($person) => !Appointment::where('assigned_staff_id', $person->id)
+            ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_APPROVED])
+            ->where('id', '!=', $appointment->id)
+            ->where('appointment_date', $appointment->appointment_date)->exists();
+        $assigned = $preferred && $available($preferred) ? $preferred : $staff->first($available);
+        abort_if(!$assigned, 422, 'No available staff member can take this appointment at that time.');
+        $appointment->update(['status' => Appointment::STATUS_APPROVED, 'assigned_staff_id' => $assigned?->id]);
 
         \App\Models\AppNotification::notify(
             $appointment->user_id,
             'appointment_approved',
             'Appointment Confirmed',
-            "Your appointment for {$appointment->pet->name} ({$appointment->service_label}) on {$appointment->appointment_date->format('M d, Y g:i A')} has been approved.",
+            "Your appointment for {$appointment->pet->name} ({$appointment->service_label}) on {$appointment->appointment_date->format('M d, Y g:i A')} has been approved." . ($assigned ? " Assigned staff: {$assigned->name}." : ''),
             route('appointments.index', ['date' => $appointment->appointment_date->toDateString()])
         );
 
         return back()->with('success', "Appointment for {$appointment->pet->name} approved.");
+    }
+
+    public function assign(Request $request, Appointment $appointment)
+    {
+        abort_unless(auth()->user()->role === 'admin', 403);
+        $data = $request->validate(['assigned_staff_id' => ['nullable', 'exists:users,id']]);
+        if ($data['assigned_staff_id']) {
+            abort_unless(\App\Models\User::whereKey($data['assigned_staff_id'])->where('role', 'staff')->where('availability', 'available')->exists(), 422);
+            $busy = Appointment::where('assigned_staff_id', $data['assigned_staff_id'])
+                ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_APPROVED])->where('appointment_date', $appointment->appointment_date)
+                ->where('id', '!=', $appointment->id)->exists();
+            abort_if($busy, 422, 'That staff member already has an appointment at this time.');
+        }
+        $appointment->update(['assigned_staff_id' => $data['assigned_staff_id']]);
+        return back()->with('success', 'Staff assignment updated.');
     }
 
     /**

@@ -22,6 +22,8 @@
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script>
+        const assignmentUrlTemplate = @json(route('admin.appointments.assign', ['appointment' => '__ID__']));
+        let approvalConfirmed = false;
         document.addEventListener('DOMContentLoaded', () => {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -32,9 +34,33 @@
                 });
             }, { threshold: 0.1 });
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+            document.getElementById('form-approve').addEventListener('submit', function (event) {
+                if (approvalConfirmed) {
+                    approvalConfirmed = false;
+                    return;
+                }
+
+                event.preventDefault();
+                document.getElementById('approval-confirm-pet').innerText = document.getElementById('modal-pet').innerText;
+                document.getElementById('approval-confirm-services').innerText = document.getElementById('modal-service').innerText;
+                document.getElementById('approval-confirm-datetime').innerText = document.getElementById('modal-datetime').innerText;
+                showModal('approval-confirm-modal', 'approval-confirm-modal-content');
+            });
         });
 
-        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute, resultPhotoUrl) {
+        function confirmAppointmentApproval() {
+            closeModal('approval-confirm-modal', 'approval-confirm-modal-content');
+            approvalConfirmed = true;
+            document.getElementById('form-approve').requestSubmit();
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !document.getElementById('approval-confirm-modal').classList.contains('hidden')) {
+                closeModal('approval-confirm-modal', 'approval-confirm-modal-content');
+            }
+        });
+
+        function openDetailModal(id, pet, owner, service, datetime, status, notes, rejectRoute, approveRoute, completeRoute, cancelRoute, editNotesRoute, resultPhotoUrl, assignedStaffId, busyStaffAssignments = []) {
             document.getElementById('modal-pet').innerText      = pet;
             document.getElementById('modal-owner').innerText    = owner;
             document.getElementById('modal-service').innerText  = service;
@@ -65,6 +91,22 @@
             document.getElementById('form-cancel').action   = cancelRoute;
             document.getElementById('form-reject').action   = rejectRoute;
             document.getElementById('form-edit-notes').action = editNotesRoute;
+            const assignmentForm = document.getElementById('form-assign-staff');
+            if (assignmentForm) {
+                assignmentForm.action = assignmentUrlTemplate.replace('__ID__', id);
+                const staffSelect = document.getElementById('assigned-staff-select');
+                const busyStaffIds = new Set(busyStaffAssignments.map(Number));
+                Array.from(staffSelect.options).forEach(option => {
+                    if (!option.value) return;
+                    const staffId = Number(option.value);
+                    const isCurrentAssignee = staffId === Number(assignedStaffId);
+                    const alreadyBooked = busyStaffIds.has(staffId);
+                    const unavailable = option.dataset.available !== 'true';
+                    option.disabled = alreadyBooked || (unavailable && !isCurrentAssignee);
+                    option.textContent = option.dataset.label + (alreadyBooked ? ' (already booked)' : (unavailable ? ' (unavailable)' : ''));
+                });
+                staffSelect.value = assignedStaffId || '';
+            }
 
             // Reset notes edit mode
             showNotesView();
@@ -177,7 +219,7 @@
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
                 <a href="{{ route($prefix . '.dashboard') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Dashboard</a>
-                <a href="{{ route($prefix . '.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pets</a>
+                <a href="{{ route($prefix . '.directory') }}"    class="hover:text-gray-900 transition-all hover:scale-105">Pet Owner Directory</a>
                 <a href="{{ route($prefix . '.appointments') }}" class="text-gray-900 font-semibold transition-all hover:scale-105">Appointments</a>
                 @if(!$isAdmin)
                 <a href="{{ route('staff.services') }}" class="hover:text-gray-900 transition-all hover:scale-105">Services</a>
@@ -199,7 +241,7 @@
     </nav>
     <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
         <a href="{{ route($prefix . '.dashboard') }}"    class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
-        <a href="{{ route($prefix . '.directory') }}"    class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pets</a>
+        <a href="{{ route($prefix . '.directory') }}"    class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><svg class="inline w-[1em] h-[1em]" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="4.5" cy="6.5" rx="1.3" ry="1.7"/><ellipse cx="8" cy="4.5" rx="1.3" ry="1.7"/><ellipse cx="11.5" cy="6.5" rx="1.3" ry="1.7"/><path d="M8 7.2c-2.1 0-3.9 1.7-3.9 3.5 0 1.1.9 1.7 2 1.7.6 0 1.1-.2 1.9-.2s1.3.2 1.9.2c1.1 0 2-.6 2-1.7 0-1.8-1.8-3.5-3.9-3.5z"/></svg> Pet Owner Directory</a>
         <a href="{{ route($prefix . '.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-semibold"><i class="bi bi-calendar-event"></i> Appointments</a>
         @if(!$isAdmin)
             <a href="{{ route('staff.services') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-list-check"></i> Services</a>
@@ -471,17 +513,22 @@
         @foreach($timeSlots as $slot)
             @forelse($slot['appointments'] as $appt)
                 @php
+                    $extraNames = \App\Models\Service::whereIn('id', $appt->service_extras ?? [])->pluck('name')->implode(', ');
+                    $serviceDisplay = $appt->service_label . ($extraNames ? ' + ' . $extraNames : '');
                     $approveRouteM   = route($prefix.'.appointments.approve',  $appt);
                     $rejectRouteM    = route($prefix.'.appointments.reject',   $appt);
                     $completeRouteM  = route($prefix.'.appointments.complete', $appt);
                     $cancelRouteM    = route($prefix.'.appointments.cancel',   $appt);
                     $editNotesRouteM = route($prefix.'.appointments.notes',    $appt);
+                    $busyStaffIds = $busyStaffBySlot->get($appt->appointment_date->format('Y-m-d H:i:s'), collect())
+                        ->reject(fn ($assignment) => (int) $assignment['appointment_id'] === (int) $appt->id)
+                        ->pluck('staff_id')->unique()->values()->all();
                 @endphp
                 <div onclick="openDetailModal(
                         {{ $appt->id }},
-                        '{{ addslashes($appt->pet->name . ' (' . $appt->pet->breed . ')') }}',
+                        '{{ addslashes($appt->pet->name . ' (' . $appt->pet->breed . ', ' . ucfirst($appt->pet->type) . ')') }}',
                         '{{ addslashes($appt->user->name) }}',
-                        '{{ addslashes($appt->service_label) }}',
+                        '{{ addslashes($serviceDisplay) }}',
                         '{{ $appt->appointment_date->format('M d, Y — g:i A') }}',
                         '{{ $appt->status }}',
                         '{{ addslashes($appt->notes ?? '') }}',
@@ -490,7 +537,9 @@
                         '{{ $completeRouteM }}',
                         '{{ $cancelRouteM }}',
                         '{{ $editNotesRouteM }}',
-                        {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }}
+                        {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }},
+                        {{ $appt->assigned_staff_id ?? 'null' }},
+                        @json($busyStaffIds)
                      )"
                      class="p-4 active:bg-gray-50">
                     <div class="flex items-center justify-between mb-1">
@@ -540,17 +589,22 @@
             @foreach($timeSlots as $slot)
                 @forelse($slot['appointments'] as $appt)
                     @php
+                        $extraNames = \App\Models\Service::whereIn('id', $appt->service_extras ?? [])->pluck('name')->implode(', ');
+                        $serviceDisplay = $appt->service_label . ($extraNames ? ' + ' . $extraNames : '');
                         $approveRoute   = route($prefix.'.appointments.approve',  $appt);
                         $rejectRoute    = route($prefix.'.appointments.reject',   $appt);
                         $completeRoute  = route($prefix.'.appointments.complete', $appt);
                         $cancelRoute    = route($prefix.'.appointments.cancel',   $appt);
                         $editNotesRoute = route($prefix.'.appointments.notes',    $appt);
+                        $busyStaffIds = $busyStaffBySlot->get($appt->appointment_date->format('Y-m-d H:i:s'), collect())
+                            ->reject(fn ($assignment) => (int) $assignment['appointment_id'] === (int) $appt->id)
+                            ->pluck('staff_id')->unique()->values()->all();
                     @endphp
                     <tr onclick="openDetailModal(
                             {{ $appt->id }},
-                            '{{ addslashes($appt->pet->name . ' (' . $appt->pet->breed . ')') }}',
+                            '{{ addslashes($appt->pet->name . ' (' . $appt->pet->breed . ', ' . ucfirst($appt->pet->type) . ')') }}',
                             '{{ addslashes($appt->user->name) }}',
-                            '{{ addslashes($appt->service_label) }}',
+                            '{{ addslashes($serviceDisplay) }}',
                             '{{ $appt->appointment_date->format('M d, Y — g:i A') }}',
                             '{{ $appt->status }}',
                             '{{ addslashes($appt->notes ?? '') }}',
@@ -559,7 +613,9 @@
                             '{{ $completeRoute }}',
                             '{{ $cancelRoute }}',
                             '{{ $editNotesRoute }}',
-                            {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }}
+                            {{ $appt->result_photo_url ? "'".addslashes($appt->result_photo_url)."'" : 'null' }},
+                            {{ $appt->assigned_staff_id ?? 'null' }},
+                            @json($busyStaffIds)
                          )"
                         class="cursor-pointer hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-5 font-bold text-violet-600">{{ $slot['label'] }}</td>
@@ -674,6 +730,16 @@
 
             <!-- Action Buttons -->
             <div class="space-y-3">
+                @if(auth()->user()->role === 'admin')
+                <form id="form-assign-staff" method="POST" class="flex gap-2 items-center">
+                    @csrf @method('PATCH')
+                    <select id="assigned-staff-select" name="assigned_staff_id" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                        <option value="">Unassigned</option>
+                        @foreach($staffMembers as $staffMember)<option value="{{ $staffMember->id }}" data-label="{{ $staffMember->name }}" data-available="{{ $staffMember->availability === 'available' ? 'true' : 'false' }}">{{ $staffMember->name }}{{ $staffMember->availability === 'available' ? '' : ' (unavailable)' }}</option>@endforeach
+                    </select>
+                    <button class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">Save Staff</button>
+                </form>
+                @endif
                 <form id="form-approve" method="POST">
                     @csrf @method('PATCH')
                     <button id="btn-approve" type="submit" class="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all hover:scale-[1.02]">
@@ -728,6 +794,26 @@
                 </form>
                 <button type="button" onclick="closeModal('detail-modal','detail-modal-content')"
                         class="w-full px-4 py-2 rounded-xl bg-transparent text-gray-400 hover:text-gray-700 text-sm transition-all">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval confirmation -->
+    <div id="approval-confirm-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-5 bg-gray-900/50 backdrop-blur-sm opacity-0 transition-opacity duration-200"
+         onclick="if(event.target===this) closeModal('approval-confirm-modal','approval-confirm-modal-content')">
+        <div id="approval-confirm-modal-content" role="dialog" aria-modal="true" aria-labelledby="approval-confirm-title" class="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-6 sm:p-7 shadow-2xl transform scale-95 opacity-0 transition-all duration-200">
+            <div class="flex items-start gap-4 mb-5">
+                <div class="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><i class="bi bi-calendar-check text-xl"></i></div>
+                <div><h2 id="approval-confirm-title" class="text-lg font-bold text-gray-900">Confirm appointment approval</h2><p class="text-sm text-gray-500 mt-1">Review the appointment information before confirming.</p></div>
+            </div>
+            <dl class="space-y-3 mb-6">
+                <div class="rounded-xl bg-gray-50 border border-gray-100 p-3"><dt class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Pet</dt><dd id="approval-confirm-pet" class="text-sm font-medium text-gray-900 mt-1"></dd></div>
+                <div class="rounded-xl bg-gray-50 border border-gray-100 p-3"><dt class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Selected services</dt><dd id="approval-confirm-services" class="text-sm font-medium text-gray-900 mt-1"></dd></div>
+                <div class="rounded-xl bg-gray-50 border border-gray-100 p-3"><dt class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Appointment date and time</dt><dd id="approval-confirm-datetime" class="text-sm font-medium text-gray-900 mt-1"></dd></div>
+            </dl>
+            <div class="flex flex-col-reverse sm:flex-row gap-3">
+                <button type="button" onclick="closeModal('approval-confirm-modal','approval-confirm-modal-content')" class="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold transition-all">Review again</button>
+                <button type="button" onclick="confirmAppointmentApproval()" class="flex-1 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all"><i class="bi bi-check-circle mr-1"></i>Confirm Approval</button>
             </div>
         </div>
     </div>

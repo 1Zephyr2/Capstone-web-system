@@ -2,19 +2,15 @@
     use App\Models\Appointment;
     $predictor = app(\App\Services\PredictiveAnalyticsService::class);
 
-    $fcLabels = []; $fcActual = []; $fcRevenue = [];
+    $fcLabels = []; $fcActual = [];
     for ($i = 11; $i >= 0; $i--) {
         $m = now()->startOfMonth()->subMonths($i);
         $fcLabels[] = $m->format('M');
         $fcActual[] = Appointment::whereYear('appointment_date', $m->year)->whereMonth('appointment_date', $m->month)
             ->whereNotIn('status', ['rejected', 'cancelled'])->count();
-        $fcRevenue[] = (float) Appointment::where('status', 'completed')->whereYear('appointment_date', $m->year)
-            ->whereMonth('appointment_date', $m->month)->sum('price');
     }
     $apptF = $predictor->forecast($fcActual, 1, 12);
-    $revF  = $predictor->forecast($fcRevenue, 1, 12);
     $nextAppts = (int) round($apptF['forecast'][0] ?? 0);
-    $nextRev   = (float) ($revF['forecast'][0] ?? 0);
     $lastAppts = end($fcActual) ?: 0;
     $delta     = $lastAppts > 0 ? round((($nextAppts - $lastAppts) / $lastAppts) * 100) : null;
 
@@ -35,16 +31,12 @@
     <p class="text-gray-400 text-xs mb-5 leading-relaxed">Appointments booked per month for the last 12 months (solid) and the hybrid-ensemble forecast for next month (dashed). It blends a trend line, moving average, exponential smoothing and last-year seasonality, weighted by how well each predicted your own past data.</p>
     <div class="grid lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 h-60"><canvas id="dashForecastChart"></canvas></div>
-        <div class="grid grid-cols-2 lg:grid-cols-1 gap-4">
+        <div class="grid grid-cols-1 gap-4">
             <div class="rounded-xl bg-{{ $accent }}-50 border border-{{ $accent }}-100 p-4">
                 <p class="text-xs text-gray-500 mb-1">Predicted appointments next month</p>
                 <p class="text-2xl font-bold text-gray-900">{{ $nextAppts }}
                     @if($delta !== null)<span class="text-xs font-semibold {{ $delta >= 0 ? 'text-emerald-600' : 'text-red-500' }}">{{ $delta >= 0 ? '↗' : '↘' }} {{ abs($delta) }}% vs this month</span>@endif
                 </p>
-            </div>
-            <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-4">
-                <p class="text-xs text-gray-500 mb-1">Predicted revenue next month</p>
-                <p class="text-2xl font-bold text-gray-900">₱{{ number_format($nextRev, 0) }}</p>
             </div>
         </div>
     </div>

@@ -31,7 +31,7 @@
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
                 <a href="{{ route('staff.dashboard') }}"    class="hover:text-gray-900 transition-all">Dashboard</a>
-                <a href="{{ route('staff.directory') }}"    class="hover:text-gray-900 transition-all">Pets</a>
+                <a href="{{ route('staff.directory') }}"    class="hover:text-gray-900 transition-all">Pet Owner Directory</a>
                 <a href="{{ route('staff.appointments') }}" class="hover:text-gray-900 transition-all">Appointments</a>
                 <a href="{{ route('staff.services') }}"     class="text-gray-900 font-semibold transition-all">Services</a>
                 <a href="{{ route('staff.insights') }}"     class="hover:text-gray-900 transition-all">Insights</a>
@@ -48,7 +48,7 @@
     </nav>
     <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
         <a href="{{ route('staff.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-house"></i> Dashboard</a>
-        <a href="{{ route('staff.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-heart"></i> Pets</a>
+        <a href="{{ route('staff.directory') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-heart"></i> Pet Owner Directory</a>
         <a href="{{ route('staff.appointments') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-calendar-event"></i> Appointments</a>
         <a href="{{ route('staff.services') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-list-check"></i> Services</a>
         <a href="{{ route('staff.insights') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-50 text-gray-600 text-sm"><i class="bi bi-graph-up"></i> Insights</a>

@@ -109,6 +109,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::get('/appointments', [StaffAppointmentController::class, 'index'])->name('appointments');
     Route::patch('/appointments/{appointment}/approve', [StaffAppointmentController::class, 'approve'])->name('appointments.approve');
+    Route::patch('/appointments/{appointment}/assign', [StaffAppointmentController::class, 'assign'])->name('appointments.assign');
     Route::patch('/appointments/{appointment}/reject', [StaffAppointmentController::class, 'reject'])->name('appointments.reject');
     Route::patch('/appointments/{appointment}/complete', [StaffAppointmentController::class, 'complete'])->name('appointments.complete');
     Route::patch('/appointments/{appointment}/notify-almost-done', [StaffAppointmentController::class, 'notifyAlmostDone'])->name('appointments.notify-almost-done');

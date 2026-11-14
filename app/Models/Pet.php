@@ -15,12 +15,20 @@ class Pet extends Model
         'breed',
         'size',
         'age',
+        'birthday',
         'special_notes',
         'photo',
         'vaccination_record',
         'medical_conditions',
         'grooming_triggers',
     ];
+
+    protected $casts = ['birthday' => 'date'];
+
+    public function getAgeAttribute($value): ?int
+    {
+        return $this->birthday ? $this->birthday->age : $value;
+    }
 
     // Matches Bark Pack's actual grooming price tiers (extra-small to giant)
     const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'G'];

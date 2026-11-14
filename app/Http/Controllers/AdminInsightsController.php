@@ -84,22 +84,17 @@ class AdminInsightsController extends Controller
         });
         foreach ($grouped as $i => $rows) { $byBucket[$i] = $rows; }
 
-        $apptSeries = []; $revSeries = [];
+        $apptSeries = [];
         foreach ($byBucket as $rows) {
             $apptSeries[] = $rows->filter($isLive)->count();
-            $revSeries[]  = (float) $rows->where('status', Appointment::STATUS_COMPLETED)->sum('price');
         }
 
         // ── Forecast the NEXT interval (horizon buckets), summed ────────────
         $apptForecast = $predictor->forecast($apptSeries, $H, $cfg['season']);
-        $revForecast  = $predictor->forecast($revSeries, $H, $cfg['season']);
         $apptFuture = array_map(fn($v) => max(0, round($v)), $apptForecast['forecast']);
-        $revFuture  = array_map(fn($v) => max(0, round($v)), $revForecast['forecast']);
 
         $predictedAppointments = (int) array_sum($apptFuture);
-        $predictedRevenue      = (float) array_sum($revFuture);
         $apptConfidence        = $apptForecast['confidence'];
-        $revenueConfidence     = $revForecast['confidence'];
 
         // ── Scoped window data ───────────────────────────────────────────────
         $inWindow = $all->filter(fn($a) => $a->appointment_date >= $windowStart);
@@ -116,25 +111,16 @@ class AdminInsightsController extends Controller
         $bookingCompleted = $completedCount;
         $bookingCancelled = $cancelledCount;
 
-        $revenueEarned = (float) $inWindow->where('status', 'completed')->sum('price');
-        $revenueLost   = (float) $inWindow->whereIn('status', ['cancelled', 'rejected'])->sum('price');
-        $netRevenueGrowthPct = $revenueEarned > 0 ? round((($revenueEarned - $revenueLost) / $revenueEarned) * 100, 1) : 0;
-        $avgRevenuePerAppointment = $completedCount > 0 ? round($revenueEarned / $completedCount, 2) : 0;
-
         // ── Charts: actual window buckets + forecast buckets ────────────────
         $monthlyWithForecast = [];
-        $revenueMonthlyWithForecast = [];
         for ($i = $N - $W; $i < $N; $i++) {
             $monthlyWithForecast[]        = ['label' => $buckets[$i]['label'], 'count' => $apptSeries[$i]];
-            $revenueMonthlyWithForecast[] = ['label' => $buckets[$i]['label'], 'total' => $revSeries[$i]];
         }
         for ($f = 0; $f < $H; $f++) {
             $label = $this->bucket($unit, -($f + 1), $withYear)[2];
             $monthlyWithForecast[]        = ['label' => $label, 'count' => $apptFuture[$f] ?? 0, 'is_forecast' => true];
-            $revenueMonthlyWithForecast[] = ['label' => $label, 'total' => $revFuture[$f] ?? 0, 'is_forecast' => true];
         }
         $maxMonthly = max(array_column($monthlyWithForecast, 'count')) ?: 1;
-        $maxRevenue = max(array_column($revenueMonthlyWithForecast, 'total')) ?: 1;
 
         $trendTitle    = 'Appointments — ' . $cfg['title'];
         $bucketNoun    = $cfg['noun'];
@@ -148,9 +134,6 @@ class AdminInsightsController extends Controller
             'predicted_total' => $predictedAppointments,
             'pct_diff'        => $periodTotal > 0 ? round((($predictedAppointments - $periodTotal) / $periodTotal) * 100, 1)
                                                   : ($predictedAppointments > 0 ? 100.0 : 0.0),
-            'revenue_window'  => $revenueEarned,
-            'revenue_pct'     => $revenueEarned > 0 ? round((($predictedRevenue - $revenueEarned) / $revenueEarned) * 100, 1)
-                                                    : ($predictedRevenue > 0 ? 100.0 : 0.0),
         ];
 
         // ── Busiest weekday inside the selected interval ────────────────────
@@ -181,15 +164,6 @@ class AdminInsightsController extends Controller
         ])->sortByDesc('total')->values();
         $maxService  = $serviceStats->max('total') ?: 1;
         $topServices = $serviceStats->take(6);
-
-        $revenueByLabel = $inWindow->where('status', 'completed')->groupBy('service_label')
-            ->map(fn($g) => (float) $g->sum('price'));
-        $revenueServiceStats = $allServices->map(fn($svc) => (object) [
-            'name'  => $svc->name,
-            'total' => $revenueByLabel[$svc->name] ?? 0.0,
-        ])->sortByDesc('total')->values();
-        $maxRevenueService  = $revenueServiceStats->max('total') ?: 1;
-        $topRevenueServices = $revenueServiceStats->take(6);
 
         // Trending: growth versus the previous interval of the same length
         $recentCounts = $inWindow->filter($isLive)->whereNotNull('service_id')->groupBy('service_id')->map->count();
@@ -234,23 +208,18 @@ class AdminInsightsController extends Controller
         $windowLabel  = $cfg['title'];
         $horizonLabel = $cfg['next'];
         $predictedAppointmentsNextMonth = $predictedAppointments;   // kept name for the view
-        $predictedRevenueNextMonth      = $predictedRevenue;
 
         return view('staff.insights', compact(
             'trendPeriod', 'windowLabel', 'horizonLabel', 'windowStart',
             'totalAppointments', 'completedCount', 'pendingCount', 'cancelledCount', 'completionRate', 'activeCustomers',
             'serviceStats', 'maxService', 'topServices', 'statusBreakdown',
             'bookingCompleted', 'bookingCancelled',
-            'revenueEarned', 'revenueLost', 'netRevenueGrowthPct', 'avgRevenuePerAppointment',
             'trendTitle', 'monthlyWithForecast', 'maxMonthly', 'volumeMeta',
             'periodTotal', 'periodAverage', 'busiestBucket', 'bucketNoun',
             'busiestDayLabel', 'busiestDayAvg', 'nextBusiestDate',
             'trendingService', 'trendingGrowth', 'topPets',
-            'revenueMonthlyWithForecast', 'maxRevenue',
-            'predictedRevenueNextMonth', 'revenueConfidence',
             'predictedAppointmentsNextMonth', 'apptConfidence',
-            'serviceDemandForecast',
-            'revenueServiceStats', 'maxRevenueService', 'topRevenueServices'
+            'serviceDemandForecast'
         ));
     }
 }

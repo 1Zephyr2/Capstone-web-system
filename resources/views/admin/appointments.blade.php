@@ -45,7 +45,7 @@
             </a>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
                 <a href="{{ route('admin.dashboard') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Dashboard</a>
-                <a href="{{ route('admin.directory') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Pets</a>
+                <a href="{{ route('admin.directory') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Pet Owner Directory</a>
                 <a href="{{ route('admin.appointments') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Appointments</a>
                 <a href="{{ route('admin.insights') }}" class="hover:text-gray-900 transition-all duration-300 hover:scale-105">Insights</a>
             </div>

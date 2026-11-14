@@ -58,9 +58,8 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 mb-1">Mobile Number</label>
-                    <input type="tel" name="phone" value="{{ old('phone') }}" required inputmode="numeric" maxlength="11" minlength="11" pattern="[0-9]{11}" title="Enter exactly 11 digits, e.g. 09282623513" oninput="this.value=this.value.replace(/\D/g,'').slice(0,11)" placeholder="e.g. 09282623513"
-                           class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 outline-none transition-all">
-                    <p class="text-gray-400 text-xs mt-1">11 digits, numbers only (e.g. 09282623513).</p>
+                    <div class="flex items-center w-full bg-white border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-emerald-200 focus-within:border-emerald-500"><span class="pl-4 text-gray-500">(+63)</span><input type="tel" name="phone" value="{{ old('phone') }}" required inputmode="numeric" maxlength="10" minlength="10" pattern="9[0-9]{9}" title="Enter 10 digits starting with 9" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)" placeholder="9171234567" class="w-full bg-transparent rounded-lg px-3 py-2.5 text-gray-900 outline-none transition-all"></div>
+                    <p class="text-gray-400 text-xs mt-1">Philippine mobile format: (+63) followed by 10 digits.</p>
                     @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>

@@ -392,6 +392,16 @@
                                                 </div>
                                             @endforeach
                                         </div>
+                                        @if(isset($services['Ala Carte']))
+                                        <fieldset class="mt-3 border-t border-gray-100 pt-3">
+                                            <legend class="text-xs font-semibold text-gray-600">Additional A La Carte services</legend>
+                                            <div class="grid sm:grid-cols-2 gap-1 mt-1">
+                                                @foreach($services['Ala Carte'] as $extra)
+                                                    <label class="flex gap-2 items-center text-xs text-gray-600"><input type="checkbox" name="service_extras[{{ $pet->id }}][]" value="{{ $extra->id }}" class="rounded text-emerald-600">{{ $extra->name }}</label>
+                                                @endforeach
+                                            </div>
+                                        </fieldset>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach

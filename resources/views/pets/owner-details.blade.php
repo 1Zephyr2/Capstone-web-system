@@ -212,7 +212,7 @@
                 <div class="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
                     <button id="btn-appointments" onclick="switchTab('appointments')"
                             class="flex-1 py-2 px-4 rounded-lg text-sm font-semibold border-b-2 transition-all">
-                        <i class="bi bi-calendar-check mr-1"></i> Appointments
+                        <i class="bi bi-scissors mr-1"></i> Service Details
                     </button>
                     <button id="btn-records" onclick="switchTab('records')"
                             class="flex-1 py-2 px-4 rounded-lg text-sm font-semibold border-b-2 transition-all">
@@ -232,8 +232,9 @@
                                 @php $badgeClass = match($appt->status) { 'pending' => 'bg-amber-100 text-amber-700 border border-amber-200', 'approved' => 'bg-emerald-100 text-emerald-700 border border-emerald-200', default => 'bg-gray-100 text-gray-500' }; @endphp
                                 <div class="flex items-center justify-between p-3 border-l-4 border-l-amber-400 bg-amber-50 rounded-r-xl">
                                     <div>
-                                        <p class="font-medium text-gray-900 text-sm">{{ $appt->service_label }}</p>
+                                        <p class="font-medium text-gray-900 text-sm">{{ $appt->service_label }}@foreach($appt->service_extras ?? [] as $extraId)@php($extraService = \App\Models\Service::find($extraId))@if($extraService) + {{ $extraService->name }}@endif @endforeach</p>
                                         <p class="text-xs text-gray-400">{{ $appt->appointment_date->format('M d, Y — g:i A') }}</p>
+                                        @if($appt->assignedStaff)<p class="text-xs text-emerald-700">Staff: {{ $appt->assignedStaff->name }}</p>@endif
                                     </div>
                                     <span class="px-2 py-0.5 rounded-full text-xs font-semibold {{ $badgeClass }}">{{ ucfirst($appt->status) }}</span>
                                 </div>
@@ -394,8 +395,8 @@
                         <input type="hidden" name="breed" id="edit-breed-hidden" value="{{ $pet->breed }}">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Age</label>
-                        <input type="number" name="age" value="{{ $pet->age }}" min="0" max="100" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all text-sm [appearance:textfield]">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Birthday</label>
+                        <input type="date" name="birthday" value="{{ $pet->birthday?->format('Y-m-d') }}" max="{{ now()->toDateString() }}" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none focus:border-emerald-500 transition-all text-sm">
                     </div>
                 </div>
                 <div>

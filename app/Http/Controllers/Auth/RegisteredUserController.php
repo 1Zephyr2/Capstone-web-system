@@ -30,13 +30,14 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // Keep digits only so "0917 123 4567" and "0917-123-4567" both become 11 digits.
-        $request->merge(['phone' => preg_replace('/\D/', '', (string) $request->phone)]);
+        // Store a Philippine mobile number in local 09xxxxxxxxx format.
+        $mobile = preg_replace('/\D/', '', (string) $request->phone);
+        $request->merge(['phone' => '0' . $mobile]);
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'phone' => ['required', 'digits:11'],
+            'phone' => ['required', 'regex:/^09[0-9]{9}$/'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 

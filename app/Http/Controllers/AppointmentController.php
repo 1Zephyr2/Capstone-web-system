@@ -41,6 +41,9 @@ class AppointmentController extends Controller
             'pets.*'           => ['required', 'exists:pets,id'],
             'services'         => ['required', 'array'],
             'services.*'       => ['nullable', 'exists:services,id'],
+            'service_extras' => ['nullable', 'array'],
+            'service_extras.*' => ['nullable', 'array'],
+            'service_extras.*.*' => ['integer', 'exists:services,id'],
             'times'            => ['required_if:time_mode,separate', 'array'],
             'times.*'          => ['nullable', 'in:' . implode(',', array_keys(Appointment::CLINIC_HOURS))],
             'notes'            => ['nullable', 'string', 'max:500'],
@@ -66,10 +69,17 @@ class AppointmentController extends Controller
                 return back()->withErrors(['services' => 'Please choose a service for each pet.'])->withInput();
             }
 
+            $extraIds = collect($validated['service_extras'][$petId] ?? [])->unique()->values();
+            $validExtras = Service::active()->whereIn('id', $extraIds)->where('category', 'Ala Carte')->count();
+            if ($validExtras !== $extraIds->count()) {
+                return back()->withErrors(['service_extras' => 'Only active A La Carte services can be selected as add-ons.'])->withInput();
+            }
+
             $bookings[] = [
                 'pet_id'     => $petId,
                 'datetime'   => $validated['appointment_date'] . ' ' . $time . ':00',
                 'service_id' => $serviceId,
+                'service_extras' => $extraIds->all(),
             ];
         }
 
@@ -102,6 +112,7 @@ class AppointmentController extends Controller
                 'pet_id'           => $booking['pet_id'],
                 'appointment_date' => $booking['datetime'],
                 'service_id'       => $booking['service_id'],
+                'service_extras' => $booking['service_extras'],
                 'status'           => Appointment::STATUS_PENDING,
                 'notes'            => $validated['notes'] ?? null,
                 'booking_group_id' => $groupId,
