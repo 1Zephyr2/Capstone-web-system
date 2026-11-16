@@ -1,21 +1,40 @@
 @php
     $threeMonthsAgo = now()->subMonths(3);
 
-    $owners = App\Models\User::where('role', 'owner')
-        ->with([
+    $ownerQuery = App\Models\User::where('role', 'owner');
+    $totalOwners = (clone $ownerQuery)->count();
+    $totalPets = App\Models\Pet::count();
+    $inactiveCount = (clone $ownerQuery)->whereDoesntHave('appointments', fn($q) => $q->where('appointment_date', '>=', $threeMonthsAgo))->count();
+
+    $query = (clone $ownerQuery)->with([
             'pets' => fn($q) => $q->orderBy('name'),
             'appointments' => fn($q) => $q->orderByDesc('appointment_date')->limit(1),
-        ])
-        ->orderBy('name')
-        ->get()
-        ->map(function($owner) use ($threeMonthsAgo) {
+        ]);
+    if (request()->filled('search')) {
+        $search = trim(request('search'));
+        $query->where(function($q) use ($search) {
+            $q->where('name', 'like', '%' . $search . '%')
+                ->orWhere('email', 'like', '%' . $search . '%')
+                ->orWhere('phone', 'like', '%' . $search . '%')
+                ->orWhereHas('pets', fn($pets) => $pets->where('name', 'like', '%' . $search . '%'));
+        });
+    }
+    if (request()->filled('pet_type')) {
+        $query->whereHas('pets', fn($pets) => $pets->where('type', request('pet_type')));
+    }
+    if (request('filter') === 'active') {
+        $query->whereHas('appointments', fn($q) => $q->where('appointment_date', '>=', $threeMonthsAgo));
+    } elseif (request('filter') === 'inactive') {
+        $query->whereDoesntHave('appointments', fn($q) => $q->where('appointment_date', '>=', $threeMonthsAgo));
+    }
+
+    $owners = $query->orderBy('name')->paginate(5)->withQueryString();
+    $owners->getCollection()->transform(function($owner) use ($threeMonthsAgo) {
             $lastAppt = $owner->appointments->first();
             $owner->is_inactive = !$lastAppt || $lastAppt->appointment_date->lt($threeMonthsAgo);
             $owner->last_visit   = $lastAppt ? $lastAppt->appointment_date : null;
             return $owner;
         });
-
-    $inactiveCount = $owners->filter(fn($o) => $o->is_inactive)->count();
 @endphp
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
@@ -52,50 +71,19 @@
             }, { threshold: 0.1 });
             document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
 
-            let searchQuery = '';
-            let statusFilter = 'all';
-            let petTypeFilter = '';
-            const ownerCards = Array.from(document.querySelectorAll('.owner-card'));
-            const applyFilters = () => {
-                let visibleCount = 0;
-                ownerCards.forEach(card => {
-                    const nameMatches = card.dataset.name.toLowerCase().includes(searchQuery);
-                    const statusMatches = statusFilter === 'all' || card.dataset.inactive === (statusFilter === 'inactive' ? 'true' : 'false');
-                    const ownerTypes = (card.dataset.types || '').split(',');
-                    const typeMatches = !petTypeFilter || ownerTypes.includes(petTypeFilter);
-                    card.style.display = nameMatches && statusMatches && typeMatches ? '' : 'none';
-                    if (nameMatches && statusMatches && typeMatches) visibleCount++;
-                });
-                document.getElementById('no-owner-results').classList.toggle('hidden', visibleCount > 0);
-            };
-
+            const filterForm = document.getElementById('directory-filter-form');
+            let searchTimer;
             document.getElementById('search').addEventListener('input', function () {
-                searchQuery = this.value.trim().toLowerCase();
-                applyFilters();
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => filterForm.requestSubmit(), 300);
             });
-            document.getElementById('pet-type-filter').addEventListener('change', function () {
-                petTypeFilter = this.value;
-                applyFilters();
-            });
+            document.getElementById('pet-type-filter').addEventListener('change', () => filterForm.requestSubmit());
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    document.querySelectorAll('.filter-btn').forEach(b => {
-                        b.classList.remove('bg-violet-600', 'text-white');
-                        b.classList.add('bg-gray-100', 'text-gray-600');
-                    });
-                    this.classList.add('bg-violet-600', 'text-white');
-                    this.classList.remove('bg-gray-100', 'text-gray-600');
-                    statusFilter = this.dataset.filter;
-                    applyFilters();
+                    filterForm.querySelector('[name="filter"]').value = this.dataset.filter === 'all' ? '' : this.dataset.filter;
+                    filterForm.requestSubmit();
                 });
             });
-
-            // Preselect a filter from ?filter=all|active|inactive (used by dashboard cards)
-            const wanted = new URLSearchParams(location.search).get('filter');
-            if (wanted) {
-                const btn = document.querySelector('.filter-btn[data-filter="' + wanted + '"]');
-                if (btn) btn.click();
-            }
         });
 
         function toggleAccordion(id) {
@@ -150,36 +138,44 @@
         </header>
 
         <!-- Search -->
-        <div class="mb-5 max-w-lg reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+        <form id="directory-filter-form" method="GET" action="{{ route('staff.directory') }}" class="mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
+            <input type="hidden" name="filter" value="{{ request('filter') }}">
+            <div class="mb-4 max-w-lg">
             <div class="relative">
                 <i class="bi bi-search absolute left-4 top-3 text-gray-400"></i>
-                <input id="search" type="text" placeholder="Search pet owners by name..."
+                <input id="search" name="search" type="search" value="{{ request('search') }}" placeholder="Search pet owners by name, phone, or pet..."
                        class="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3 text-gray-900 placeholder-slate-600 focus:border-violet-500 transition-all outline-none text-sm">
             </div>
-        </div>
-        <select id="pet-type-filter" class="mb-5 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm"><option value="">All pet types</option><option value="dog">Dog owners</option><option value="cat">Cat owners</option></select>
+            </div>
+            <select id="pet-type-filter" name="pet_type" class="mb-4 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                <option value="">All pet types</option><option value="dog" @selected(request('pet_type') === 'dog')>Dog owners</option><option value="cat" @selected(request('pet_type') === 'cat')>Cat owners</option>
+            </select>
 
         <!-- Filter tabs -->
-        <div class="flex items-center gap-2 mb-6 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out">
-            <button data-filter="all"      class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-violet-600 text-white">All</button>
-            <button data-filter="active"   class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-gray-100 text-gray-600">Active</button>
-            <button data-filter="inactive" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all bg-gray-100 text-gray-600 flex items-center gap-1.5">
+        <div class="flex items-center gap-2">
+            <button type="button" data-filter="all" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all {{ !request('filter') || request('filter') === 'all' ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600' }}">All</button>
+            <button type="button" data-filter="active" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all {{ request('filter') === 'active' ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600' }}">Active</button>
+            <button type="button" data-filter="inactive" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold transition-all {{ request('filter') === 'inactive' ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600' }} flex items-center gap-1.5">
                 Inactive
                 @if($inactiveCount > 0)
                     <span class="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $inactiveCount }}</span>
                 @endif
             </button>
+            @if(request()->hasAny(['search','pet_type','filter']))
+                <a href="{{ route('staff.directory') }}" class="px-3 py-2 text-xs font-semibold text-gray-500 hover:text-violet-700">Clear filters</a>
+            @endif
         </div>
+        </form>
 
         <!-- Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 ease-out">
             <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                 <p class="text-gray-500 text-xs mb-1">Total Owners</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $owners->count() }}</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $totalOwners }}</p>
             </div>
             <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                 <p class="text-gray-500 text-xs mb-1">Total Pets</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $owners->sum(fn($o) => $o->pets->count()) }}</p>
+                <p class="text-2xl font-bold text-gray-900">{{ $totalPets }}</p>
             </div>
             <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
                 <p class="text-red-600 text-xs mb-1">Inactive (3+ months)</p>
@@ -189,7 +185,6 @@
 
         <!-- Owner List -->
         <div class="space-y-3">
-            <p id="no-owner-results" class="hidden rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">No pet owners match your search and filters.</p>
             @forelse($owners as $owner)
                 @php $petNames = $owner->pets->pluck('name')->join(', '); $petTypes = $owner->pets->pluck('type')->unique()->join(','); @endphp
                 <div class="owner-card bg-white border {{ $owner->is_inactive ? 'border-red-200' : 'border-gray-200' }} rounded-xl overflow-hidden hover:border-gray-300 transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.08)] reveal-on-scroll opacity-0 translate-y-10 transition-all duration-700 ease-out"
@@ -265,10 +260,16 @@
             @empty
                 <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
                     <i class="bi bi-people text-4xl text-gray-300 mb-3 block"></i>
-                    <p class="text-gray-400">No owners registered yet.</p>
+                    <p class="text-gray-400">No pet owners match the current search and filters.</p>
                 </div>
             @endforelse
         </div>
+        @if($owners->hasPages())
+            <div class="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500">
+                <span>Showing {{ $owners->firstItem() }}–{{ $owners->lastItem() }} of {{ $owners->total() }} owners</span>
+                {{ $owners->links() }}
+            </div>
+        @endif
     </main>
 </body>
 </html>

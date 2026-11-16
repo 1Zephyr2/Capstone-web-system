@@ -182,7 +182,6 @@
                 <button id="btn-owners"   onclick="showTab('owners')"   class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-people mr-2"></i> Owner Accounts</button>
                 <button id="btn-services" onclick="showTab('services')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-scissors mr-2"></i> Grooming Options</button>
                 <button id="btn-booking-services" onclick="showTab('booking-services')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-list-check mr-2"></i> Booking Services</button>
-                <button id="btn-settings" onclick="showTab('settings')" class="tab-btn w-full text-left px-4 py-3 rounded-xl font-medium border-l-4 transition-all text-gray-500 border-transparent hover:bg-gray-50"><i class="bi bi-gear mr-2"></i> System Settings</button>
             </div>
 
             <!-- Content -->
@@ -516,12 +515,6 @@
                             @endforelse
                         </div>
                     </div>
-                </div>
-
-                <!-- Settings placeholder (referenced by sidebar button, add real content later) -->
-                <div id="panel-settings" class="tab-panel hidden">
-                    <h2 class="text-xl font-bold text-gray-900 mb-2">System Settings</h2>
-                    <p class="text-gray-500 text-sm italic">Coming soon.</p>
                 </div>
 
             </div>

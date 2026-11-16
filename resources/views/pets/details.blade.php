@@ -1,16 +1,21 @@
 @php
     $pet = App\Models\Pet::with([
         'user',
-        'appointments' => fn($q) => $q->orderByDesc('appointment_date'),
-        'records'      => fn($q) => $q->with('recorder')->orderByDesc('record_date'),
+        'records' => fn($q) => $q->with('recorder')->orderByDesc('record_date'),
     ])->findOrFail($id);
 
     $isAdmin = auth()->check() && auth()->user()->role === 'admin';
     $isStaff = auth()->check() && auth()->user()->role === 'staff';
 
-    $nextAppointment       = $pet->appointments->where('status','approved')->where('appointment_date','>=',now())->sortBy('appointment_date')->first();
-    $completedAppointments = $pet->appointments->where('status','completed')->sortByDesc('appointment_date');
-    $activeAppts           = $pet->appointments->whereIn('status',['pending','approved'])->sortBy('appointment_date');
+    $nextAppointment = $pet->appointments()->with(['assignedStaff', 'service'])
+        ->where('status', 'approved')->where('appointment_date', '>=', now())
+        ->orderBy('appointment_date')->first();
+    $activeAppts = $pet->appointments()->with(['assignedStaff', 'service'])
+        ->whereIn('status', ['pending', 'approved'])->orderBy('appointment_date')
+        ->paginate(5, ['*'], 'appointments_page')->withQueryString();
+    $completedAppointments = $pet->appointments()->with('service')
+        ->where('status', 'completed')->orderByDesc('appointment_date')
+        ->paginate(5, ['*'], 'history_page')->withQueryString();
 
     if ($isAdmin) {
         $bgMain='bg-gray-50'; $bgNav='bg-white';
@@ -199,7 +204,7 @@
 
                 <!-- Appointments Tab -->
                 <div id="tab-appointments">
-                    @if($activeAppts->count() > 0)
+                    @if($activeAppts->total() > 0)
                     <div class="{{ $cardBg }} border {{ $cardBorder }} rounded-2xl shadow-sm p-5 mb-4">
                         <h3 class="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
                             <i class="bi bi-calendar-event {{ $accentText }}"></i> Pending / Upcoming
@@ -216,6 +221,9 @@
                                 </div>
                             @endforeach
                         </div>
+                        @if($activeAppts->hasPages())
+                            <div class="mt-4 border-t border-gray-200 pt-3">{{ $activeAppts->links() }}</div>
+                        @endif
                     </div>
                     @endif
 
@@ -225,9 +233,9 @@
                             <h3 class="font-bold text-gray-900 text-sm flex items-center gap-2">
                                 <i class="bi bi-clock-history {{ $accentText }}"></i> Service Details & History
                             </h3>
-                            <span class="text-xs text-gray-400">{{ $completedAppointments->count() }} completed</span>
+                            <span class="text-xs text-gray-400">{{ $completedAppointments->total() }} completed</span>
                         </div>
-                        @if($completedAppointments->count() > 0)
+                        @if($completedAppointments->total() > 0)
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead class="bg-gray-50/40 border-b {{ $cardBorder }}">
@@ -251,6 +259,9 @@
                                 </tbody>
                             </table>
                         </div>
+                        @if($completedAppointments->hasPages())
+                            <div class="border-t {{ $cardBorder }} p-4">{{ $completedAppointments->links() }}</div>
+                        @endif
                         @else
                             <div class="text-center py-10">
                                 <i class="bi bi-calendar-x text-3xl text-gray-300 mb-2 block"></i>
