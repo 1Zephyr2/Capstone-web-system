@@ -32,7 +32,7 @@ class AdminInsightsController extends Controller
                       'title' => 'Last 12 months',  'next' => 'next 12 months','noun' => 'month'],
     ];
 
-    /** Bucket k: 0 = current, 1 = previous … negative = future. Returns [start, end, label]. */
+    /** Historical bucket k: 0 = current, positive = previous. Returns [start, end, label]. */
     private function bucket(string $unit, int $k, bool $withYear = false): array
     {
         if ($unit === 'day') {
@@ -46,6 +46,24 @@ class AdminInsightsController extends Controller
         }
         $base = now()->startOfMonth()->subMonthsNoOverflow($k);
         return [$base->copy(), $base->copy()->endOfMonth(), $base->format($withYear ? "M 'y" : 'M')];
+    }
+
+    /** A distinct future period after today: day = next 7 days, week = next 4 weeks, month = next N months. */
+    private function futureBucket(string $unit, int $offset, bool $withYear = false): array
+    {
+        if ($unit === 'day') {
+            $d = today()->addDays($offset + 1);
+            return [$d->copy()->startOfDay(), $d->copy()->endOfDay(), $d->format('D M j')];
+        }
+        if ($unit === 'week') {
+            $start = today()->addDays(1 + 7 * $offset)->startOfDay();
+            $end = $start->copy()->addDays(6)->endOfDay();
+            $startLabel = $start->format($start->year === $end->year ? 'M j' : "M j 'y");
+            $endLabel = $end->format($start->year === $end->year ? 'M j' : "M j 'y");
+            return [$start, $end, $startLabel . '–' . $endLabel];
+        }
+        $start = now()->startOfMonth()->addMonthsNoOverflow($offset + 1);
+        return [$start->copy(), $start->copy()->endOfMonth(), $start->format($withYear ? "M 'y" : 'M')];
     }
 
     public function index(Request $request, PredictiveAnalyticsService $predictor)
@@ -68,15 +86,23 @@ class AdminInsightsController extends Controller
         $prevStart   = $buckets[$N - 2 * $W]['start'];
         $historyEnd  = today()->endOfDay();
 
+        $futureBuckets = [];
+        for ($f = 0; $f < $H; $f++) {
+            [$s, $e, $label] = $this->futureBucket($unit, $f, $withYear);
+            $futureBuckets[] = ['start' => $s, 'end' => $e, 'label' => $label];
+        }
+
         $all = Appointment::with('service')
-            ->whereBetween('appointment_date', [$buckets[0]['start'], $historyEnd])
+            ->whereBetween('appointment_date', [$buckets[0]['start'], $futureBuckets[$H - 1]['end']])
             ->get();
 
         $isLive = fn($a) => !in_array($a->status, [Appointment::STATUS_REJECTED, Appointment::STATUS_CANCELLED], true);
+        $history = $all->filter(fn($a) => $a->appointment_date <= $historyEnd);
+        $upcoming = $all->filter(fn($a) => $a->appointment_date > $historyEnd && $isLive($a));
 
         // Assign every appointment to its bucket index
         $byBucket = array_fill(0, $N, collect());
-        $grouped = $all->groupBy(function ($a) use ($buckets, $N) {
+        $grouped = $history->groupBy(function ($a) use ($buckets, $N) {
             for ($i = $N - 1; $i >= 0; $i--) {
                 if ($a->appointment_date >= $buckets[$i]['start']) return $i;
             }
@@ -92,13 +118,21 @@ class AdminInsightsController extends Controller
         // ── Forecast the NEXT interval (horizon buckets), summed ────────────
         $apptForecast = $predictor->forecast($apptSeries, $H, $cfg['season']);
         $apptFuture = array_map(fn($v) => max(0, round($v)), $apptForecast['forecast']);
+        $upcomingByBucket = [];
+        foreach ($futureBuckets as $i => $futureBucket) {
+            $known = $upcoming->filter(fn($a) => $a->appointment_date >= $futureBucket['start'] && $a->appointment_date <= $futureBucket['end']);
+            $upcomingByBucket[$i] = $known->count();
+            // A forecast cannot be lower than bookings that are already on the calendar.
+            $apptFuture[$i] = max($apptFuture[$i] ?? 0, $upcomingByBucket[$i]);
+        }
 
         $predictedAppointments = (int) array_sum($apptFuture);
+        $upcomingAppointmentCount = (int) array_sum($upcomingByBucket);
         $apptConfidence        = $apptForecast['confidence'];
 
         // ── Scoped window data ───────────────────────────────────────────────
-        $inWindow = $all->filter(fn($a) => $a->appointment_date >= $windowStart);
-        $prevWindow = $all->filter(fn($a) => $a->appointment_date >= $prevStart && $a->appointment_date < $windowStart);
+        $inWindow = $history->filter(fn($a) => $a->appointment_date >= $windowStart);
+        $prevWindow = $history->filter(fn($a) => $a->appointment_date >= $prevStart && $a->appointment_date < $windowStart);
 
         $totalAppointments = $inWindow->count();
         $completedCount    = $inWindow->where('status', 'completed')->count();
@@ -117,8 +151,12 @@ class AdminInsightsController extends Controller
             $monthlyWithForecast[]        = ['label' => $buckets[$i]['label'], 'count' => $apptSeries[$i]];
         }
         for ($f = 0; $f < $H; $f++) {
-            $label = $this->bucket($unit, -($f + 1), $withYear)[2];
-            $monthlyWithForecast[]        = ['label' => $label, 'count' => $apptFuture[$f] ?? 0, 'is_forecast' => true];
+            $monthlyWithForecast[] = [
+                'label' => $futureBuckets[$f]['label'],
+                'count' => $apptFuture[$f] ?? 0,
+                'scheduled' => $upcomingByBucket[$f] ?? 0,
+                'is_forecast' => true,
+            ];
         }
         $maxMonthly = max(array_column($monthlyWithForecast, 'count')) ?: 1;
 
@@ -176,24 +214,52 @@ class AdminInsightsController extends Controller
             if ($growth > $trendingGrowth) { $trendingGrowth = $growth; $trendingService = $allServices->firstWhere('id', $svcId); }
         }
 
-        // Per-service demand forecast for the next interval
-        $serviceDemandForecast = $allServices->map(function ($svc) use ($byBucket, $isLive, $predictor, $cfg, $N, $W, $H) {
+        // Per-service forecasts are kept both as a horizon total and split into each future day/week/month.
+        $serviceForecastPeriods = array_map(fn($period) => [
+            'label' => $period['label'],
+            'scheduled' => 0,
+            'predicted' => 0,
+            'services' => [],
+        ], $futureBuckets);
+        $serviceDemandForecast = $allServices->map(function ($svc) use ($byBucket, $upcoming, $futureBuckets, $isLive, $predictor, $cfg, $N, $W, $H, &$serviceForecastPeriods) {
             $series = [];
             foreach ($byBucket as $rows) {
                 $series[] = $rows->filter($isLive)->where('service_id', $svc->id)->count();
             }
             $result    = $predictor->forecast($series, $H, $cfg['season']);
             $lastTotal = array_sum(array_slice($series, $N - $W));
-            $predicted = (int) round(array_sum(array_map(fn($v) => max(0, $v), $result['forecast'])));
+            $modelForecast = array_map(fn($v) => max(0, round($v)), $result['forecast']);
+            $scheduled = 0;
+            foreach ($futureBuckets as $i => $futureBucket) {
+                $known = $upcoming->filter(fn($a) => $a->service_id === $svc->id && $a->appointment_date >= $futureBucket['start'] && $a->appointment_date <= $futureBucket['end'])->count();
+                $scheduled += $known;
+                $modelForecast[$i] = max($modelForecast[$i] ?? 0, $known);
+                $serviceForecastPeriods[$i]['scheduled'] += $known;
+                $serviceForecastPeriods[$i]['predicted'] += $modelForecast[$i];
+                if ($modelForecast[$i] > 0 || $known > 0) {
+                    $serviceForecastPeriods[$i]['services'][] = (object) [
+                        'name' => $svc->name,
+                        'scheduled' => $known,
+                        'predicted' => $modelForecast[$i],
+                    ];
+                }
+            }
+            $predicted = (int) array_sum($modelForecast);
             return (object) [
                 'name'       => $svc->name,
                 'category'   => $svc->category,
                 'last_month' => $lastTotal,
+                'scheduled'  => $scheduled,
                 'predicted'  => $predicted,
                 'trend'      => $predicted > $lastTotal ? 'up' : ($predicted < $lastTotal ? 'down' : 'flat'),
                 'confidence' => $result['confidence'],
             ];
         })->filter(fn($s) => $s->last_month > 0 || $s->predicted > 0)->sortByDesc('predicted')->values();
+
+        foreach ($serviceForecastPeriods as &$period) {
+            $period['services'] = collect($period['services'])->sortByDesc('predicted')->take(8)->values();
+        }
+        unset($period);
 
         // Most active pets within the interval
         $petCounts = $inWindow->filter($isLive)->groupBy('pet_id')->map->count()->sortDesc()->take(5);
@@ -219,7 +285,7 @@ class AdminInsightsController extends Controller
             'busiestDayLabel', 'busiestDayAvg', 'nextBusiestDate',
             'trendingService', 'trendingGrowth', 'topPets',
             'predictedAppointmentsNextMonth', 'apptConfidence',
-            'serviceDemandForecast'
+            'serviceDemandForecast', 'serviceForecastPeriods', 'upcomingAppointmentCount'
         ));
     }
 }

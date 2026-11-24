@@ -4,6 +4,8 @@
     $labels = array_column($monthlyWithForecast, 'label');
     $actual = array_map(fn ($row) => (($row['is_forecast'] ?? false) ? null : $row['count']), $monthlyWithForecast);
     $forecast = array_map(fn ($row) => (($row['is_forecast'] ?? false) ? $row['count'] : null), $monthlyWithForecast);
+    $scheduled = array_map(fn ($row) => (($row['is_forecast'] ?? false) ? ($row['scheduled'] ?? 0) : null), $monthlyWithForecast);
+    $futureRows = collect($monthlyWithForecast)->filter(fn ($row) => $row['is_forecast'] ?? false)->values();
     $completedBookings = (int) $statusBreakdown->get('completed', 0);
     $pendingBookings = (int) $statusBreakdown->get('pending', 0);
     $approvedBookings = (int) $statusBreakdown->get('approved', 0);
@@ -11,6 +13,51 @@
     $rejectedBookings = (int) $statusBreakdown->get('rejected', 0);
     $topService = $topServices->firstWhere('total', '>', 0);
     $topForecastService = $serviceDemandForecast->sortByDesc('predicted')->first();
+    $statusOrder = ['completed', 'pending', 'approved', 'cancelled', 'rejected'];
+    $statusLabels = collect($statusOrder)->filter(fn ($status) => $statusBreakdown->has($status))->values();
+    $statusValues = $statusLabels->map(fn ($status) => (int) $statusBreakdown->get($status))->values();
+    $servicePercentages = $topServices->map(fn ($service) => $totalAppointments > 0 ? round(($service->total / $totalAppointments) * 100, 1) : 0)->values();
+    $chartValuesPlugin = <<<'JS'
+    {
+        id: 'valueLabels',
+        afterDatasetsDraw(chart) {
+            const {ctx} = chart;
+            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                const meta = chart.getDatasetMeta(datasetIndex);
+                if (meta.hidden) return;
+                meta.data.forEach((element, index) => {
+                    const raw = dataset.data[index];
+                    if (raw === null || raw === undefined || Number(raw) === 0) return;
+                    ctx.save();
+                    ctx.font = '600 11px sans-serif';
+                    if (chart.config.type === 'doughnut') {
+                        const total = dataset.data.reduce((sum, value) => sum + (Number(value) || 0), 0);
+                        const pct = total ? (Number(raw) / total * 100) : 0;
+                        const pos = element.tooltipPosition();
+                        ctx.fillStyle = '#fff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`${pct.toFixed(1)}%`, pos.x, pos.y);
+                    } else if (chart.config.type === 'bar') {
+                        const pos = element.tooltipPosition();
+                        ctx.fillStyle = '#374151';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        const percentage = dataset.percentages?.[index];
+                        ctx.fillText(percentage === undefined ? String(raw) : `${raw} (${percentage}%)`, pos.x + 6, pos.y);
+                    } else {
+                        const pos = element.tooltipPosition();
+                        ctx.fillStyle = dataset.borderColor || '#374151';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(String(raw), pos.x, pos.y - 7);
+                    }
+                    ctx.restore();
+                });
+            });
+        }
+    }
+    JS;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -72,41 +119,71 @@
         <section class="grid lg:grid-cols-2 gap-6">
             <div class="bg-white border border-gray-200 rounded-xl p-5">
                 <h2 class="font-semibold mb-4 flex items-center gap-2">Appointment trends · {{ $windowLabel }}
-                    <x-info-tip title="How to read appointment trends"><p>Each point on the horizontal axis is one {{ strtolower($bucketNoun) }} in the selected {{ strtolower($windowLabel) }} range; the vertical axis is the number of appointments scheduled during that bucket. The solid green line counts pending, approved, and completed appointments; rejected and cancelled appointments are excluded. The dashed purple line estimates the count for {{ strtolower($horizonLabel) }}. A higher point means more bookings for that period, not more available slots. Compare the last solid points to see whether booking volume is rising or falling, and use the forecast as a planning estimate.</p></x-info-tip>
+                    <x-info-tip title="Appointment trends"><p>Each chart point shows an appointment count for its labeled {{ strtolower($bucketNoun) }}. Green is the past period; purple is the forecast for {{ strtolower($horizonLabel) }}. Rejected and cancelled appointments are excluded from the trend.</p><p>{{ number_format($periodTotal) }} active appointments were recorded in the selected past period ({{ number_format($periodAverage, 1) }} per {{ strtolower($bucketNoun) }} on average). The busiest was {{ $busiestBucket['label'] ?? '—' }} with {{ number_format($busiestBucket['count'] ?? 0) }}. For the next {{ strtolower($horizonLabel) }}, {{ number_format($upcomingAppointmentCount) }} appointments are already scheduled; the forecast estimates {{ number_format($predictedAppointmentsNextMonth) }} in total.</p><p>Future dates are grouped as days for 7 days, consecutive 7-day weeks for 4 weeks, and calendar months for 6 or 12 months.</p></x-info-tip>
                 </h2>
-                <div class="h-72"><canvas id="trend-chart"></canvas></div><p class="text-xs text-gray-400 mt-2">Dashed line shows the appointment forecast.</p>
-                <p class="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600"><strong class="text-gray-800">Summary:</strong> {{ number_format($periodTotal) }} appointments recorded in this period ({{ number_format($periodAverage, 1) }} per period on average). The busiest period was {{ $busiestBucket['label'] ?? '—' }} with {{ number_format($busiestBucket['count'] ?? 0) }} bookings.</p>
+                <div class="h-72"><canvas id="trend-chart"></canvas></div>
+                <details class="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm">
+                    <summary class="cursor-pointer font-medium text-gray-700">Upcoming appointments by period</summary>
+                    <div class="mt-2 max-h-56 divide-y divide-gray-200 overflow-y-auto">
+                        @foreach($futureRows as $row)
+                            <div class="grid grid-cols-3 gap-2 py-2 text-xs sm:text-sm">
+                                <span class="font-medium">{{ $row['label'] }}</span>
+                                <span class="text-gray-500">{{ number_format($row['scheduled'] ?? 0) }} scheduled</span>
+                                <span class="text-right text-indigo-700">{{ number_format($row['count']) }} estimated</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </details>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl p-5">
                 <h2 class="font-semibold mb-4 flex items-center gap-2">Booking distribution
-                    <x-info-tip title="How to read booking distribution" align="right"><p>Each appointment in the selected date range is counted once and placed in its current status slice. Pending means staff have not decided yet; approved means the booking is accepted; completed means the service was finished; rejected means staff declined it; cancelled means it was cancelled or expired. Slice size represents the number of appointments in that status, not a percentage of income. The largest slice is the status with the most bookings.</p></x-info-tip>
+                    <x-info-tip title="Booking distribution" align="right"><p>Each slice is a current appointment status. The percentage label is that status's share of all appointments in the selected period; hover or focus a slice for the exact count and percentage.</p><p>{{ number_format($completedBookings) }} completed, {{ number_format($pendingBookings + $approvedBookings) }} pending or approved, and {{ number_format($cancelledBookings + $rejectedBookings) }} cancelled or rejected.</p></x-info-tip>
                 </h2>
                 <div class="h-72"><canvas id="distribution-chart"></canvas></div>
-                <p class="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600"><strong class="text-gray-800">Summary:</strong> {{ number_format($completedBookings) }} completed, {{ number_format($pendingBookings + $approvedBookings) }} pending or approved, and {{ number_format($cancelledBookings + $rejectedBookings) }} cancelled or rejected appointments.</p>
             </div>
         </section>
         <section class="grid lg:grid-cols-2 gap-6">
             <div class="bg-white border border-gray-200 rounded-xl p-5">
                 <h2 class="font-semibold mb-4 flex items-center gap-2">Popular services
-                    <x-info-tip title="How to read popular services"><p>Each horizontal bar counts appointments in the selected date range whose primary package or service is the label on the left; pending, approved, completed, rejected, and cancelled requests are included. The number along the bottom is the booking count, so longer bars mean more appointments chose that primary service. Add-on selections are stored separately and are not added to these bars. Use the ranking to see which main services owners requested most often.</p></x-info-tip>
+                    <x-info-tip title="Popular services"><p>Each bar shows the exact booking count and its percentage of all appointments in the selected past period. Add-ons are stored separately. The most requested was @if($topService) {{ $topService->name }} with {{ number_format($topService->total) }} bookings. @else none yet. @endif</p></x-info-tip>
                 </h2>
                 <div class="h-72"><canvas id="services-chart"></canvas></div>
-                <p class="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600"><strong class="text-gray-800">Summary:</strong> @if($topService) {{ $topService->name }} was the most requested service with {{ number_format($topService->total) }} bookings. @else No service bookings were recorded in this period yet. @endif</p>
             </div>
             <div class="bg-white border border-gray-200 rounded-xl p-5">
                 <h2 class="font-semibold mb-4 flex items-center gap-2">Service demand forecast · {{ $horizonLabel }}
-                    <x-info-tip title="How to read service demand forecast" align="right"><p>Each row is a service with recent or predicted demand. The number before the arrow is the count of pending, approved, and completed appointments using that primary service in the selected date range; rejected and cancelled bookings are excluded. The number after the arrow estimates bookings for the matching future interval ({{ strtolower($horizonLabel) }}). The system combines historical trend, moving average, smoothing, and seasonality methods when enough history is available, then weights methods by how well they predicted past data. A higher predicted count may require more staff time or supplies; treat it as an estimate and compare with actual results as new bookings come in.</p></x-info-tip>
+                    <x-info-tip title="Service demand forecast" align="right"><p>Open a day, week, or month below to see each service's expected bookings for that exact period. “Scheduled” counts bookings already on the calendar; “Estimated” is the forecast total and will not be lower than bookings already scheduled. The forecast combines historical trend, moving average, smoothing, and seasonal methods when there is enough history.</p><p>@if($topForecastService) {{ $topForecastService->name }} has the highest estimated demand across the selected horizon at {{ number_format($topForecastService->predicted) }} bookings. @else No upcoming demand can be estimated yet. @endif</p></x-info-tip>
                 </h2>
-                <div class="divide-y divide-gray-100">@forelse($serviceDemandForecast->take(8) as $service)<div class="py-3 flex justify-between gap-3 text-sm"><span>{{ $service->name }}</span><span class="text-gray-500">{{ $service->last_month }} → {{ $service->predicted }} bookings</span></div>@empty<p class="text-sm text-gray-400">No service bookings in this period yet.</p>@endforelse</div>
-                <p class="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600"><strong class="text-gray-800">Summary:</strong> @if($topForecastService) {{ $topForecastService->name }} is forecast to have the highest demand at {{ number_format($topForecastService->predicted) }} bookings in the next period. @else There is not enough service booking history to show a forecast. @endif</p>
+                <p class="mb-2 text-xs text-gray-500">Top 8 services per period. Period totals include all non-archived services.</p>
+                <div class="divide-y divide-gray-100">
+                    @foreach($serviceForecastPeriods as $index => $period)
+                        <details class="py-2" @if($index === 0) open @endif>
+                            <summary class="cursor-pointer rounded-lg px-2 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50">
+                                {{ $period['label'] }} <span class="font-normal text-gray-500">· {{ number_format($period['scheduled']) }} scheduled · {{ number_format($period['predicted']) }} estimated</span>
+                            </summary>
+                            <div class="divide-y divide-gray-100 px-2">
+                                @forelse($period['services'] as $service)
+                                    <div class="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-3 py-2 text-xs sm:text-sm">
+                                        <span class="truncate">{{ $service->name }}</span>
+                                        <span class="text-right text-gray-500">{{ number_format($service->scheduled) }} scheduled</span>
+                                        <span class="text-right font-medium text-indigo-700">{{ number_format($service->predicted) }} estimated</span>
+                                    </div>
+                                @empty
+                                    <p class="px-2 py-3 text-xs text-gray-400">No scheduled or forecast service bookings for this period.</p>
+                                @endforelse
+                            </div>
+                        </details>
+                    @endforeach
+                </div>
             </div>
         </section>
     </main>
     <script>
         const labels = @json($labels);
-        new Chart(document.getElementById('trend-chart'), {type:'line',data:{labels,datasets:[{label:'Appointments',data:@json($actual),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3},{label:'Forecast',data:@json($forecast),borderColor:'#6366f1',borderDash:[6,5],tension:.3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-        new Chart(document.getElementById('distribution-chart'), {type:'doughnut',data:{labels:@json($statusBreakdown->keys()),datasets:[{data:@json($statusBreakdown->values()),backgroundColor:['#f59e0b','#10b981','#3b82f6','#ef4444','#9ca3af']}]},options:{responsive:true,maintainAspectRatio:false}});
-        new Chart(document.getElementById('services-chart'), {type:'bar',data:{labels:@json($topServices->pluck('name')),datasets:[{label:'Bookings',data:@json($topServices->pluck('total')),backgroundColor:'#8b5cf6'}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{beginAtZero:true,ticks:{precision:0}}}}});
+        const valueLabelsPlugin = {!! $chartValuesPlugin !!};
+        const scheduledBookings = @json($scheduled);
+        new Chart(document.getElementById('trend-chart'), {type:'line',plugins:[valueLabelsPlugin],data:{labels,datasets:[{label:'Appointments',data:@json($actual),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3},{label:'Forecast',data:@json($forecast),borderColor:'#6366f1',borderDash:[6,5],tension:.3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{precision:0}}},plugins:{tooltip:{callbacks:{afterLabel:(context)=>context.datasetIndex===1?`Already scheduled: ${scheduledBookings[context.dataIndex]}`:''}}}}});
+        new Chart(document.getElementById('distribution-chart'), {type:'doughnut',plugins:[valueLabelsPlugin],data:{labels:@json($statusLabels),datasets:[{data:@json($statusValues),backgroundColor:['#f59e0b','#ef4444','#10b981','#9ca3af','#3b82f6']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{tooltip:{callbacks:{label:(context)=>{const values=context.dataset.data;const total=values.reduce((sum,value)=>sum+Number(value||0),0);const pct=total?(Number(context.raw)/total*100):0;return `${context.label}: ${context.raw} (${pct.toFixed(1)}%)`;}}}}}});
+        new Chart(document.getElementById('services-chart'), {type:'bar',plugins:[valueLabelsPlugin],data:{labels:@json($topServices->pluck('name')),datasets:[{label:'Bookings',data:@json($topServices->pluck('total')),percentages:@json($servicePercentages),backgroundColor:'#8b5cf6'}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:60}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}});
     </script>
 </body>
 </html>
